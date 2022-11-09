@@ -22,9 +22,9 @@ npm build
 bun run build               # compile with tsc
 bun test                    # run unit tests with bun
 bun cli ...                 # interact with bult cli
-
-# cli usage
-bun cli <commands>
+bun cli migrate up          # migrate upwards
+bun supabase db reset       # reset the local database
+bun types                   # update local typings
 ```
 
 <!-- #### Issues And Workarounds

@@ -5,7 +5,8 @@
   "scripts": {
     "build": "rm -rf dist/* && tsc",
     "test": "jest tests",
-    "cli": "bun  run build && node ./dist/index.js"
+    "cli": "bun run build && node ./dist/index.js",
+    "types": "supabase gen types typescript --local > src/database.types.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.2.2",
@@ -15,7 +16,7 @@
     "typescript": "4.7.4"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.0.0-rc.4",
+    "@supabase/supabase-js": "^2.0.5",
     "commander": "^9.4.0",
     "dotenv": "^16.0.2",
     "yaml": "^2.1.3"

@@ -1,28 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
-import {
-  API_URL,
-  SERVICE_ROLE_KEY,
-  API_KEY,
-  EMAIL,
-  PASSWORD,
-} from "./constants";
-
-export const makeClient = (session = null) => {
-  const key = SERVICE_ROLE_KEY || API_KEY;
-
-  return createClient(API_URL, key, {
+import { GenericSchema } from "@supabase/postgrest-js/dist/module/types";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { API_URL, SERVICE_ROLE_KEY } from "./constants";
+import { Database } from "./database.types";
+export const createClient = () =>
+  createSupabaseClient<Database, "supacontent">(API_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
-    db: {schema: "supacontent"}
+    db: { schema: "supacontent" },
   });
-};
-
-export const signIn = async (client) => {
-  if (!SERVICE_ROLE_KEY) {
-    return await client.auth.signInWithPassword({
-      email: EMAIL,
-      password: PASSWORD,
-    });
-  } else {
-    return false;
-  }
-};

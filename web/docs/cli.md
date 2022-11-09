@@ -16,15 +16,8 @@ npm i @ziinc/supacontent
 The CLI will perform a login and export the contents of a project. The project ID can be found in the url `/app/projects/:project_id`.
 
 ```
-# .env in root folder
-EMAIL=my@example.com
-PASSWORD=my-password
-```
-
-```bash
-# terminal
-npx supacontent export <project-id>           # list of content in the project
-npx supacontent export <project-id> --type     # list of content types, with embeded content under the content key.
+# /.env in root folder
+SUPACONTENT_API_KEY=XXXXXXX
 ```
 
 #### Migrations
@@ -33,7 +26,7 @@ Requires DBMate to be installed. Connects to the database and performs the migra
 
 ```
 # .env in root folder
-DATABASE_URL=postgresql://....
+SUPACONTENT_DATABASE_URI=postgresql://....
 ```
 
 ```bash

@@ -1,17 +1,13 @@
-import { exec, execSync, spawnSync } from "child_process";
+import { execSync } from "child_process";
 import { program } from "commander";
+import { DATABASE_URL } from "./constants";
 import { exportContent } from "./export";
 
-// add secret env var
+require("dotenv").config({ path: ".env.secret" });
 
-const fs = require('fs')
-require("dotenv").config({path:  ".env.secret"});
-
-const env = process.env.NODE_ENV || 'dev'
-console.log('env', env)
-require("dotenv").config({path: `.env.${env}`, override: true});
-require("dotenv").config({path: `.env.${env}.secret`, override: true});
-
+const env = process.env.NODE_ENV || "dev";
+require("dotenv").config({ path: `.env.${env}`, override: true });
+require("dotenv").config({ path: `.env.${env}.secret`, override: true });
 
 program
   .command("migrate <direction>")
@@ -22,7 +18,7 @@ program
 
     const stdout = execSync(`dbmate ${direction}`, {
       env: {
-        DATABASE_URL: process.env.DATABASE_URL + "?sslmode=disable",
+        DATABASE_URL: DATABASE_URL + "?sslmode=disable",
         PATH: process.env.PATH,
       },
     });
@@ -34,11 +30,9 @@ program
 
 program
   .command("export <project_id>")
-  .option("-t, --type", "group content by type")
-  .action(async (projectId, options) => {
-    console.log("Initiating export for project (id: " + projectId + ")");
-    exportContent(projectId, options);
-  });
+  .option("-f, --format", "file format")
+  .option("--markdownBodyKey", "data key used for markdown file body")
+  .action(exportContent);
 
 // dev
 program.command("drop", "drops the database").action(() => null);
@@ -49,4 +43,3 @@ program
   .action(() => console.log(process.env));
 
 program.parseAsync();
-const options = program.opts();

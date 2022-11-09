@@ -30,3 +30,13 @@ const { data, error } = await client
   .select()
   .eq("id", "eq", 1);
 ```
+
+
+### Full Export
+To allow compatibility with static site generators, we can export files to static files directly.
+
+```bash
+# terminal
+npx supacontent export <project-id>           # list of content in the project
+npx supacontent export  <project-id> --format=md
+```
