@@ -5,4 +5,6 @@ module.exports = {
   transform: {
     "^.+\\.svg$": "<rootDir>/tests/helpers/svgTransformer.js",
   },
+  setupFilesAfterEnv: ['<rootDir>/tests/helpers/setup/jsdom.ts'],
+
 };

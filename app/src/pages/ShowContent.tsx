@@ -7,25 +7,26 @@ import Editor from "../components/editors/RichTextEditor";
 import ShortTextEditor from "../components/editors/ShortTextEditor";
 import FeatherIcon from "../components/Icon";
 import { Content, ContentType } from "../types";
-import { client, supacontent } from "../utils";
+import { supacontent, useCurrentProject } from "../utils";
 const ShowContent = () => {
   const params = useParams();
   const navigate = useNavigate();
   const [contentType, setContentType] = useState<ContentType>(null);
   const [content, setContent] = useState<Content>(null);
   const { content_id, content_type_id } = useParams();
+  const project = useCurrentProject();
   useEffect(() => {
     fetchData();
   }, [params.content_type_id]);
   const fetchData = async () => {
-    const { data } = await supacontent
+    const { data } = await supacontent(project)
       .from("content")
       .select("*")
       .filter("id", "eq", content_id)
       .single();
     setContent(data);
 
-    const { data: contentTypeData } = await supacontent
+    const { data: contentTypeData } = await supacontent(project)
       .from("content_types")
       .select("*")
       .filter("id", "eq", content_type_id)
@@ -49,7 +50,10 @@ const ShowContent = () => {
           type="button"
           className="btn btn-warning  w-64"
           onClick={async () => {
-            await supacontent.from("content").delete().eq("id", content.id);
+            await supacontent(project)
+              .from("content")
+              .delete()
+              .eq("id", content.id);
             navigate(
               `/projects/${params.project_id}/content/type/${content_type_id}`
             );
@@ -61,15 +65,13 @@ const ShowContent = () => {
       {contentType &&
         contentType.fields.map((field) => {
           const handleSave = async (saved) => {
-            const { data } = await supacontent
+            const { data } = await supacontent(project)
               .from("content")
-              .update(
-                {
-                  data: { ...content.data, [field.name]: saved },
-                },
-                { returning: "representation" }
-              )
-              .eq("id", content.id);
+              .update({
+                data: { ...content.data, [field.name]: saved },
+              })
+              .eq("id", content.id)
+              .select();
             setContent(data[0]);
           };
           return (
@@ -93,15 +95,13 @@ const ShowContent = () => {
                   field={field}
                   value={content.data[field.name]}
                   onSave={async (saved) => {
-                    const { data } = await supacontent
+                    const { data } = await supacontent(project)
                       .from("content")
-                      .update(
-                        {
-                          data: { ...content.data, [field.name]: saved },
-                        },
-                        { returning: "representation" }
-                      )
-                      .eq("id", content.id);
+                      .update({
+                        data: { ...content.data, [field.name]: saved },
+                      })
+                      .eq("id", content.id)
+                      .select();
                     setContent(data[0]);
                   }}
                 />

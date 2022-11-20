@@ -5,30 +5,33 @@
     "clean": "rm -rf dist/*",
     "static": "mkdir -p dist && cp -r public/* dist",
     "css": "tailwindcss -i ./src/main.css -o ./tmp/index.css",
-    "css:watch": "bun run css -- --watch",
+    "css:watch": "npm run css -- --watch",
     "prebuild": "npm-run-all clean static css",
     "build": "node ./build.js",
     "build:watch": "node ./build.js watch",
     "build:ci": "npm run build && mkdir -p ../_site/app && cp -r ./dist/* ../_site/app/",
     "serve": "serve dist -s",
     "test": "CI=true jest tests",
-    "test:watch": "bun run test -- --watchAll",
+    "test:watch": "npm run test -- --watchAll",
     "check": "tsc --noEmit --preserveWatchOutput",
-    "check:watch": "bun run check -- --watch",
+    "check:watch": "npm run check -- --watch",
     "start": "npm-run-all clean static css -p **:watch serve"
   },
   "dependencies": {
     "@editorjs/editorjs": "^2.25.0",
-    "@supabase/supabase-js": "^1.35.6",
+    "@supabase/auth-ui-react": "^0.2.6",
+    "@supabase/supabase-js": "^2.1.0",
     "@tailwindcss/typography": "^0.5.4",
     "@types/feather-icons": "^4.7.0",
     "@types/lodash": "^4.14.184",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "antd": "^5.0.0",
     "daisyui": "^2.24.0",
     "dotenv": "^16.0.1",
     "feather-icons": "^4.29.0",
     "lodash": "^4.17.21",
+    "lucide-react": "^0.101.0",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.16",
     "postcss-cli": "^10.0.0",
@@ -36,6 +39,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "6",
     "serve": "^14.0.1",
+    "swr": "^1.3.0",
     "tailwindcss": "^3.1.8"
   },
   "eslintConfig": {
@@ -44,15 +48,15 @@
     ]
   },
   "devDependencies": {
+    "@testing-library/react": "^13.3.0",
+    "@types/jest": "^28.1.8",
+    "@types/node": "^18.7.3",
+    "esbuild": "^0.15.3",
     "jest": "^28.1.3",
     "jest-environment-jsdom": "^28.1.3",
-    "@types/node": "^18.7.3",
     "react-refresh": "0.10.0",
     "react-scripts": "^5.0.1",
-    "esbuild": "^0.15.3",
-    "ts-jest": "^28.0.7",
-    "typescript": "latest",
-    "@testing-library/react": "^13.3.0",
-    "@types/jest": "^28.1.6"
+    "ts-jest": "^28.0.8",
+    "typescript": "latest"
   }
 }

@@ -4,7 +4,7 @@ import FeatherIcon from "../components/Icon";
 import ToggleEdit from "../components/ToggleEdit";
 import ContentTypeFieldForm from "../interfaces/ContentTypes/ContentTypeFieldForm";
 import { ContentType } from "../types";
-import { client, supacontent } from "../utils";
+import { supacontent, useCurrentProject } from "../utils";
 
 const ContentTypesPage = () => {
   const { refreshContentTypes }: any = useOutletContext();
@@ -13,11 +13,12 @@ const ContentTypesPage = () => {
   const [data, setData] = useState<ContentType>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const { content_type_id } = useParams();
+  const project = useCurrentProject();
   useEffect(() => {
     fetchData();
   }, [params.content_type_id]);
   const fetchData = async () => {
-    const { data } = await supacontent
+    const { data } = await supacontent(project)
       .from("content_types")
       .select("*")
       .filter("id", "eq", content_type_id)
@@ -30,7 +31,7 @@ const ContentTypesPage = () => {
         <div className="prose">
           <ToggleEdit
             onSave={async (name) => {
-              const { data: result } = await supacontent
+              const { data: result } = await supacontent(project)
                 .from("content_types")
                 .update({
                   name,
@@ -47,7 +48,7 @@ const ContentTypesPage = () => {
           type="button"
           className="btn btn-warning  w-64"
           onClick={async () => {
-            await supacontent
+            await supacontent(project)
               .from("content_types")
               .delete()
               .eq("id", data.id);
@@ -76,7 +77,7 @@ const ContentTypesPage = () => {
                     const newFields = data.fields.filter(
                       (oldField) => oldField !== field
                     );
-                    const { data: result } = await supacontent
+                    const { data: result } = await supacontent(project)
                       .from("content_types")
                       .update({
                         fields: newFields,
@@ -96,7 +97,7 @@ const ContentTypesPage = () => {
         <ContentTypeFieldForm
           onCancel={() => setShowNewForm(false)}
           onSubmit={async (params) => {
-            const { data: result } = await supacontent
+            const { data: result } = await supacontent(project)
               .from("content_types")
               .update({
                 fields: [...data.fields, params],

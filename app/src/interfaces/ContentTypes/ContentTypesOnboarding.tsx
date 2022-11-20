@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useParams } from "react-router-dom";
-import { client, supacontent } from "../../utils";
+import { supacontent, useCurrentProject } from "../../utils";
 
 const ContentTypesOnboarding = () => {
   const params = useParams();
   const navigate = useNavigate();
   const [isCheckDone, setIsCheckDone] = useState(false);
+  const project = useCurrentProject();
 
   const check = async () => {
-    const { data } = await supacontent.from("content_types").select("*");
+    const { data } = await supacontent(project)
+      .from("content_types")
+      .select("*");
 
     if (data && data[0]) {
       // take the first collection, else take first single

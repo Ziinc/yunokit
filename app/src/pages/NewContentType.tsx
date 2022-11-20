@@ -1,8 +1,6 @@
 import { useNavigate, useOutletContext, useParams } from "react-router";
 import { Link, useSearchParams } from "react-router-dom";
-import { useAppContext } from "../App";
-import { ContentType, Project } from "../types";
-import { client, supacontent } from "../utils";
+import { supacontent, useCurrentProject } from "../utils";
 
 const NewContentType = () => {
   const navigate = useNavigate();
@@ -10,23 +8,22 @@ const NewContentType = () => {
   const basePath = `/projects/${params.project_id}`;
   const [searchParams] = useSearchParams();
   const { refreshContentTypes }: any = useOutletContext();
+  const project = useCurrentProject();
   return (
     <>
       <form
         className="mx-auto container my-auto max-w-md flex flex-col gap-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          const { data } = await supacontent
-            .from<ContentType>("content_types")
-            .insert(
-              {
-                name: (e.target as any).name.value,
-                type: (e.target as any).type.value,
-                project_id: Number(params.project_id),
-                fields: [] as any,
-              },
-              { returning: "representation" }
-            );
+          const { data } = await supacontent(project)
+            .from("content_types")
+            .insert({
+              name: (e.target as any).name.value,
+              type: (e.target as any).type.value,
+              project_id: Number(params.project_id),
+              fields: [] as any,
+            })
+            .select();
           await refreshContentTypes();
           navigate(`${basePath}/content-types/${data[0].id}`);
         }}

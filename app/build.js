@@ -61,6 +61,8 @@ esbuild
     Object.assign(
       {
         entryPoints: ["tmp/index.css"],
+        nodePaths: ['node_modules'],
+
       },
       base
     )

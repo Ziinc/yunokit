@@ -1,10 +1,9 @@
-import { isEmpty } from "lodash";
 import { useEffect, useState } from "react";
-import { Navigate, useLocation, useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { Link } from "react-router-dom";
 import ContentSummary from "../../components/ContentSummary";
 import { Content } from "../../types";
-import { client, supacontent } from "../../utils";
+import { supacontent, useCurrentProject } from "../../utils";
 
 const ListContent = () => {
   const [content, setContent] = useState(null);
@@ -12,12 +11,14 @@ const ListContent = () => {
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const project = useCurrentProject();
 
   useEffect(() => {
     refresh();
   }, [params.content_type_id]);
   const refresh = async () => {
-    const { data } = await supacontent
+    // @ts-ignore
+    const { data } = await supacontent(project)
       .from("content")
       .select(
         `
@@ -31,7 +32,7 @@ const ListContent = () => {
       .filter("content_type.project_id", "eq", params.project_id);
     setContent(data);
 
-    const { data: contentTypeData } = await supacontent
+    const { data: contentTypeData } = await supacontent(project)
       .from("content_types")
       .select("*")
       .filter("id", "eq", params.content_type_id)
@@ -46,13 +47,13 @@ const ListContent = () => {
         <button
           className="btn btn-primary btn-sm"
           onClick={async () => {
-            const { data } = await supacontent.from("content").insert(
-              {
+            const { data } = await supacontent(project)
+              .from("content")
+              .insert({
                 content_type_id: params.content_type_id,
                 data: {},
-              },
-              { returning: "representation" }
-            );
+              })
+              .select();
             navigate(
               `/projects/${params.project_id}/content/type/${params.content_type_id}/edit/${data[0].id}`
             );
@@ -67,7 +68,6 @@ const ListContent = () => {
         {content.map((item: Content) => (
           <Link to={location.pathname + "/edit/" + item.id}>
             <ContentSummary content={item} contentType={contentType} />
-           
           </Link>
         ))}
       </section>

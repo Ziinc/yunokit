@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
-import { client, supacontent } from "../utils";
+import { supacontent, useCurrentProject } from "../utils";
 import ContentTypesMenu from "./home/ContentTypesMenu";
 
 const ContentTypesPage = () => {
   const [data, setData] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
+  const project = useCurrentProject()
+
   useEffect(() => {
     fetchData();
   }, []);
   const fetchData = async () => {
-    const { data } = await supacontent.from("content_types").select("*");
+    const { data } = await supacontent(project).from("content_types").select("*");
     setData(data);
   };
 

@@ -1,27 +1,23 @@
-import { useNavigate, useParams } from "react-router";
-import { useAppContext } from "../App";
-import { client, supacontent } from "../utils";
+import { Button } from "antd";
+import { useNavigate } from "react-router";
+import { useAppContext } from "../utils";
+import { client, useCurrentProject } from "../utils";
 
 const ProjectSettingsPage = () => {
-  const params = useParams();
   const navigate = useNavigate();
-  const appContext = useAppContext();
+  const { refreshProjects } = useAppContext();
+  const project = useCurrentProject();
   return (
-    <div className="p-4">
-      <button
-        className="btn btn-warning"
-        onClick={async () => {
-          await supacontent
-            .from("projects")
-            .delete()
-            .eq("id", params.project_id);
-          await appContext.refreshProjects();
-          navigate("/");
-        }}
-      >
-        Delete Project
-      </button>
-    </div>
+    <Button
+      danger
+      onClick={async () => {
+        await client.from("projects").delete().eq("id", project.id);
+        await refreshProjects();
+        navigate("/");
+      }}
+    >
+      Disconnect Project
+    </Button>
   );
 };
 

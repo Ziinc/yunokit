@@ -9,5 +9,5 @@
     "allowJs": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "tests/**/*"]
+  "include": ["src/**/*", "tests/**/*", "__mocks__/**/*"]
 }

@@ -6,7 +6,7 @@
     "build": "rm -rf dist/* && tsc",
     "test": "jest tests",
     "cli": "bun run build && node ./dist/index.js",
-    "types": "supabase gen types typescript --local > src/database.types.ts"
+    "types": "supabase gen types typescript --local > src/database.types.ts && supabase gen types typescript --local > ../app/src/database.types.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.2.2",

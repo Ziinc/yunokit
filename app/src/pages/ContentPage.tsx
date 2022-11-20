@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { ContentType } from "../types";
-import { client, supacontent } from "../utils";
+import { supacontent, useCurrentProject } from "../utils";
 import ContentTypesMenu from "./home/ContentTypesMenu";
 
 const ContentPage: React.FC = () => {
@@ -11,9 +11,10 @@ const ContentPage: React.FC = () => {
   useEffect(() => {
     refreshAll();
   }, [params.content_type_id]);
+  const project = useCurrentProject()
 
   const refreshAll = async () => {
-    const { data } = await supacontent.from("content_types").select("*");
+    const { data } = await supacontent(project).from("content_types").select("*");
     if (data && data[0] && !params.content_type_id) {
       // take the first collection, else take first single
       const first = data.find((ct) => ct.type === "collection") || data[0];
@@ -22,17 +23,12 @@ const ContentPage: React.FC = () => {
     setContentTypes(data);
   };
   const handleCreate = async (type: "collection" | "single") => {
-    const { data, error } = await supacontent
-      .from<ContentType>("content_types")
-      .insert(
-        {
-          name: "Untitled",
-          type: "collection",
-          project_id: Number(params.project_id),
-          fields: [],
-        },
-        { returning: "representation" }
-      );
+    const { data, error } = await supacontent(project).from("content_types").insert({
+      name: "Untitled",
+      type: "collection",
+      project_id: Number(params.project_id),
+      fields: [],
+    }).select();
     navigate(`/projects/${params.project_id}/content-types/${data[0].id}`);
   };
 
