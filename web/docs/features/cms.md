@@ -4,39 +4,62 @@ sidebar_position: 1
 
 # Content Management System
 
-### Why?
+Allows for dynamic content creation and content types, providing maximum flexibility for end user content creation.
 
-**User-friendly editing interface**, allowing for the developer to use their tool of choice while keeping content editors happy without needing to know any technical details.
+Features:
 
-**Dynamic content types**, allowing the developer to avoid config files and letting content managers freedom over data schema.
+- Dynamic content types
+- Content
 
-**SSR/SSG friendly**, consumers of the api can serve content over server-side rendering or through static site generation.
+## Integration
 
-### Querying
-
-You can query the content in existing node.js apps or browser/mobile clients using supabase-js. V2 is recommended.
+All tables can be queried as per normal tables. Do remember to prefix each table with the `supacontent` schema name.
 
 Relevant tables:
 
-- `supacontent.content`
+- `supacontent.content_items`
 - `supacontent.content_types`
-- `supacontent.projects`
 
-Example of querying content:
+### Client Querying
+
+You can easily query the created content using `supabase-js` for custom integration into your app.
+
+Example `supabase-js` usage:
 
 ```js
 const { data, error } = await client
-  .from("content")
+  .from("content_items")
   .select()
   .eq("id", "eq", 1);
 ```
 
+### Content Permissions and Ownership
 
-### Full Export
-To allow compatibility with static site generators, we can export files to static files directly.
+To specify that a content item belongs to a user, add the user's id to the `supacontent.content_items.user_id` column.
 
-```bash
-# terminal
-npx supacontent export <project-id>           # list of content in the project
-npx supacontent export  <project-id> --format=md
+You can then filter down to that user's content items by filtering on `user_id`
+
+```js
+const user_id = "35795d3f-553d-4538-92b6-edb61ff84676";
+const { data, error } = await client
+  .from("content_items")
+  .select()
+  .eq("user_id", "eq", user_id);
+```
+
+### RLS Policies
+
+Supacontent does not manage ownership permissions RLS policies for maximum developer flexibility. As such, if you would like to configure ownership permissions for users, consider the following RLS policies:
+
+#### CRUD of Content Items
+
+```sql
+create policy "Individuals can create content items." on supacontent.content_items for
+    insert with check (auth.uid() = user_id);
+create policy "Individuals can view their own content items. " on supacontent.content_items for
+    select using (auth.uid() = user_id);
+create policy "Individuals can update their own content items." on supacontent.content_items for
+    update using (auth.uid() = user_id);
+create policy "Individuals can delete their own content items." on supacontent.content_items for
+    delete using (auth.uid() = user_id);
 ```

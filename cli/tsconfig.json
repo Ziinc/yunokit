@@ -7,8 +7,10 @@
     "moduleResolution": "node",
     "lib": ["dom", "ESNext"],
     "outDir": "dist",
-    "allowJs": true
+    "allowJs": false,
+    "declaration": true,
+    "sourceMap": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*", "__mocks__/**/*"],
   "exclude": ["node_modules/**/*"]
 }

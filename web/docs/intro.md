@@ -22,28 +22,28 @@ Supacontent ships with a CLI for handling migrations, as well as a React compone
 
 ### Getting Started
 
-1. Install the npm package
+1. Install the npm package.
 
 ```bash
 npm i @ziinc/supacontent
 ```
 
-2. Start up your local supabase stack
+2. Generate migrations to your supabase project directory.
+
+```bash
+npx sc migrations
+```
+
+3, Update your project's `config.toml` to include `supacontent` under the list of api schemas.
+
+```toml
+# supabase/config.toml
+[api]
+schemas = ["supacontent", ...]
+```
+
+4. Start up your local supabase stack.
 
 ```bash
 supabase start
-1. Create =`.env` file in your working directory. Add in the Supabase service role key and database URI from Step 2.
 ```
-
-```
-SUPACONTENT_API_KEY=XXXXXXX
-SUPACONTENT_DATABASE_URI=postgresql://....
-```
-
-4. Run migrations
-
-```bash
-npx supacontent migrate up
-```
-
-🚧 WIP
