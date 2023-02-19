@@ -3,3 +3,4 @@ cli/.env.prod/
 **/.env.secret
 _site/
 .vscode/
+.DS_Store
