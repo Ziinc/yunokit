@@ -1,0 +1,33 @@
+{
+  "name": "supacontent-lib",
+  "private": true,
+  "main": "dist/index.js",
+  "files": [
+    "dist/style.css"
+  ],
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "npm run build -- --watch",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "@vitejs/plugin-react-swc": "^3.0.0",
+    "jsdom": "^21.1.0",
+    "sass": "^1.58.3",
+    "typescript": "^4.9.3",
+    "vite": "^4.1.0",
+    "vitest": "^0.28.5"
+  }
+}

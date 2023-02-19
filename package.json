@@ -1,0 +1,13 @@
+{
+  "name": "supacontent",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "turbo test",
+    "start": "turbo start"
+  },
+  "dependencies": {
+    "turbo": "^1.8.1"
+  },
+  "workspaces": ["cli", "lib", "web"]
+}

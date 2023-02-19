@@ -1,0 +1,42 @@
+import { ContentListExample, ContentList } from "@ziinc/supacontent-lib";
+import "@ziinc/supacontent-lib/dist/style.css";
+import { renderToString } from 'react-dom/server';
+import prettier from "prettier/standalone";
+import prettierHtml from "prettier/parser-html";
+import JsxRenderer from "../../../src/components/JsxRenderer";
+import reactElementToJSXString from "react-element-to-jsx-string";
+
+# `<ContentList />`
+
+Displays a list of content items.
+
+<ContentListExample />
+
+<pre>
+{prettier.format(renderToString(<ContentListExample />), {parser: "html", plugins: [prettierHtml]})}
+</pre>
+
+export const Func = ()=> <ContentList />;
+
+<JsxRenderer
+    Component={ContentListExample}
+/>
+
+<pre>{reactElementToJSXString(<ContentListExample  />)}</pre>
+
+## Usage
+
+Use the `data` key to pass data into the component.
+
+The `itemTitleKey` and `itemDescriptionKey` are used to determine what values to display for each item.
+
+## Props
+
+| Name                 | Type                  | Required? | Description                                                                              |
+| -------------------- | --------------------- | --------- | ---------------------------------------------------------------------------------------- |
+| `data`               | `ContentItem[]`       | Required  | `ContentItem`s to render                                                                 |
+| `itemTitleKey`       | `string`              | Required  | The key of the content item's `data` field to use to render the title of the item.       |
+| `itemDescriptionKey` | `string`              | Optional  | The key of the content item's `data` field to use to render the description of the item. |
+| `itemClassName`      | `string`              | Optional  | The `className` of the content item.                                                     |
+| `className`          | `string`              | Optional  | The `className` of the content list.                                                     |
+| `style`              | `React.CSSProperties` | Optional  | The `style` of the content list.                                                         |

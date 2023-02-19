@@ -6,7 +6,8 @@
     "build": "rm -rf dist/* && tsc -p tsconfig.build.json",
     "test": "jest tests",
     "precli": "npm run build",
-    "cli": "node ./dist/index.js"
+    "cli": "node ./dist/index.js",
+    "start": "npm run build -- --watch"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",

@@ -4,3 +4,6 @@ cli/.env.prod/
 _site/
 .vscode/
 .DS_Store
+
+.turbo
+node_modules/

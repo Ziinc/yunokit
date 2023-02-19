@@ -13,7 +13,7 @@ const config = {
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
   staticDirectories: ["../shared/static", "static"],
-  favicon: "supacontent-icon-fill.ico",
+  favicon: "favicon.ico",
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -34,7 +34,10 @@ const config = {
           routeBasePath: "/", // Serve the blog at the site's root
         },
         theme: {
-          customCss: require.resolve("./src/css/custom.css"),
+          customCss: [
+            require.resolve("./src/css/custom.css"),
+            require.resolve("@ziinc/supacontent-lib/dist/style.css"),
+          ],
         },
         gtag: {
           trackingID: "G-B3P5HGLDR1",
