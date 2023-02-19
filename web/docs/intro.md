@@ -6,17 +6,19 @@ sidebar_label: Introduction
 title: Introduction
 ---
 
-Supacontent is the a content-centric feature framework for Supabase apps. Each feature is pluggable and integrates with any existing Supabase project.
+Supacontent is the a framework for Supabase-backed apps **for shipping content features fast**. Each core feature is optional can plug into your frontend and integrates seamlessly into existing Supabase project.
 
-Supacontent ships with an npm package that provides a cli for working with the framework.
+Supacontent ships with a CLI for handling migrations, as well as a React component library.
 
 ### Why?
 
-**Integration into existing supabase projects**. Existing features and apps can directly query data through the same familiar Supabase client interface.
+**Integrate into existing Supabase projects**. Existing features and apps can directly query and join on data through the same familiar Supabase client.
 
-**No more re-inventing the wheel for eacn new project**. Focus on the value-added feature buildling, instead of boilerplate functionality.
+**Stop re-inventing the wheel for eacn new project**. Focus on the value-added feature building, instead of re-creating boilerplate functionality.
 
-**Migrations are automatically handled**. Spend your development hours on your UI instead of database/api wrangling.
+**Migrations are automatically handled**. Spend your development hours on your UI instead of database and api wrangling.
+
+**Out-of-the-box components**. UI? No problem. Integrate and ship our features as fast as a copy-paste.
 
 ### Getting Started
 
@@ -43,4 +45,5 @@ SUPACONTENT_DATABASE_URI=postgresql://....
 ```bash
 npx supacontent migrate up
 ```
+
 🚧 WIP

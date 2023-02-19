@@ -29,5 +29,3 @@ npm i @ziinc/supacontent
 # terminal
 npx supacontent migrate up
 ```
-
-> Note: if self-hosting, ensure that the static files compiled point to `https://your-site.com/app` so that routing in the app works.
