@@ -12,7 +12,8 @@ const config = {
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
-  favicon: "img/favicon.ico",
+  staticDirectories: ["../shared/static", "static"],
+  favicon: "supacontent-icon-fill.ico",
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -36,8 +37,8 @@ const config = {
           customCss: require.resolve("./src/css/custom.css"),
         },
         gtag: {
-          trackingID: 'G-B3P5HGLDR1',
-        }
+          trackingID: "G-B3P5HGLDR1",
+        },
       }),
     ],
   ],
@@ -46,11 +47,10 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: "Supacontent",
-        // logo: {
-        //   alt: "My Site Logo",
-        //   src: "img/logo.svg",
-        // },
+        logo: {
+          alt: "supacontent",
+          src: "supacontent-logo.png",
+        },
         items: [
           {
             type: "doc",

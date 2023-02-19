@@ -1,0 +1,16 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72.636119689878 66.84613639732805" width="217.908359069634" height="200.53840919198416">
+  <!-- svg-source:excalidraw -->
+  
+  <defs>
+    <style class="style-fonts">
+      @font-face {
+        font-family: "Virgil";
+        src: url("https://excalidraw.com/Virgil.woff2");
+      }
+      @font-face {
+        font-family: "Cascadia";
+        src: url("https://excalidraw.com/Cascadia.woff2");
+      }
+    </style>
+  </defs>
+  <g stroke-linecap="round" transform="translate(10 13.695677852975848) rotate(0 26.318059844939 21.575229272176102)"><path d="M10.79 0 L41.85 0 L46.57 0.67 L49.94 2.7 L51.96 6.07 L52.64 10.79 L52.64 32.36 L51.96 37.08 L49.94 40.45 L46.57 42.48 L41.85 43.15 L10.79 43.15 L6.07 42.48 L2.7 40.45 L0.67 37.08 L0 32.36 L0 10.79 L0.67 6.07 L2.7 2.7 L6.07 0.67 L10.79 0" stroke="none" stroke-width="0" fill="#ffff"></path><path d="M10.79 0 M10.79 0 C20.43 0, 30.07 0, 41.85 0 M10.79 0 C21.93 0, 33.08 0, 41.85 0 M41.85 0 C49.04 0, 52.64 3.6, 52.64 10.79 M41.85 0 C49.04 0, 52.64 3.6, 52.64 10.79 M52.64 10.79 C52.64 17.93, 52.64 25.08, 52.64 32.36 M52.64 10.79 C52.64 17.79, 52.64 24.79, 52.64 32.36 M52.64 32.36 C52.64 39.55, 49.04 43.15, 41.85 43.15 M52.64 32.36 C52.64 39.55, 49.04 43.15, 41.85 43.15 M41.85 43.15 C33.2 43.15, 24.56 43.15, 10.79 43.15 M41.85 43.15 C34.46 43.15, 27.08 43.15, 10.79 43.15 M10.79 43.15 C3.6 43.15, 0 39.55, 0 32.36 M10.79 43.15 C3.6 43.15, 0 39.55, 0 32.36 M0 32.36 C0 24.1, 0 15.83, 0 10.79 M0 32.36 C0 26.62, 0 20.88, 0 10.79 M0 10.79 C0 3.6, 3.6 0, 10.79 0 M0 10.79 C0 3.6, 3.6 0, 10.79 0" stroke="#ffff" stroke-width="1" fill="none"></path></g><g transform="translate(13.886820215535636 10) rotate(0 11.5 22)"><text x="0" y="35" font-family="Cascadia, Segoe UI Emoji" font-size="36px" fill="#2b8a3e" text-anchor="start" style="white-space: pre;" direction="ltr">s</text></g><g transform="translate(36.09467408417993 10.250700525657635) rotate(0 11.5 22)"><text x="0" y="35" font-family="Cascadia, Segoe UI Emoji" font-size="36px" fill="#343a40" text-anchor="start" style="white-space: pre;" direction="ltr">c</text></g></svg>
