@@ -5,11 +5,6 @@ sidebar_position: 3
 # NPM Package
 
 The NPM package ships with a CLI.
-#### Installation
-
-```bash
-npm i @ziinc/supacontent
-```
 
 #### Exporting
 

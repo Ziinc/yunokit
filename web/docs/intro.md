@@ -20,9 +20,27 @@ Supacontent ships with an npm package that provides a cli for working with the f
 
 ### Getting Started
 
-Requirements:
+1. Install the npm package
 
-- npm and node
-- dbmate (if self-managed or platform-managed)
+```bash
+npm i @ziinc/supacontent
+```
 
+2. Start up your local supabase stack
+
+```bash
+supabase start
+1. Create =`.env` file in your working directory. Add in the Supabase service role key and database URI from Step 2.
+```
+
+```
+SUPACONTENT_API_KEY=XXXXXXX
+SUPACONTENT_DATABASE_URI=postgresql://....
+```
+
+4. Run migrations
+
+```bash
+npx supacontent migrate up
+```
 🚧 WIP
