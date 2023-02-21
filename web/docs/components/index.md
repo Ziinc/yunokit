@@ -1,5 +1,27 @@
 # Component Library
 
+Supacontent ships with a React component library for rapidly prototyping and building content interfaces.
+
+## Getting Started
+
+1. Install the component library
+
+   ```bash
+   npm i "@ziinc/supacontent-lib"
+   ```
+
+2. Add the component into your app.
+
+   ```jsx
+   import { ContentList } from "@ziinc/supacontent-lib";
+
+   const YourApp = () => (
+     <div>
+       <ContentList />
+     </div>
+   );
+   ```
+
 ## Base Styles
 
 All components ship with basic styling. Styling is unopinionated and can be overridden or extended in multiple ways.
