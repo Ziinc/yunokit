@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import migrations from "./migrations";
 import { program } from "commander";
 
@@ -6,4 +8,4 @@ program
   .option("-d, --directory <dir>", "custom output directory")
   .action(migrations);
 
-program.parseAsync();
+program.parse();

@@ -18,7 +18,7 @@ export const migrations = async (rawOptions: Partial<Options>) => {
     fs.mkdirSync(opts.directory, { recursive: true });
   }
 
-  const migrationsOriginPath = path.join(__dirname, "../db/migrations");
+  const migrationsOriginPath = path.join(__dirname, "migrations");
   const existingMigrations = findAllMigrations(opts.directory).filter(
     (migration) => migration.hasPrefix
   );

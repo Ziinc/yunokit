@@ -5,7 +5,7 @@
     "allowSyntheticDefaultImports": true,
     "target": "es6",
     "moduleResolution": "node",
-    "lib": ["dom", "ESNext"],
+    "lib": ["ESNext"],
     "outDir": "dist",
     "allowJs": false,
     "declaration": true,

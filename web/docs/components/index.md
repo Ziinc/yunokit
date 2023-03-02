@@ -7,13 +7,13 @@ Supacontent ships with a React component library for rapidly prototyping and bui
 1. Install the component library
 
    ```bash
-   npm i "@ziinc/supacontent-lib"
+   npm i "@ziinc/supacontent"
    ```
 
 2. Add the component into your app.
 
    ```jsx
-   import { ContentList } from "@ziinc/supacontent-lib";
+   import { ContentList } from "@ziinc/supacontent";
 
    const YourApp = () => (
      <div>
@@ -29,7 +29,7 @@ All components ship with basic styling. Styling is unopinionated and can be over
 In order to use the base styles, you will need to import the stylesheet.
 
 ```js
-import "@ziinc/supacontent-lib/dist/styles.css";
+import "@ziinc/supacontent/dist/styles.css";
 ```
 
 ### Overriding and Extending
@@ -43,7 +43,7 @@ The recommended way to extend styling by adding a `classNames` prop to the compo
 You may also choose to override the CSS through your own css stylesheet. Ensure that you have imported your own stylesheet **after** importing the base styles.
 
 ```js
-import "@ziinc/supacontent-lib/dist/styles.css";
+import "@ziinc/supacontent/dist/styles.css";
 import "my_stylesheet.css";
 ```
 

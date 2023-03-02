@@ -1,5 +1,4 @@
 import migrator from "../src/migrations";
-
 jest.mock("fs");
 import fs from "fs";
 

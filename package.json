@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "test": "turbo test",
-    "start": "turbo start"
+    "start": "turbo start",
+    "build": "turbo build"
   },
   "dependencies": {
     "turbo": "^1.8.1"

@@ -6,14 +6,16 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig({
   plugins: [react()],
   build: {
+    target: "esnext",
     minify: false,
     lib: {
-      entry: "src/index.tsx",
-      fileName: "index",
-      name: "supacontent-lib",
+      entry: {
+        index: "src/index",
+      },
+      name: "supacontent",
     },
+    emptyOutDir: true,
     rollupOptions: {
-      
       // make sure to externalize deps that shouldn't be bundled
       // into your library
       external: ["react"],
@@ -25,6 +27,6 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "jsdom"
-  }
+    environment: "jsdom",
+  },
 });

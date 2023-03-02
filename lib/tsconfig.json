@@ -16,6 +16,6 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src"],
+  "include": ["src", "../cli/src/cli.ts", "../cli/src/migrations.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

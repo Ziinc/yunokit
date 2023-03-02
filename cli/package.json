@@ -1,9 +1,17 @@
 {
   "name": "@ziinc/supacontent",
   "version": "0.0.1",
-  "module": "src/index.js",
+  "module": "dist/index.js",
+  "bin": {
+    "sc": "dist/cli.cjs",
+    "supacontent": "dist/cli.cjs"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rm -rf dist/* && tsc -p tsconfig.build.json",
+    "postbuild": "mkdir -p dist/migrations && cp migrations/* dist/migrations",
     "test": "jest tests",
     "precli": "npm run build",
     "cli": "node ./dist/index.js",
@@ -31,8 +39,5 @@
     "url": "https://github.com/Ziinc/supacontent/issues"
   },
   "homepage": "https://github.com/Ziinc/supacontent#readme",
-  "description": "",
-  "bin": {
-    "sc": "./dist/index.js"
-  }
+  "description": ""
 }

@@ -1,9 +1,9 @@
 {
-  "name": "supacontent-lib",
+  "name": "@ziinc/supacontent-lib",
   "private": true,
   "main": "dist/index.js",
   "files": [
-    "dist/style.css"
+    "dist"
   ],
   "version": "0.0.0",
   "type": "module",
@@ -12,9 +12,14 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "cli": "node ./dist/cli.cjs"
   },
   "dependencies": {
+    "commander": "^10.0.0",
+    "dayjs": "^1.11.7"
+  },
+  "peerDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
