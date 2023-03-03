@@ -5,11 +5,12 @@ import prettier from "prettier/standalone";
 import prettierHtml from "prettier/parser-html";
 import { DemoProps } from "./types";
 
-interface Props extends DemoProps<any> {}
+import CodeBlock from '@theme/CodeBlock';
+export interface HtmlRendererProps extends DemoProps<any> {}
 /**
  * Renreders a given component and props to html code
  */
-const HtmlRenderer: React.FC<Props> = ({ Component, props }) => {
+const HtmlRenderer = ({ Component, props }: HtmlRendererProps) => {
   const html = renderToString(<Component {...(props || {})} />).replace(
     / data-reactroot=""/g,
     ""
@@ -18,6 +19,6 @@ const HtmlRenderer: React.FC<Props> = ({ Component, props }) => {
     parser: "html",
     plugins: [prettierHtml],
   });
-  return <pre>{formatted}</pre>;
+  return <CodeBlock language="html">{formatted}</CodeBlock>;
 };
 export default HtmlRenderer;

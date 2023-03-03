@@ -1,13 +1,12 @@
 import { ContentListExample, ContentList } from "@ziinc/supacontent-lib";
 import ComponentDemo from "../../../src/components/ComponentDemo";
+import PropsRenderer from "../../../src/components/PropsRenderer";
 
 # `<ContentList />`
 
 Displays a list of content items.
 
-
-<ComponentDemo Component={ContentListExample}  />
-
+<ComponentDemo Component={ContentListExample} />
 
 ## Usage
 
@@ -17,11 +16,4 @@ The `itemTitleKey` and `itemDescriptionKey` are used to determine what values to
 
 ## Props
 
-| Name                 | Type                  | Required? | Description                                                                              |
-| -------------------- | --------------------- | --------- | ---------------------------------------------------------------------------------------- |
-| `data`               | `ContentItem[]`       | Required  | `ContentItem`s to render                                                                 |
-| `itemTitleKey`       | `string`              | Required  | The key of the content item's `data` field to use to render the title of the item.       |
-| `itemDescriptionKey` | `string`              | Optional  | The key of the content item's `data` field to use to render the description of the item. |
-| `itemClassName`      | `string`              | Optional  | The `className` of the content item.                                                     |
-| `className`          | `string`              | Optional  | The `className` of the content list.                                                     |
-| `style`              | `React.CSSProperties` | Optional  | The `style` of the content list.                                                         |
+<PropsRenderer name="ContentList" />

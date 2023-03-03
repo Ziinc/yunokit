@@ -1,9 +1,12 @@
 import React from "react";
-import { ContentItem } from "../types";
+import { ContentItem } from "../../types";
 import classes from "./ContentList.module.scss";
+
 export interface ContentListProps {
+  // testing props
   data: ContentItem[];
-  title?: string;
+  /** some description */
+  title?: string; // this is a description
   itemTitleKey: string;
   itemDescriptionKey?: string;
   itemClassName?: string;
@@ -11,14 +14,17 @@ export interface ContentListProps {
   style?: React.CSSProperties;
 }
 
-export const ContentList: React.FC<ContentListProps> = ({
+/**
+ * this is a component
+ */
+export const ContentList = ({
   data,
   itemTitleKey,
   itemDescriptionKey,
   itemClassName,
   className,
   style,
-}) => {
+}: ContentListProps) => {
   return (
     <ul className={className ? classes.list : undefined} style={style}>
       {data.map((item) => (
@@ -32,3 +38,5 @@ export const ContentList: React.FC<ContentListProps> = ({
     </ul>
   );
 };
+
+export default ContentList;

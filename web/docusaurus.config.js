@@ -23,7 +23,6 @@ const config = {
     locales: ["en"],
   },
 
-  
   presets: [
     [
       "classic",
@@ -94,20 +93,43 @@ const config = {
       },
     }),
 
-    plugins: [
-      async (context, options)=> {
-        return {
-          name: "docusaurus-tailwindcss",
-          configurePostCss(postcssOptions) {
-            // Appends TailwindCSS and AutoPrefixer.
-            console.log("running plugin")
-            postcssOptions.plugins.push(require("tailwindcss"));
-            postcssOptions.plugins.push(require("autoprefixer"));
-            return postcssOptions;
-          },
-        };
+  plugins: [
+    async (context, options) => {
+      return {
+        name: "docusaurus-tailwindcss",
+        configurePostCss(postcssOptions) {
+          // Appends TailwindCSS and AutoPrefixer.
+          console.log("running plugin");
+          postcssOptions.plugins.push(require("tailwindcss"));
+          postcssOptions.plugins.push(require("autoprefixer"));
+          return postcssOptions;
+        },
+      };
+    },
+    [
+      "docusaurus-plugin-react-docgen-typescript",
+      /** @type {import('docusaurus-plugin-react-docgen-typescript').Options} */
+      {
+        // pass in a single string or an array of strings
+        src: "../lib/src/**/*.tsx",
+        compilerOptions: {
+          include: [require.resolve("@ziinc/supacontent-lib"), "src/**/*"]
+        },
+        parserOptions: {
+          // savePropValueAsString: true,
+          // pass parserOptions to react-docgen-typescript
+          // here is a good starting point which filters out all
+          // types from react
+          // propFilter: (prop, component) => {
+          //   if (prop.parent) {
+          //     return !prop.parent.fileName.includes("@types/react");
+          //   }
+          //   return true;
+          // },
+        },
       },
-    ]
+    ],
+  ],
 };
 
 module.exports = config;

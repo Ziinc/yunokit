@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ContentListExample } from "./ContentListExample";
+import { ContentListExample } from "../ContentListExample";
 
 test("displays a list of content items", async () => {
   render(<ContentListExample />);

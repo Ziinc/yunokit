@@ -8,7 +8,15 @@
     "build": "turbo build"
   },
   "dependencies": {
+    "docusaurus-plugin-react-docgen-typescript": "^1.1.0",
     "turbo": "^1.8.1"
   },
-  "workspaces": ["cli", "lib", "web"]
+  "workspaces": [
+    "cli",
+    "lib",
+    "web"
+  ],
+  "devDependencies": {
+    "react-docgen-typescript": "^2.2.2"
+  }
 }
