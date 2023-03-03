@@ -3,10 +3,10 @@ import { ContentItem } from "../../types";
 import classes from "./ContentList.module.scss";
 
 export interface ContentListProps {
-  // testing props
-  data: ContentItem[];
-  /** some description */
-  title?: string; // this is a description
+  /** Content items to renderer  */
+  items: ContentItem[];
+  /** The title of the list, renderered above list items */
+  header?: React.ReactNode; // this is a description
   itemTitleKey: string;
   itemDescriptionKey?: string;
   itemClassName?: string;
@@ -18,23 +18,26 @@ export interface ContentListProps {
  * this is a component
  */
 export const ContentList = ({
-  data,
+  items,
   itemTitleKey,
   itemDescriptionKey,
   itemClassName,
   className,
   style,
+  header,
 }: ContentListProps) => {
   return (
     <ul className={className ? classes.list : undefined} style={style}>
-      {data.map((item) => (
-        <li key={item.id} className={[classes.item, itemClassName].join(" ")}>
-          {item.data?.[itemTitleKey]}
-          <span className={[classes.description].join(" ")}>
-            {itemDescriptionKey && item.data?.[itemDescriptionKey]}
-          </span>
-        </li>
-      ))}
+      {header && <div>{header}</div>}
+      {items &&
+        items.map((item) => (
+          <li key={item.id} className={[classes.item, itemClassName].join(" ")}>
+            {item.data?.[itemTitleKey]}
+            <span className={[classes.description].join(" ")}>
+              {itemDescriptionKey && item.data?.[itemDescriptionKey]}
+            </span>
+          </li>
+        ))}
     </ul>
   );
 };

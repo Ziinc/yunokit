@@ -2,7 +2,7 @@ import { ContentList } from "./ContentList";
 
 export const ContentListExample = () => (
   <ContentList
-    data={[
+    items={[
       {
         id: 123,
         user_id: null,

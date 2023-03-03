@@ -1,18 +1,40 @@
 import { ContentListExample, ContentList } from "@ziinc/supacontent-lib";
 import ComponentDemo from "../../../src/components/ComponentDemo";
 import PropsRenderer from "../../../src/components/PropsRenderer";
+const PROPS = {
+  items: [
+    {
+      id: 123,
+      user_id: null,
+      data: { title: "My Bar Title", desc: "My description" },
+    },
+    {
+      id: 124,
+      user_id: null,
+      data: { title: "My Foo Title", desc: "My awesome description" },
+    },
+  ],
+  itemTitleKey: "title",
+  itemDescriptionKey: "desc",
+};
 
 # `<ContentList />`
 
 Displays a list of content items.
 
-<ComponentDemo Component={ContentListExample} />
+<ComponentDemo Component={ContentList} props={PROPS} />
 
 ## Usage
 
-Use the `data` key to pass data into the component.
-
 The `itemTitleKey` and `itemDescriptionKey` are used to determine what values to display for each item.
+
+## Custom Styling
+
+ContentList ships with basic styling out-of-the-box. These styles can be overridden by a variety of methods.
+
+You may provide custom classes to each rendered element, such as by using
+
+<ComponentDemo Component={ContentList} props={PROPS} />
 
 ## Props
 
