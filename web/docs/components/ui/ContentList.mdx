@@ -1,28 +1,13 @@
 import { ContentListExample, ContentList } from "@ziinc/supacontent-lib";
-import "@ziinc/supacontent-lib/dist/style.css";
-import { renderToString } from 'react-dom/server';
-import prettier from "prettier/standalone";
-import prettierHtml from "prettier/parser-html";
-import JsxRenderer from "../../../src/components/JsxRenderer";
-import reactElementToJSXString from "react-element-to-jsx-string";
+import ComponentDemo from "../../../src/components/ComponentDemo";
 
 # `<ContentList />`
 
 Displays a list of content items.
 
-<ContentListExample />
 
-<pre>
-{prettier.format(renderToString(<ContentListExample />), {parser: "html", plugins: [prettierHtml]})}
-</pre>
+<ComponentDemo Component={ContentListExample}  />
 
-export const Func = ()=> <ContentList />;
-
-<JsxRenderer
-    Component={ContentListExample}
-/>
-
-<pre>{reactElementToJSXString(<ContentListExample  />)}</pre>
 
 ## Usage
 
