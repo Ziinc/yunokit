@@ -6,7 +6,7 @@ sidebar_position: 3
 
 The `npm` package ships with a command line interface, for handling the development integration with your supabase project.
 
-Supacontent uses the `sc` namespace.
+Supacontent uses the `sc` and `supacontent` binary names.
 
 #### `sc migrations`
 
