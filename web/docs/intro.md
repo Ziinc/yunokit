@@ -8,7 +8,7 @@ title: Introduction
 
 Supacontent is the a framework for Supabase-backed apps **for shipping content features fast**. Each core feature is optional can plug into your frontend and integrates seamlessly into existing Supabase project.
 
-Supacontent ships with a CLI for handling migrations, as well as a React component library.
+<!-- Supacontent ships with a CLI for handling migrations, as well as a React component library. -->
 
 ### Why?
 
@@ -18,20 +18,25 @@ Supacontent ships with a CLI for handling migrations, as well as a React compone
 
 **Migrations are automatically handled**. Spend your development hours on your UI instead of database and api wrangling.
 
-**Out-of-the-box components**. UI? No problem. Integrate and ship our features as fast as a copy-paste.
+<!--
+**Out-of-the-box components**. UI? No problem. Integrate and ship our features as fast as a copy-paste. -->
 
 ### Getting Started
 
 1. Install the npm package.
 
 ```bash
-npm i @ziinc/supacontent
+npm i -D @ziinc/supacontent
+# or
+npm install --save-dev @ziinc/supacontent
 ```
 
 2. Generate migrations to your supabase project directory.
 
 ```bash
 npx sc migrations
+# or
+npx supacontent migrations
 ```
 
 3, Update your project's `config.toml` to include `supacontent` under the list of api schemas.
