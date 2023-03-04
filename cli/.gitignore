@@ -2,6 +2,7 @@ node_modules/
 # Supabase
 **/supabase/.branches
 **/supabase/.temp
+**/supabase/migrations
 
 **/export.json
 **/.env.*.secret
