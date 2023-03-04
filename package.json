@@ -5,7 +5,8 @@
   "scripts": {
     "test": "turbo test",
     "start": "turbo start",
-    "build": "turbo build"
+    "build": "turbo build",
+    "cli": "sc"
   },
   "dependencies": {
     "docusaurus-plugin-react-docgen-typescript": "^1.1.0",
@@ -17,6 +18,7 @@
     "web"
   ],
   "devDependencies": {
+    "@ziinc/supacontent": "file:./cli",
     "react-docgen-typescript": "^2.2.2"
   }
 }

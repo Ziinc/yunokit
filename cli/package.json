@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "module": "dist/index.js",
   "bin": {
-    "sc": "dist/cli.cjs",
-    "supacontent": "dist/cli.cjs"
+    "sc": "dist/index.js",
+    "supacontent": "dist/index.js"
   },
   "files": [
     "dist"
