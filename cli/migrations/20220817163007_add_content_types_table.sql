@@ -3,7 +3,8 @@ create table supacontent.content_types (
   type varchar check (type  = any('{single, collection}' :: varchar[]) ),
   name varchar check (char_length(name) > 3),
   fields jsonb not null,
-  inserted_at timestamp with time zone default timezone('utc'::text, now()) not null
+  inserted_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 alter table supacontent.content_types enable row level security;

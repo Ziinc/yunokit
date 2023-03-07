@@ -15,7 +15,8 @@
     "test": "jest tests",
     "precli": "npm run build",
     "cli": "node ./dist/index.js",
-    "start": "npm run build -- --watch"
+    "start": "npm run build -- --watch",
+    "sb:test": "supabase test db"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",

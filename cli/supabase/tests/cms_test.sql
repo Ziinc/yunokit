@@ -11,7 +11,7 @@ SELECT columns_are(
 SELECT columns_are(
     'supacontent',
     'content_types',
-    ARRAY['id', 'fields', 'name', 'type', 'inserted_at']
+    ARRAY['id', 'fields', 'name', 'type', 'inserted_at', 'updated_at']
 );
 
 
