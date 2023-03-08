@@ -1,12 +1,20 @@
-SELECT plan(2);
+SELECT plan(4);
 
--- columns
+-- CONTENT ITEMS
 SELECT columns_are(
     'supacontent',
     'content_items',
     ARRAY['id', 'content_type_id', 'data', 'inserted_at', 'updated_at', 'user_id' ]
 );
 
+
+SELECT triggers_are(
+    'supacontent',
+    'content_items',
+    ARRAY[ 'tr_content_items_au']
+);
+
+-- CONTENT TYPES
 
 SELECT columns_are(
     'supacontent',
@@ -16,6 +24,11 @@ SELECT columns_are(
 
 
 
+SELECT triggers_are(
+    'supacontent',
+    'content_types',
+    ARRAY[ 'tr_content_types_bu']
+);
+
 -- Finish the tests and clean up.
 SELECT * FROM finish();
-ROLLBACK;

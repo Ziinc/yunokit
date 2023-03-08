@@ -8,3 +8,17 @@ create table supacontent.content_types (
 );
 
 alter table supacontent.content_types enable row level security;
+
+
+create or replace function supacontent.trfn_content_types_bu() returns trigger as $$
+begin
+  NEW.updated_at := clock_timestamp();
+  raise debug 'Setting content_type.updated_at to %', NEW.updated_at::text;
+  return NEW;
+end;
+$$ language plpgsql;
+
+create or replace trigger tr_content_types_bu before update
+    on supacontent.content_types
+    for each row 
+    execute function supacontent.trfn_content_types_bu();
