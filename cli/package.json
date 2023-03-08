@@ -16,7 +16,7 @@
     "precli": "npm run build",
     "cli": "node ./dist/index.js",
     "start": "npm run build -- --watch",
-    "sb:test": "supabase test db"
+    "sb:test": "rm -rf supabase/migrations/* && npm run cli migrations && supabase db reset && supabase test db"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",
