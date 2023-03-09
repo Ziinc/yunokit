@@ -1,4 +1,5 @@
-SELECT plan(4);
+BEGIN;
+SELECT plan(7);
 
 -- CONTENT ITEMS
 SELECT columns_are(
@@ -13,6 +14,7 @@ SELECT triggers_are(
     'content_items',
     ARRAY[ 'tr_content_items_bu']
 );
+
 
 -- CONTENT TYPES
 
@@ -30,5 +32,31 @@ SELECT triggers_are(
     ARRAY[ 'tr_content_types_bu']
 );
 
+
+
+-- restricted column values
+prepare insert_type as 
+    INSERT INTO supacontent.content_types (type, name, fields) 
+    VALUES ('any', 'posts', '[]');
+
+select throws_ok('insert_type');
+
+
+-- restricted column values
+prepare insert_name as 
+    INSERT INTO supacontent.content_types (type, name, fields) 
+    VALUES ('single', 'p', '[]');
+
+select throws_ok('insert_name');
+
+
+prepare insert_fields as 
+    INSERT INTO supacontent.content_types (type, name, fields) 
+    VALUES ('single', 'posts', '{}');
+
+select throws_ok('insert_fields');
+
+
 -- Finish the tests and clean up.
 SELECT * FROM finish();
+ROLLBACK;
