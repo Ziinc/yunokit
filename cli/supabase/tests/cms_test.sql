@@ -11,7 +11,7 @@ SELECT columns_are(
 SELECT triggers_are(
     'supacontent',
     'content_items',
-    ARRAY[ 'tr_content_items_au']
+    ARRAY[ 'tr_content_items_bu']
 );
 
 -- CONTENT TYPES

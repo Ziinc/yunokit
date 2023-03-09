@@ -7,3 +7,18 @@ create table supacontent.content_items (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 alter table supacontent.content_items enable row level security;
+
+
+
+create or replace function supacontent.trfn_content_items_bu() returns trigger as $$
+begin
+  NEW.updated_at := clock_timestamp();
+  raise debug 'Setting content_items.updated_at to %', NEW.updated_at::text;
+  return NEW;
+end;
+$$ language plpgsql;
+
+create or replace trigger tr_content_items_bu before update
+    on supacontent.content_items
+    for each row 
+    execute function supacontent.trfn_content_items_bu();
