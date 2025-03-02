@@ -13,12 +13,7 @@
     "turbo": "^1.8.1"
   },
   "workspaces": [
-    "cli",
-    "lib",
-    "web"
-  ],
-  "devDependencies": {
-    "@ziinc/supacontent": "file:./cli",
-    "react-docgen-typescript": "^2.2.2"
-  }
+    "web",
+    "app"
+  ]
 }

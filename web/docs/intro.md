@@ -6,40 +6,32 @@ sidebar_label: Introduction
 title: Introduction
 ---
 
-Supacontent is the a framework for Supabase-backed apps **for shipping content features fast**. Each core feature is optional can plug into your frontend and integrates seamlessly into existing Supabase project.
-
-<!-- Supacontent ships with a CLI for handling migrations, as well as a React component library. -->
+Supacontent is a Content Management System with a batteries-included admin dashboard. Each core feature integrates seamlessly into existing Supabase stack.
 
 ### Why?
 
+**Admin dashboard**. Built-in admin dashboard for managing content, assets, and more.
+
 **Integrate into existing Supabase projects**. Existing features and apps can directly query and join on data through the same familiar Supabase client.
 
-**Stop re-inventing the wheel for eacn new project**. Focus on the value-added feature building, instead of re-creating boilerplate functionality.
+**Stop re-inventing the wheel for each new project**. Focus on the value-added feature building, instead of re-creating boilerplate functionality.
 
-**Migrations are automatically handled**. Spend your development hours on your UI instead of database and api wrangling.
+**Migrations are automatically handled**. Spend your development hours on your UI instead of database schema building.
+
 
 <!--
 **Out-of-the-box components**. UI? No problem. Integrate and ship our features as fast as a copy-paste. -->
 
 ### Getting Started
 
-1. Install the npm package.
+1. Pull and run the docker image.
 
 ```bash
-npm i -D @ziinc/supacontent
-# or
-npm install --save-dev @ziinc/supacontent
+docker pull ziinc/supacontent:latest
+docker run -d --name supacontent -p 8000:8000 ziinc/supacontent:latest
 ```
 
-2. Generate migrations to your supabase project directory.
-
-```bash
-npx sc migrations
-# or
-npx supacontent migrations
-```
-
-3, Update your project's `config.toml` to include `supacontent` under the list of api schemas.
+2. Update your project's `config.toml` to include `supacontent` under the list of api schemas.
 
 ```toml
 # supabase/config.toml
@@ -47,8 +39,7 @@ npx supacontent migrations
 schemas = ["supacontent", ...]
 ```
 
-4. Start up your local supabase stack.
-
+Then start your local project:
 ```bash
 supabase start
 ```

@@ -1,8 +1,11 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require("prism-react-renderer/themes/github");
-const darkCodeTheme = require("prism-react-renderer/themes/dracula");
+const {themes} = require('prism-react-renderer');
+const autoprefixer = require("autoprefixer")
+const lightCodeTheme = themes.github;
+const darkCodeTheme = themes.dracula;
+
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -32,12 +35,6 @@ const config = {
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
           routeBasePath: "/", // Serve the blog at the site's root
-        },
-        theme: {
-          customCss: [
-            require.resolve("./src/css/custom.css"),
-            require.resolve("@ziinc/supacontent-lib/dist/style.css"),
-          ],
         },
         gtag: {
           trackingID: "G-B3P5HGLDR1",
@@ -96,39 +93,15 @@ const config = {
   plugins: [
     async (context, options) => {
       return {
-        name: "docusaurus-tailwindcss",
+        name: "docusaurus-postcss",
         configurePostCss(postcssOptions) {
-          // Appends TailwindCSS and AutoPrefixer.
+          // Appends AutoPrefixer.
           console.log("running plugin");
-          postcssOptions.plugins.push(require("tailwindcss"));
-          postcssOptions.plugins.push(require("autoprefixer"));
+          postcssOptions.plugins.push(autoprefixer);
           return postcssOptions;
         },
       };
     },
-    [
-      "docusaurus-plugin-react-docgen-typescript",
-      /** @type {import('docusaurus-plugin-react-docgen-typescript').Options} */
-      {
-        // pass in a single string or an array of strings
-        src: "../lib/src/**/*.tsx",
-        compilerOptions: {
-          include: [require.resolve("@ziinc/supacontent-lib"), "src/**/*"]
-        },
-        parserOptions: {
-          // savePropValueAsString: true,
-          // pass parserOptions to react-docgen-typescript
-          // here is a good starting point which filters out all
-          // types from react
-          // propFilter: (prop, component) => {
-          //   if (prop.parent) {
-          //     return !prop.parent.fileName.includes("@types/react");
-          //   }
-          //   return true;
-          // },
-        },
-      },
-    ],
   ],
 };
 
