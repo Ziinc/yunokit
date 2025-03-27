@@ -29,10 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { name: 'Content Builder', path: '/builder', icon: <Database size={20} /> },
     { name: 'Library', path: '/library', icon: <Image size={20} /> },
     { name: 'Community', path: '/comments', icon: <MessageCircle size={20} /> },
-    { name: 'Developer', path: '/developer', icon: <Code size={20} />, subItems: [
-      { name: 'API Docs', path: '/developer/api' },
-      { name: 'Database Migrations', path: '/developer/migrations' }
-    ]},
+    { name: 'Developer', path: '/developer', icon: <Code size={20} /> },
   ];
 
   return (
@@ -82,24 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               {isOpen && <span>{item.name}</span>}
             </Link>
             
-            {isOpen && item.subItems && (
-              <div className="ml-9 my-1">
-                {item.subItems.map((subItem) => (
-                  <Link
-                    key={subItem.path}
-                    to={subItem.path}
-                    className={cn(
-                      "flex items-center py-1.5 px-2 text-sm rounded-md transition-colors",
-                      location.pathname === subItem.path
-                        ? "bg-accent/80 text-accent-foreground"
-                        : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {subItem.name}
-                  </Link>
-                ))}
-              </div>
-            )}
+
           </React.Fragment>
         ))}
       </nav>

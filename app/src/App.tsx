@@ -16,9 +16,8 @@ import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import AssetsLibraryPage from "./pages/AssetsLibraryPage";
 import SignInPage from "./pages/SignInPage";
-import ApiExamplesPage from "./pages/ApiExamplesPage";
+import DeveloperPage from "./pages/DeveloperPage";
 import DocumentationPage from "./pages/DocumentationPage";
-import DatabaseMigrationPage from "./pages/DatabaseMigrationPage";
 import ContentSearchPage from "./pages/ContentSearchPage";
 import CommentsPage from "./pages/CommentsPage";
 import { AppLayout } from "./components/Layout/AppLayout";
@@ -47,8 +46,7 @@ const App = () => (
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/library" element={<AssetsLibraryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/developer/api" element={<ApiExamplesPage />} />
-              <Route path="/developer/migrations" element={<DatabaseMigrationPage />} />
+              <Route path="/developer/*" element={<DeveloperPage />} />
               <Route path="/documentation" element={<DocumentationPage />} />
               <Route path="/search" element={<ContentSearchPage />} />
               <Route path="/comments" element={<CommentsPage />} />
