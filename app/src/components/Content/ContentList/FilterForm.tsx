@@ -26,6 +26,8 @@ const filterSchema = z.object({
   schemaId: z.string().optional(),
   author: z.string().optional(),
   search: z.string().optional(),
+  page: z.number().default(1),
+  perPage: z.number().default(10),
 });
 
 export type FilterValues = z.infer<typeof filterSchema>;
@@ -50,6 +52,8 @@ export const FilterForm: React.FC<FilterFormProps> = ({
       schemaId: "",
       author: "",
       search: "",
+      page: 1,
+      perPage: 10,
     },
   });
 
@@ -57,7 +61,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({
     <Form {...form}>
       <form 
         onSubmit={form.handleSubmit(onSubmitFilters)} 
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4"
       >
         <FormField
           control={form.control}
@@ -151,7 +155,29 @@ export const FilterForm: React.FC<FilterFormProps> = ({
           )}
         />
         
-        <div className="flex gap-2 lg:col-span-5">
+        <FormField
+          control={form.control}
+          name="perPage"
+          render={({ field }) => (
+            <FormItem className="justify-self-end">
+              <Select 
+                onValueChange={(value) => field.onChange(parseInt(value))} 
+                defaultValue={field.value.toString()}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Items per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="25">25 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                  <SelectItem value="100">100 per page</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+        <div className="flex gap-2 lg:col-span-4">
           <Button type="submit" className="gap-2">
             <Filter size={16} />
             Apply Filters

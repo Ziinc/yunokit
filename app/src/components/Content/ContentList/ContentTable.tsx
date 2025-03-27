@@ -11,21 +11,29 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { ContentStatusBadge } from "./ContentStatusBadge";
+import { ContentPagination } from "./ContentPagination";
 import { formatDate } from "@/utils/formatDate";
 
 interface ContentTableProps {
   items: ContentItem[];
   schemas: ContentSchema[];
   onRowClick: (item: ContentItem) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export const ContentTable: React.FC<ContentTableProps> = ({ 
   items, 
   schemas, 
-  onRowClick 
+  onRowClick,
+  currentPage,
+  totalPages,
+  onPageChange
 }) => {
   return (
-    <Table>
+    <div>
+      <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[300px]">Title</TableHead>
@@ -89,5 +97,13 @@ export const ContentTable: React.FC<ContentTableProps> = ({
         )}
       </TableBody>
     </Table>
+    <div className="p-4 border-t">
+      <ContentPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={onPageChange}
+      />
+    </div>
+    </div>
   );
 };

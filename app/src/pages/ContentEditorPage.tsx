@@ -12,7 +12,7 @@ const ContentEditorPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [items, setItems] = useState<ContentItem[]>(mockContentItems);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   const totalItems = items.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -20,6 +20,7 @@ const ContentEditorPage: React.FC = () => {
   const displayedItems = paginateItems(items, currentPage, itemsPerPage);
   
   const onSubmitFilters = (values: FilterValues) => {
+    setItemsPerPage(values.perPage);
     let filteredItems = [...mockContentItems];
     
     if (values.schemaId) {
@@ -60,6 +61,7 @@ const ContentEditorPage: React.FC = () => {
   const handleCreateNew = (schemaId: string) => {
     navigate(`/builder/${schemaId}/new`);
   };
+  console.log(currentPage)
   
   return (
     <div className="space-y-6">
@@ -82,12 +84,9 @@ const ContentEditorPage: React.FC = () => {
           items={displayedItems}
           schemas={exampleSchemas}
           onRowClick={handleRowClick}
-        />
-        
-        <ContentPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          setCurrentPage={setCurrentPage}
+          onPageChange={setCurrentPage}
         />
       </div>
     </div>

@@ -20,10 +20,9 @@ export const ContentPagination: React.FC<ContentPaginationProps> = ({
   totalPages,
   setCurrentPage,
 }) => {
-  if (totalPages <= 1) return null;
   
   return (
-    <div className="p-4 border-t">
+    <div className="">
       <Pagination>
         <PaginationContent>
           <PaginationItem>
