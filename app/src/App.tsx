@@ -27,10 +27,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 // Load markdown-it for the markdown editor
 import "./utils/markdownIt";
 
-const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -62,7 +60,6 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
-  </QueryClientProvider>
 );
 
 export default App;
