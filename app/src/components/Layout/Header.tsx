@@ -9,12 +9,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface HeaderProps {
-  toggleSidebar: () => void;
-  isSidebarOpen: boolean;
-}
 
-export const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
+export const Header: React.FC<{}> = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [workspace, setWorkspace] = useState("primary");
@@ -40,9 +36,6 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) 
 
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm h-16 flex items-center px-4 sticky top-0 z-10">
-      <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-4 fun-icon">
-        <Menu size={20} />
-      </Button>
 
       {/* Workspace selector */}
       <div className="hidden md:flex md:w-64">
