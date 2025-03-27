@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
-export const Header: React.FC<{}> = () => {
+export const Header: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [workspace, setWorkspace] = useState("primary");
