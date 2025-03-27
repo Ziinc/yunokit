@@ -54,11 +54,11 @@ const ContentEditorPage: React.FC = () => {
   };
   
   const handleRowClick = (item: ContentItem) => {
-    navigate(`/content/${item.schemaId}/${item.id}`);
+    navigate(`/builder/${item.schemaId}/${item.id}`);
   };
   
   const handleCreateNew = (schemaId: string) => {
-    navigate(`/content/${schemaId}/new`);
+    navigate(`/builder/${schemaId}/new`);
   };
   
   return (
