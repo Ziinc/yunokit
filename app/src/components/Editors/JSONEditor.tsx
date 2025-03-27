@@ -24,7 +24,7 @@ const defaultJSON = `{
     }
   ],
   "metadata": {
-    "author": "FunCMS User",
+    "author": "SupaContent User",
     "createdAt": "2023-08-01T12:00:00Z",
     "tags": ["json", "editor", "example"]
   }

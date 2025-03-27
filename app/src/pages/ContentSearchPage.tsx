@@ -59,7 +59,7 @@ const ContentSearchPage: React.FC = () => {
       const results: ContentItem[] = [
         {
           id: "1",
-          title: "Getting Started with FunCMS",
+          title: "Getting Started with SupaContent",
           type: "article",
           schema: "tutorial",
           status: "published" as ContentItemStatus,

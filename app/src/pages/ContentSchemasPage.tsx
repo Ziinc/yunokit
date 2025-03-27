@@ -161,9 +161,9 @@ const ContentSchemasPage: React.FC = () => {
     <div className="space-y-6 max-w-full">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Content Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Content Type Builder</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your content schemas and content items
+            Manage your content schemas for your content items.
           </p>
         </div>
         

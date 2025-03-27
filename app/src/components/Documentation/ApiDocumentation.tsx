@@ -19,7 +19,7 @@ export const ApiDocumentation: React.FC = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-medium">How API Auto-Docs Work</h3>
           <p>
-            FunCMS automatically generates API documentation based on your content schemas. This ensures that API examples always
+            SupaContent automatically generates API documentation based on your content schemas. This ensures that API examples always
             stay in sync with your content structure, providing ready-to-use code snippets for developers.
           </p>
           

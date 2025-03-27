@@ -8,7 +8,7 @@ export const KeyConcepts: React.FC = () => {
       <CardHeader>
         <CardTitle>Key Concepts</CardTitle>
         <CardDescription>
-          Understanding the core concepts of FunCMS
+          Understanding the core concepts of SupaContent
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

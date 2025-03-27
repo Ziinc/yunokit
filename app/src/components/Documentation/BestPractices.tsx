@@ -12,7 +12,7 @@ export const BestPractices: React.FC = () => {
           <span>Best Practices</span>
         </CardTitle>
         <CardDescription>
-          Recommendations for getting the most out of FunCMS
+          Recommendations for getting the most out of SupaContent
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

@@ -16,7 +16,7 @@ export const FieldTypesReference: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <p>
-          FunCMS offers a wide range of field types to suit different content needs. Each field type has specific 
+          SupaContent offers a wide range of field types to suit different content needs. Each field type has specific 
           capabilities and use cases to help structure your content effectively.
         </p>
         

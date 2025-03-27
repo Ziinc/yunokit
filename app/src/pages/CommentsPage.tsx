@@ -32,7 +32,7 @@ const CommentsPage: React.FC = () => {
       status: "approved",
       createdAt: "2023-09-16T14:30:00Z",
       contentId: "123",
-      contentTitle: "Getting Started with FunCMS",
+      contentTitle: "Getting Started with SupaContent",
       contentType: "tutorial",
       author: {
         id: "user1",
@@ -48,7 +48,7 @@ const CommentsPage: React.FC = () => {
       status: "approved",
       createdAt: "2023-09-15T09:45:00Z",
       contentId: "123",
-      contentTitle: "Getting Started with FunCMS",
+      contentTitle: "Getting Started with SupaContent",
       contentType: "tutorial",
       author: {
         id: "user2",
@@ -64,7 +64,7 @@ const CommentsPage: React.FC = () => {
       status: "spam",
       createdAt: "2023-09-14T22:10:00Z",
       contentId: "123",
-      contentTitle: "Getting Started with FunCMS",
+      contentTitle: "Getting Started with SupaContent",
       contentType: "tutorial",
       author: {
         id: "user3",
@@ -81,7 +81,7 @@ const CommentsPage: React.FC = () => {
       status: "approved",
       createdAt: "2023-09-16T15:20:00Z",
       contentId: "123",
-      contentTitle: "Getting Started with FunCMS",
+      contentTitle: "Getting Started with SupaContent",
       contentType: "tutorial",
       author: {
         id: "admin1",
@@ -167,7 +167,7 @@ const CommentsPage: React.FC = () => {
       reason: "Spam content with external links",
       status: "resolved",
       createdAt: "2023-09-14T16:45:00Z",
-      contentTitle: "Getting Started with FunCMS"
+      contentTitle: "Getting Started with SupaContent"
     }
   ]);
 

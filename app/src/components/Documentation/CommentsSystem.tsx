@@ -19,7 +19,7 @@ export const CommentsSystem: React.FC = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Understanding Comments</h3>
           <p>
-            The comments system in FunCMS facilitates collaboration between content creators, editors, and reviewers. 
+            The comments system in SupaContent facilitates collaboration between content creators, editors, and reviewers. 
             Comments can be general or specific to certain content fields, allowing for targeted feedback.
           </p>
           

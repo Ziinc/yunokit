@@ -10,20 +10,20 @@ export const WelcomeSection: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Welcome to FunCMS</CardTitle>
+        <CardTitle>Welcome to SupaContent</CardTitle>
         <CardDescription>
           Get started with our headless content management system
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p>
-          FunCMS is a modern headless content management system designed to make content management easy and developer-friendly.
-          With a flexible content schema system, powerful editors, and comprehensive API, FunCMS helps you build and manage digital content efficiently.
+          SupaContent is a modern headless content management system designed to make content management easy and developer-friendly.
+          With a flexible content schema system, powerful editors, and comprehensive API, SupaContent helps you build and manage digital content efficiently.
         </p>
         
         <Alert>
           <AlertDescription>
-            New to FunCMS? Start with our quickstart templates to set up common content structures for your project.
+            New to SupaContent? Start with our quickstart templates to set up common content structures for your project.
           </AlertDescription>
         </Alert>
         

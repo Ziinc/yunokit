@@ -23,7 +23,7 @@ export const GuidesList: React.FC = () => {
           {/* Guide 1 */}
           <div className="border rounded-lg overflow-hidden">
             <div className="bg-muted p-4">
-              <h3 className="text-lg font-medium">Building a Blog with FunCMS</h3>
+              <h3 className="text-lg font-medium">Building a Blog with SupaContent</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Learn how to set up a complete blog using content schemas, editors, and the API
               </p>
@@ -101,7 +101,7 @@ export const GuidesList: React.FC = () => {
             <div className="bg-muted p-4">
               <h3 className="text-lg font-medium">Setting Up a Multilingual CMS</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Configure FunCMS to manage content in multiple languages
+                Configure SupaContent to manage content in multiple languages
               </p>
             </div>
             

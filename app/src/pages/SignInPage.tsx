@@ -26,7 +26,7 @@ const SignInPage: React.FC = () => {
           <div className="mx-auto mb-4 p-2 rounded-md bg-gradient-to-br from-cms-purple to-cms-blue w-12 h-12 flex items-center justify-center">
             <ShieldCheck className="h-6 w-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold">Sign in to FunCMS</CardTitle>
+          <CardTitle className="text-2xl font-bold">Sign in to SupaContent</CardTitle>
           <CardDescription>
             Choose a sign in method to continue
           </CardDescription>

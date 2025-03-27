@@ -25,9 +25,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <Home size={20} /> },
     { name: 'Content Manager', path: '/manager', icon: <FileText size={20} /> },
-    { name: 'Content Type Builder', path: '/builder', icon: <Database size={20} /> },
-    { name: 'Assets Library', path: '/library', icon: <Image size={20} /> },
-    { name: 'Comments', path: '/comments', icon: <MessageCircle size={20} /> },
+    { name: 'Content Builder', path: '/builder', icon: <Database size={20} /> },
+    { name: 'Library', path: '/library', icon: <Image size={20} /> },
+    { name: 'Community', path: '/comments', icon: <MessageCircle size={20} /> },
     { name: 'Developer', path: '/developer', icon: <Code size={20} />, subItems: [
       { name: 'API Docs', path: '/developer/api' },
       { name: 'Database Migrations', path: '/developer/migrations' }
@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           <div className="p-1.5 rounded-md bg-gradient-to-br from-cms-purple to-cms-blue animate-pulse-gentle">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
-          {isOpen && <span className="font-bold text-lg">FunCMS</span>}
+          {isOpen && <span className="font-bold text-lg">SupaContent</span>}
         </div>
       </div>
       
