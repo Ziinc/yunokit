@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -14,6 +14,7 @@ import {
   CreditCard,
   MessageCircle,
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -48,6 +49,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           </div>
           {isOpen && <span className="font-bold text-lg">SupaContent</span>}
         </div>
+      </div>
+
+      {/* Workspace selector */}
+      <div className={cn("px-4 py-3 border-b border-border", !isOpen && "px-2")}>
+        <Select defaultValue="primary">
+          <SelectTrigger className={cn("w-full", !isOpen && "hidden")}>
+            <SelectValue placeholder="Select workspace" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="primary">Primary Workspace</SelectItem>
+            <SelectItem value="marketing">Marketing Team</SelectItem>
+            <SelectItem value="development">Development Team</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <nav className="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
