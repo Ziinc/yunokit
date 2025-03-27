@@ -39,15 +39,15 @@ const App = () => (
           <Routes>
             <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
-              <Route path="/editor/markdown" element={<MarkdownEditorPage />} />
-              <Route path="/editor/json" element={<JsonEditorPage />} />
-              <Route path="/editor/block" element={<BlockEditorPage />} />
-              <Route path="/schemas" element={<ContentSchemasPage />} />
-              <Route path="/content" element={<ContentEditorPage />} />
-              <Route path="/content/:schemaId/new" element={<ContentItemPage />} />
-              <Route path="/content/:schemaId/:contentId" element={<ContentItemPage />} />
+              <Route path="/manager" element={<ContentEditorPage />} />
+              <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
+              <Route path="/manager/json" element={<JsonEditorPage />} />
+              <Route path="/manager/block" element={<BlockEditorPage />} />
+              <Route path="/builder" element={<ContentSchemasPage />} />
+              <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
+              <Route path="/builder/:schemaId/:contentId" element={<ContentItemPage />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/assets" element={<AssetsLibraryPage />} />
+              <Route path="/library" element={<AssetsLibraryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/developer/api" element={<ApiExamplesPage />} />
               <Route path="/developer/migrations" element={<DatabaseMigrationPage />} />
