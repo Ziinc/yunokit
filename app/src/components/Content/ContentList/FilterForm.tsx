@@ -91,7 +91,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({
                   <SelectValue placeholder="Content Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   {schemas.map(schema => (
                     <SelectItem key={schema.id} value={schema.id}>
                       {schema.name}
@@ -116,7 +116,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="published">Published</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="pending_review">Pending Review</SelectItem>
@@ -139,7 +139,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({
                   <SelectValue placeholder="Author" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Authors</SelectItem>
+                  <SelectItem value="all">All Authors</SelectItem>
                   {uniqueAuthors.map(author => (
                     <SelectItem key={author} value={author}>
                       {author.split('@')[0]}
