@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,6 +21,7 @@ import ContentSearchPage from "./pages/ContentSearchPage";
 import CommentsPage from "./pages/CommentsPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SearchProvider } from "@/contexts/SearchContext";
 
 // Load markdown-it for the markdown editor
 import "./utils/markdownIt";
@@ -29,34 +29,36 @@ import "./utils/markdownIt";
 
 const App = () => (
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/manager" element={<ContentEditorPage />} />
-              <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
-              <Route path="/manager/json" element={<JsonEditorPage />} />
-              <Route path="/manager/block" element={<BlockEditorPage />} />
-              <Route path="/builder" element={<ContentSchemasPage />} />
-              <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
-              <Route path="/builder/:schemaId/:contentId" element={<ContentItemPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/library" element={<AssetsLibraryPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/developer/*" element={<DeveloperPage />} />
-              <Route path="/documentation" element={<DocumentationPage />} />
-              <Route path="/search" element={<ContentSearchPage />} />
-              <Route path="/comments" element={<CommentsPage />} />
-            </Route>
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/auth/callback" element={<Navigate to="/profile" />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <SearchProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/manager" element={<ContentEditorPage />} />
+                <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
+                <Route path="/manager/json" element={<JsonEditorPage />} />
+                <Route path="/manager/block" element={<BlockEditorPage />} />
+                <Route path="/builder" element={<ContentSchemasPage />} />
+                <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
+                <Route path="/builder/:schemaId/:contentId" element={<ContentItemPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/library" element={<AssetsLibraryPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/developer/*" element={<DeveloperPage />} />
+                <Route path="/documentation" element={<DocumentationPage />} />
+                <Route path="/search" element={<ContentSearchPage />} />
+                <Route path="/comments" element={<CommentsPage />} />
+              </Route>
+              <Route path="/signin" element={<SignInPage />} />
+              <Route path="/auth/callback" element={<Navigate to="/profile" />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </SearchProvider>
     </AuthProvider>
 );
 

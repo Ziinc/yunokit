@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentItemStatus } from "@/lib/contentSchema";
+import { useSearch } from "@/contexts/SearchContext";
 
 interface ContentItem {
   id: string;
@@ -30,10 +31,10 @@ interface ContentItem {
 const ContentSearchPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { setSearchQuery } = useSearch();
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   
-  const [query, setQuery] = useState(initialQuery);
   const [searchResults, setSearchResults] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -136,9 +137,7 @@ const ContentSearchPage: React.FC = () => {
     }, 1000);
   }, [initialQuery]);
   
-  const handleSearch = () => {
-    navigate(`/search?q=${encodeURIComponent(query)}`);
-    
+  const applyFilters = () => {
     setIsLoading(true);
     
     setTimeout(() => {
@@ -151,10 +150,27 @@ const ContentSearchPage: React.FC = () => {
       setIsLoading(false);
       
       toast({
-        title: "Search results updated",
+        title: "Filters applied",
         description: `Found ${filtered.length} items matching your criteria`
       });
     }, 800);
+  };
+
+  const clearFiltersAndSearch = () => {
+    // Reset filters
+    setSelectedTypes([]);
+    setSelectedStatuses(["published", "draft"]);
+    
+    // Clear search query in header
+    setSearchQuery("");
+    
+    // Navigate to empty search page
+    navigate("/search");
+    
+    toast({
+      title: "Filters cleared",
+      description: "All filters and search criteria have been reset"
+    });
   };
   
   const handleTypeChange = (type: string) => {
@@ -186,26 +202,11 @@ const ContentSearchPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Search Results</h1>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-          <Input 
-            value={query} 
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search content..." 
-            className="pl-10"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
-            }}
-          />
-        </div>
-        <Button onClick={handleSearch} disabled={isLoading}>
-          {isLoading ? "Searching..." : "Search"}
-        </Button>
+        {initialQuery && (
+          <p className="text-muted-foreground">
+            Results for: <span className="font-medium text-foreground">"{initialQuery}"</span>
+          </p>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -256,7 +257,12 @@ const ContentSearchPage: React.FC = () => {
               
               <Separator />
               
-              <Button onClick={handleSearch} className="w-full">Apply Filters</Button>
+              <div className="flex gap-2">
+                <Button onClick={applyFilters} className="flex-1">Apply Filters</Button>
+                <Button onClick={clearFiltersAndSearch} variant="outline" size="icon">
+                  <ArrowUpDown size={16} className="rotate-90" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -315,11 +321,7 @@ const ContentSearchPage: React.FC = () => {
               ) : searchResults.length === 0 ? (
                 <div className="py-12 text-center">
                   <p className="text-muted-foreground">No results match your search criteria</p>
-                  <Button className="mt-4" variant="outline" onClick={() => {
-                    setSelectedTypes([]);
-                    setSelectedStatuses(["published", "draft"]);
-                    navigate("/search");
-                  }}>Clear Filters</Button>
+                  <Button className="mt-4" variant="outline" onClick={clearFiltersAndSearch}>Clear Filters</Button>
                 </div>
               ) : (
                 <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "space-y-4"}>
