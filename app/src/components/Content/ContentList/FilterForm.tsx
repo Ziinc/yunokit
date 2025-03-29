@@ -70,18 +70,24 @@ export const FilterForm: React.FC<FilterFormProps> = ({
     );
   }, [initialValues]);
 
+  // Reset form with new values when initialValues change
   useEffect(() => {
     if (initialValues) {
-      const updatedValues = {
-        ...initialValues,
+      // Reset the form completely before setting new values
+      form.reset({
         status: initialValues.status || "all",
         schemaId: initialValues.schemaId || "all",
-        author: initialValues.author || "all"
-      };
-      console.log("Setting form values with normalized 'all' values:", updatedValues);
+        author: initialValues.author || "all",
+        search: initialValues.search || "",
+        page: initialValues.page || 1,
+        perPage: initialValues.perPage || 10
+      });
       
-      Object.entries(updatedValues).forEach(([key, value]) => {
-        form.setValue(key as any, value);
+      console.log("Form reset with new values from URL:", {
+        status: initialValues.status || "all",
+        schemaId: initialValues.schemaId || "all",
+        author: initialValues.author || "all",
+        search: initialValues.search || ""
       });
     }
   }, [initialValues, form]);

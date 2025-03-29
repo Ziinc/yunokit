@@ -37,7 +37,7 @@ const ContentManagerPage: React.FC = () => {
     }
     
     // Get schema and author
-    const schemaId = queryParams.get("schemaId") || "";
+    const schemaId = queryParams.get("schema") || "";
     const author = queryParams.get("author") || "";
     
     // Set up initial filters
@@ -51,12 +51,8 @@ const ContentManagerPage: React.FC = () => {
     };
     
     // Handle sort parameter
-    const sort = queryParams.get("sort");
-    if (sort) {
-      setSortField(sort);
-    } else {
-      setSortField("title");
-    }
+    const sort = queryParams.get("sort") || "title";
+    setSortField(sort);
     
     console.log("Setting filter values from URL:", initialFilters);
     
@@ -86,13 +82,16 @@ const ContentManagerPage: React.FC = () => {
       filteredItems = filteredItems.filter(item => item.status === values.status);
     }
     
+    // Fix author filtering to check both createdBy and updatedBy
     if (values.author && values.author !== "all") {
-      filteredItems = filteredItems.filter(item => 
-        item.createdBy?.includes(values.author!) || 
-        item.updatedBy?.includes(values.author!)
-      );
+      filteredItems = filteredItems.filter(item => {
+        const createdBy = item.createdBy || '';
+        const updatedBy = item.updatedBy || '';
+        return createdBy === values.author || updatedBy === values.author;
+      });
     }
     
+    // Fix search filtering to be case-insensitive
     if (values.search) {
       const searchTerm = values.search.toLowerCase();
       filteredItems = filteredItems.filter(item => 
@@ -129,11 +128,11 @@ const ContentManagerPage: React.FC = () => {
     // Update URL with filter parameters
     const params = new URLSearchParams();
     if (values.status) params.set("status", values.status);
-    if (values.schemaId) params.set("schemaId", values.schemaId);
+    if (values.schemaId) params.set("schema", values.schemaId);
     if (values.author) params.set("author", values.author);
     if (values.search) params.set("search", values.search);
     if (sortField && sortField !== "title") params.set("sort", sortField);
-    params.set("page", values.page.toString());
+    params.set("page", "1"); // Reset to page 1 when applying new filters
     params.set("perPage", values.perPage.toString());
     
     navigate({

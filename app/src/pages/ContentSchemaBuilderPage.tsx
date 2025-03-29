@@ -1,18 +1,15 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, FileText, Edit, Search, Files, File, Layers } from "lucide-react";
+import { Plus, Settings, FileText, Search, Files, File, Layers } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
-import { ContentSchema, exampleSchemas, mockContentItems, ContentItem, ContentItemStatus } from "@/lib/contentSchema";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContentSchema, exampleSchemas, ContentItem } from "@/lib/contentSchema";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs,  TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 import { DocsButton } from "@/components/ui/DocsButton";
 
@@ -98,17 +95,15 @@ const ContentSchemaBuilderPage: React.FC = () => {
   const [editingSchema, setEditingSchema] = useState<ContentSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeView, setActiveView] = useState<"schemas" | "content">("schemas");
   const [schemaTypeFilter, setSchemaTypeFilter] = useState<"all" | "collection" | "single">("all");
   const [schemasPerPage, setSchemasPerPage] = useState(10);
-  const [contentItemsPerPage, setContentItemsPerPage] = useState(10);
   const [currentSchemasPage, setCurrentSchemasPage] = useState(1);
-  const [currentContentPage, setCurrentContentPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Filter schemas based on type filter
+  // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
+    // First filter by type
     const filtered = schemas.filter(schema => {
       if (schemaTypeFilter === "all") return true;
       if (schemaTypeFilter === "collection") return schema.isCollection;
@@ -116,18 +111,15 @@ const ContentSchemaBuilderPage: React.FC = () => {
       return true;
     });
     
-    // Apply search filter
-    if (!searchQuery) return filtered;
+    // Then apply search filter (across name and description)
+    if (!searchQuery.trim()) return filtered;
+    
+    const searchLower = searchQuery.toLowerCase();
     return filtered.filter(schema => 
-      schema.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (schema.description && schema.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      schema.name.toLowerCase().includes(searchLower) ||
+      (schema.description && schema.description.toLowerCase().includes(searchLower))
     );
   }, [schemas, schemaTypeFilter, searchQuery]);
-
-  // Filter content items based on search query
-  const filteredContentItems = useMemo(() => {
-    return filterContentItems(mockContentItems, searchQuery);
-  }, [searchQuery]);
 
   // Get paginated schemas
   const paginatedSchemas = useMemo(() => {
@@ -136,18 +128,8 @@ const ContentSchemaBuilderPage: React.FC = () => {
     return filteredSchemas.slice(startIndex, endIndex);
   }, [filteredSchemas, currentSchemasPage, schemasPerPage]);
 
-  // Get paginated content items
-  const paginatedContentItems = useMemo(() => {
-    const startIndex = (currentContentPage - 1) * contentItemsPerPage;
-    const endIndex = startIndex + contentItemsPerPage;
-    return filteredContentItems.slice(startIndex, endIndex);
-  }, [filteredContentItems, currentContentPage, contentItemsPerPage]);
-
   // Total pages for schemas
   const totalSchemaPages = Math.ceil(filteredSchemas.length / schemasPerPage);
-  
-  // Total pages for content items
-  const totalContentPages = Math.ceil(filteredContentItems.length / contentItemsPerPage);
 
   const handleCreateSchema = (schema: ContentSchema) => {
     setSchemas([...schemas, schema]);
@@ -169,24 +151,9 @@ const ContentSchemaBuilderPage: React.FC = () => {
     });
   };
 
-  const handleEditContent = (schemaId: string, contentId?: string) => {
-    const path = contentId 
-      ? `/content/${schemaId}/${contentId}` 
-      : `/content/${schemaId}`;
-    navigate(path);
-  };
-
-  const renderStatusBadge = (status: ContentItemStatus) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="outline">Draft</Badge>;
-      case 'pending_review':
-        return <Badge variant="secondary" className="bg-amber-100 text-amber-800">Pending Review</Badge>;
-      case 'published':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Published</Badge>;
-      default:
-        return null;
-    }
+  // Navigate to Content Manager with schema filter
+  const handleViewContent = (schemaId: string) => {
+    navigate(`/manager?schema=${schemaId}`);
   };
 
   return (
@@ -215,187 +182,115 @@ const ContentSchemaBuilderPage: React.FC = () => {
         </Dialog>
       </div>
       
-      <Tabs 
-        value={activeView} 
-        onValueChange={(v) => setActiveView(v as "schemas" | "content")}
-        className="w-full"
-      >
-        <TabsList>
-          <TabsTrigger value="schemas">Schemas</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
-        </TabsList>
-      
-        <div className="relative mt-4">
+      {/* Search and filter in the same row */}
+      <div className="flex flex-wrap gap-4 items-center justify-between">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input 
-            placeholder={activeView === "schemas" ? "Search schemas..." : "Search content... (try status:draft or author:alex)"}
+            placeholder="Search schemas by name or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
-
-        <TabsContent value="schemas" className="mt-4">
-          <div className="mb-4">
-            <Tabs 
-              value={schemaTypeFilter} 
-              onValueChange={(v) => setSchemaTypeFilter(v as "all" | "collection" | "single")}
-              className="w-full"
-            >
-              <TabsList>
-                <TabsTrigger value="all" className="flex items-center gap-2">
-                  <Layers size={16} />
-                  All
-                </TabsTrigger>
-                <TabsTrigger value="collection" className="flex items-center gap-2">
-                  <Files size={16} />
-                  Collections
-                </TabsTrigger>
-                <TabsTrigger value="single" className="flex items-center gap-2">
-                  <File size={16} />
-                  Singles
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+        
+        <Tabs 
+          value={schemaTypeFilter} 
+          onValueChange={(v) => setSchemaTypeFilter(v as "all" | "collection" | "single")}
+        >
+          <TabsList>
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <Layers size={16} />
+              All
+            </TabsTrigger>
+            <TabsTrigger value="collection" className="flex items-center gap-2">
+              <Files size={16} />
+              Collections
+            </TabsTrigger>
+            <TabsTrigger value="single" className="flex items-center gap-2">
+              <File size={16} />
+              Singles
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+      
+      {/* Schema list with white background */}
+      <div className="overflow-hidden border rounded-md bg-white">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Fields</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedSchemas.map((schema) => (
+                <TableRow key={schema.id}>
+                  <TableCell className="font-medium">{schema.name}</TableCell>
+                  <TableCell>
+                    <Badge variant={schema.isCollection ? "default" : "outline"}>
+                      {schema.isCollection ? "Collection" : "Single"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{schema.fields.length} field{schema.fields.length !== 1 && "s"}</TableCell>
+                  <TableCell className="max-w-xs truncate">{schema.description || "No description"}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewContent(schema.id)}
+                      >
+                        <FileText size={16} className="mr-2" />
+                        View Content
+                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-muted-foreground"
+                            onClick={() => setEditingSchema(schema)}
+                          >
+                            <Settings size={16} className="mr-2" />
+                            Manage Schema
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                          {editingSchema && (
+                            <ContentSchemaEditor
+                              initialSchema={editingSchema}
+                              onSave={handleUpdateSchema}
+                            />
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           
-          <div className="overflow-hidden border rounded-md">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Fields</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedSchemas.map((schema) => (
-                    <TableRow key={schema.id}>
-                      <TableCell className="font-medium">{schema.name}</TableCell>
-                      <TableCell>
-                        <Badge variant={schema.isCollection ? "default" : "outline"}>
-                          {schema.isCollection ? "Collection" : "Single"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{schema.fields.length} field{schema.fields.length !== 1 && "s"}</TableCell>
-                      <TableCell className="max-w-xs truncate">{schema.description || "No description"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditContent(schema.id)}
-                          >
-                            <Edit size={16} className="mr-2" />
-                            Edit Content
-                          </Button>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-muted-foreground"
-                                onClick={() => setEditingSchema(schema)}
-                              >
-                                <Settings size={16} className="mr-2" />
-                                Manage Schema
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                              {editingSchema && (
-                                <ContentSchemaEditor
-                                  initialSchema={editingSchema}
-                                  onSave={handleUpdateSchema}
-                                />
-                              )}
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              
-              {filteredSchemas.length > 0 && (
-                <div className="p-4 border-t">
-                  <PaginationControls
-                    currentPage={currentSchemasPage}
-                    totalPages={totalSchemaPages}
-                    onPageChange={setCurrentSchemasPage}
-                    itemsPerPage={schemasPerPage}
-                    onItemsPerPageChange={setSchemasPerPage}
-                    pageSizeOptions={[5, 10, 20, 50]}
-                  />
-                </div>
-              )}
+          {filteredSchemas.length > 0 && (
+            <div className="p-4 border-t">
+              <PaginationControls
+                currentPage={currentSchemasPage}
+                totalPages={totalSchemaPages}
+                onPageChange={setCurrentSchemasPage}
+                itemsPerPage={schemasPerPage}
+                onItemsPerPageChange={setSchemasPerPage}
+                pageSizeOptions={[5, 10, 20, 50]}
+              />
             </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="content" className="mt-4">
-          <div className="border rounded-md overflow-hidden">
-            <div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Updated</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedContentItems.map((item) => {
-                    const schema = schemas.find(s => s.id === item.schemaId);
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.title}</TableCell>
-                        <TableCell>{schema?.name || item.schemaId}</TableCell>
-                        <TableCell>{renderStatusBadge(item.status)}</TableCell>
-                        <TableCell>
-                          {new Date(item.updatedAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {item.createdBy?.split('@')[0] || 'Unknown'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditContent(item.schemaId, item.id)}
-                          >
-                            <Edit size={16} className="mr-2" />
-                            Edit
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-              
-              {filteredContentItems.length > 0 && (
-                <div className="p-4 border-t">
-                  <PaginationControls
-                    currentPage={currentContentPage}
-                    totalPages={totalContentPages}
-                    onPageChange={setCurrentContentPage}
-                    itemsPerPage={contentItemsPerPage}
-                    onItemsPerPageChange={setContentItemsPerPage}
-                    pageSizeOptions={[5, 10, 20, 50]}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
