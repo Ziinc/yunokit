@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Image, Upload, FileImage, PlusCircle, Search, Trash2, Edit, Plus, X, Info } from "lucide-react";
+import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 
 // Mock data for assets - this would come from Supabase in a real app
 const mockAssets = [
@@ -246,57 +247,18 @@ const AssetsLibraryPage: React.FC = () => {
                 </div>
                 
                 {filteredAssets.length > 0 && (
-                  <div className="p-4 mt-4 border border-t-0 rounded-b-md flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Items per page:</span>
-                      <Select 
-                        value={String(itemsPerPage)} 
-                        onValueChange={(value) => {
-                          setItemsPerPage(Number(value));
-                          setCurrentPage(1); // Reset to first page when changing items per page
-                        }}
-                      >
-                        <SelectTrigger className="w-[80px] h-8">
-                          <SelectValue placeholder="12" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="12">12</SelectItem>
-                          <SelectItem value="24">24</SelectItem>
-                          <SelectItem value="36">36</SelectItem>
-                          <SelectItem value="48">48</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="text-muted-foreground font-normal"
-                      >
-                        ← Previous
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mx-2 h-10 w-10"
-                      >
-                        {currentPage}
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages || totalPages === 0}
-                        className="text-muted-foreground font-normal"
-                      >
-                        Next →
-                      </Button>
-                    </div>
+                  <div className="p-4 border-t">
+                    <PaginationControls
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      itemsPerPage={itemsPerPage}
+                      onItemsPerPageChange={(value) => {
+                        setItemsPerPage(value);
+                        setCurrentPage(1); // Reset to first page when changing items per page
+                      }}
+                      pageSizeOptions={[10, 20, 30, 50]}
+                    />
                   </div>
                 )}
               </>
@@ -354,57 +316,18 @@ const AssetsLibraryPage: React.FC = () => {
               ))}
               
               {filteredAssets.length > 0 && (
-                <div className="p-4 border-t flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Items per page:</span>
-                    <Select 
-                      value={String(itemsPerPage)} 
-                      onValueChange={(value) => {
-                        setItemsPerPage(Number(value));
-                        setCurrentPage(1); // Reset to first page when changing items per page
-                      }}
-                    >
-                      <SelectTrigger className="w-[80px] h-8">
-                        <SelectValue placeholder="10" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="30">30</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="text-muted-foreground font-normal"
-                    >
-                      ← Previous
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mx-2 h-10 w-10"
-                    >
-                      {currentPage}
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages || totalPages === 0}
-                      className="text-muted-foreground font-normal"
-                    >
-                      Next →
-                    </Button>
-                  </div>
+                <div className="p-4 border-t">
+                  <PaginationControls
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={(value) => {
+                      setItemsPerPage(value);
+                      setCurrentPage(1); // Reset to first page when changing items per page
+                    }}
+                    pageSizeOptions={[10, 20, 30, 50]}
+                  />
                 </div>
               )}
             </div>

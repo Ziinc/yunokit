@@ -12,6 +12,7 @@ import UsersTab from "@/components/Comments/UsersTab";
 import { formatDate } from "@/utils/formatDate";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 
 const CommentsPage: React.FC = () => {
   const { toast } = useToast();
@@ -837,57 +838,18 @@ const CommentsPage: React.FC = () => {
           
           {/* Pagination Controls for Comments Tab */}
           {filteredComments.length > 0 && (
-            <div className="p-4 border rounded-md flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Items per page:</span>
-                <Select 
-                  value={String(commentsPerPage)} 
-                  onValueChange={(value) => {
-                    setCommentsPerPage(Number(value));
-                    setCurrentCommentsPage(1); // Reset to first page when changing items per page
-                  }}
-                >
-                  <SelectTrigger className="w-[80px] h-8">
-                    <SelectValue placeholder="10" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentCommentsPage(p => Math.max(1, p - 1))}
-                  disabled={currentCommentsPage === 1}
-                  className="text-muted-foreground font-normal"
-                >
-                  ← Previous
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mx-2 h-10 w-10"
-                >
-                  {currentCommentsPage}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentCommentsPage(p => Math.min(totalCommentsPages, p + 1))}
-                  disabled={currentCommentsPage === totalCommentsPages || totalCommentsPages === 0}
-                  className="text-muted-foreground font-normal"
-                >
-                  Next →
-                </Button>
-              </div>
+            <div className="p-4 border rounded-md">
+              <PaginationControls
+                currentPage={currentCommentsPage}
+                totalPages={totalCommentsPages}
+                onPageChange={setCurrentCommentsPage}
+                itemsPerPage={commentsPerPage}
+                onItemsPerPageChange={(value) => {
+                  setCommentsPerPage(value);
+                  setCurrentCommentsPage(1); // Reset to first page when changing items per page
+                }}
+                pageSizeOptions={[5, 10, 20, 50]}
+              />
             </div>
           )}
         </TabsContent>
@@ -905,57 +867,18 @@ const CommentsPage: React.FC = () => {
           
           {/* Pagination Controls for Forum Tab */}
           {filteredPosts.length > 0 && (
-            <div className="p-4 border rounded-md flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Items per page:</span>
-                <Select 
-                  value={String(postsPerPage)} 
-                  onValueChange={(value) => {
-                    setPostsPerPage(Number(value));
-                    setCurrentPostsPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[80px] h-8">
-                    <SelectValue placeholder="10" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentPostsPage(p => Math.max(1, p - 1))}
-                  disabled={currentPostsPage === 1}
-                  className="text-muted-foreground font-normal"
-                >
-                  ← Previous
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mx-2 h-10 w-10"
-                >
-                  {currentPostsPage}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentPostsPage(p => Math.min(totalPostsPages, p + 1))}
-                  disabled={currentPostsPage === totalPostsPages || totalPostsPages === 0}
-                  className="text-muted-foreground font-normal"
-                >
-                  Next →
-                </Button>
-              </div>
+            <div className="p-4 border rounded-md">
+              <PaginationControls
+                currentPage={currentPostsPage}
+                totalPages={totalPostsPages}
+                onPageChange={setCurrentPostsPage}
+                itemsPerPage={postsPerPage}
+                onItemsPerPageChange={(value) => {
+                  setPostsPerPage(value);
+                  setCurrentPostsPage(1);
+                }}
+                pageSizeOptions={[5, 10, 20, 50]}
+              />
             </div>
           )}
         </TabsContent>
@@ -974,57 +897,18 @@ const CommentsPage: React.FC = () => {
           
           {/* Pagination Controls for Chat Tab */}
           {filteredMessages.length > 0 && (
-            <div className="p-4 border rounded-md flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Items per page:</span>
-                <Select 
-                  value={String(messagesPerPage)} 
-                  onValueChange={(value) => {
-                    setMessagesPerPage(Number(value));
-                    setCurrentMessagesPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[80px] h-8">
-                    <SelectValue placeholder="10" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentMessagesPage(p => Math.max(1, p - 1))}
-                  disabled={currentMessagesPage === 1}
-                  className="text-muted-foreground font-normal"
-                >
-                  ← Previous
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mx-2 h-10 w-10"
-                >
-                  {currentMessagesPage}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentMessagesPage(p => Math.min(totalMessagesPages, p + 1))}
-                  disabled={currentMessagesPage === totalMessagesPages || totalMessagesPages === 0}
-                  className="text-muted-foreground font-normal"
-                >
-                  Next →
-                </Button>
-              </div>
+            <div className="p-4 border rounded-md">
+              <PaginationControls
+                currentPage={currentMessagesPage}
+                totalPages={totalMessagesPages}
+                onPageChange={setCurrentMessagesPage}
+                itemsPerPage={messagesPerPage}
+                onItemsPerPageChange={(value) => {
+                  setMessagesPerPage(value);
+                  setCurrentMessagesPage(1);
+                }}
+                pageSizeOptions={[5, 10, 20, 50]}
+              />
             </div>
           )}
         </TabsContent>
@@ -1041,57 +925,18 @@ const CommentsPage: React.FC = () => {
           
           {/* Pagination Controls for Users Tab */}
           {filteredUsers.length > 0 && (
-            <div className="p-4 border rounded-md flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Items per page:</span>
-                <Select 
-                  value={String(usersPerPage)} 
-                  onValueChange={(value) => {
-                    setUsersPerPage(Number(value));
-                    setCurrentUsersPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[80px] h-8">
-                    <SelectValue placeholder="10" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentUsersPage(p => Math.max(1, p - 1))}
-                  disabled={currentUsersPage === 1}
-                  className="text-muted-foreground font-normal"
-                >
-                  ← Previous
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mx-2 h-10 w-10"
-                >
-                  {currentUsersPage}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentUsersPage(p => Math.min(totalUsersPages, p + 1))}
-                  disabled={currentUsersPage === totalUsersPages || totalUsersPages === 0}
-                  className="text-muted-foreground font-normal"
-                >
-                  Next →
-                </Button>
-              </div>
+            <div className="p-4 border rounded-md">
+              <PaginationControls
+                currentPage={currentUsersPage}
+                totalPages={totalUsersPages}
+                onPageChange={setCurrentUsersPage}
+                itemsPerPage={usersPerPage}
+                onItemsPerPageChange={(value) => {
+                  setUsersPerPage(value);
+                  setCurrentUsersPage(1);
+                }}
+                pageSizeOptions={[5, 10, 20, 50]}
+              />
             </div>
           )}
         </TabsContent>
@@ -1111,57 +956,18 @@ const CommentsPage: React.FC = () => {
           
           {/* Pagination Controls for Reports Tab */}
           {filteredReports.length > 0 && (
-            <div className="p-4 border rounded-md flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Items per page:</span>
-                <Select 
-                  value={String(reportsPerPage)} 
-                  onValueChange={(value) => {
-                    setReportsPerPage(Number(value));
-                    setCurrentReportsPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[80px] h-8">
-                    <SelectValue placeholder="10" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentReportsPage(p => Math.max(1, p - 1))}
-                  disabled={currentReportsPage === 1}
-                  className="text-muted-foreground font-normal"
-                >
-                  ← Previous
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mx-2 h-10 w-10"
-                >
-                  {currentReportsPage}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentReportsPage(p => Math.min(totalReportsPages, p + 1))}
-                  disabled={currentReportsPage === totalReportsPages || totalReportsPages === 0}
-                  className="text-muted-foreground font-normal"
-                >
-                  Next →
-                </Button>
-              </div>
+            <div className="p-4 border rounded-md">
+              <PaginationControls
+                currentPage={currentReportsPage}
+                totalPages={totalReportsPages}
+                onPageChange={setCurrentReportsPage}
+                itemsPerPage={reportsPerPage}
+                onItemsPerPageChange={(value) => {
+                  setReportsPerPage(value);
+                  setCurrentReportsPage(1);
+                }}
+                pageSizeOptions={[5, 10, 20, 50]}
+              />
             </div>
           )}
         </TabsContent>
@@ -1180,57 +986,18 @@ const CommentsPage: React.FC = () => {
           
           {/* Pagination Controls for Moderation Tab */}
           {bannedWords.length > 0 && (
-            <div className="p-4 border rounded-md flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Items per page:</span>
-                <Select 
-                  value={String(bannedWordsPerPage)} 
-                  onValueChange={(value) => {
-                    setBannedWordsPerPage(Number(value));
-                    setCurrentBannedWordsPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[80px] h-8">
-                    <SelectValue placeholder="10" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentBannedWordsPage(p => Math.max(1, p - 1))}
-                  disabled={currentBannedWordsPage === 1}
-                  className="text-muted-foreground font-normal"
-                >
-                  ← Previous
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mx-2 h-10 w-10"
-                >
-                  {currentBannedWordsPage}
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentBannedWordsPage(p => Math.min(totalBannedWordsPages, p + 1))}
-                  disabled={currentBannedWordsPage === totalBannedWordsPages || totalBannedWordsPages === 0}
-                  className="text-muted-foreground font-normal"
-                >
-                  Next →
-                </Button>
-              </div>
+            <div className="p-4 border rounded-md">
+              <PaginationControls
+                currentPage={currentBannedWordsPage}
+                totalPages={totalBannedWordsPages}
+                onPageChange={setCurrentBannedWordsPage}
+                itemsPerPage={bannedWordsPerPage}
+                onItemsPerPageChange={(value) => {
+                  setBannedWordsPerPage(value);
+                  setCurrentBannedWordsPage(1);
+                }}
+                pageSizeOptions={[5, 10, 20, 50]}
+              />
             </div>
           )}
         </TabsContent>

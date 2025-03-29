@@ -10,9 +10,8 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { ContentStatusBadge } from "./ContentStatusBadge";
-import { ContentPagination } from "./ContentPagination";
 import { formatDate } from "@/utils/formatDate";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PaginationControls } from "./PaginationControls";
 
 interface ContentTableProps {
   items: ContentItem[];
@@ -101,28 +100,13 @@ export const ContentTable: React.FC<ContentTableProps> = ({
         )}
       </TableBody>
     </Table>
-    <div className="p-4 border-t flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Items per page:</span>
-        <Select 
-          value={String(itemsPerPage)} 
-          onValueChange={(value) => onItemsPerPageChange(Number(value))}
-        >
-          <SelectTrigger className="w-[80px] h-8">
-            <SelectValue placeholder="10" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="5">5</SelectItem>
-            <SelectItem value="10">10</SelectItem>
-            <SelectItem value="20">20</SelectItem>
-            <SelectItem value="50">50</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <ContentPagination
+    <div className="p-4 border-t">
+      <PaginationControls
         currentPage={currentPage}
         totalPages={totalPages}
-        setCurrentPage={onPageChange}
+        onPageChange={onPageChange}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={onItemsPerPageChange}
       />
     </div>
     </div>

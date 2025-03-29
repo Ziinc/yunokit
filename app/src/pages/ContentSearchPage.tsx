@@ -14,6 +14,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentItemStatus } from "@/lib/contentSchema";
 import { useSearch } from "@/contexts/SearchContext";
 import { mockContentItems, contentSchemas } from "@/lib/mocks";
+import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 
 const ContentSearchPage: React.FC = () => {
   const { toast } = useToast();
@@ -368,51 +369,15 @@ const ContentSearchPage: React.FC = () => {
               )}
             </CardContent>
             {searchResults.length > 0 && (
-              <div className="px-4 py-2 flex items-center justify-between border-t">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Items per page:</span>
-                  <Select value={String(itemsPerPage)} onValueChange={(value) => setItemsPerPage(Number(value))}>
-                    <SelectTrigger className="w-[80px] h-8">
-                      <SelectValue placeholder="10" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="text-muted-foreground font-normal"
-                  >
-                    ← Previous
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mx-2 h-10 w-10"
-                  >
-                    {currentPage}
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(searchResults.length / itemsPerPage), p + 1))}
-                    disabled={currentPage === Math.ceil(searchResults.length / itemsPerPage)}
-                    className="text-muted-foreground font-normal"
-                  >
-                    Next →
-                  </Button>
-                </div>
+              <div className="px-4 py-2">
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(searchResults.length / itemsPerPage)}
+                  onPageChange={setCurrentPage}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  pageSizeOptions={[5, 10, 20, 50]}
+                />
               </div>
             )}
           </Card>

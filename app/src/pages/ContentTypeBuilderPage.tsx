@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 
 // Simple query parser for search filtering
 const parseQuery = (query: string) => {
@@ -316,54 +317,15 @@ const ContentSchemasPage: React.FC = () => {
               </Table>
               
               {filteredSchemas.length > 0 && (
-                <div className="p-4 border-t flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Items per page:</span>
-                    <Select 
-                      value={String(schemasPerPage)} 
-                      onValueChange={(value) => setSchemasPerPage(Number(value))}
-                    >
-                      <SelectTrigger className="w-[80px] h-8">
-                        <SelectValue placeholder="10" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentSchemasPage(p => Math.max(1, p - 1))}
-                      disabled={currentSchemasPage === 1}
-                      className="text-muted-foreground font-normal"
-                    >
-                      ← Previous
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mx-2 h-10 w-10"
-                    >
-                      {currentSchemasPage}
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentSchemasPage(p => Math.min(totalSchemaPages, p + 1))}
-                      disabled={currentSchemasPage === totalSchemaPages || totalSchemaPages === 0}
-                      className="text-muted-foreground font-normal"
-                    >
-                      Next →
-                    </Button>
-                  </div>
+                <div className="p-4 border-t">
+                  <PaginationControls
+                    currentPage={currentSchemasPage}
+                    totalPages={totalSchemaPages}
+                    onPageChange={setCurrentSchemasPage}
+                    itemsPerPage={schemasPerPage}
+                    onItemsPerPageChange={setSchemasPerPage}
+                    pageSizeOptions={[5, 10, 20, 50]}
+                  />
                 </div>
               )}
             </div>
@@ -415,54 +377,15 @@ const ContentSchemasPage: React.FC = () => {
               </Table>
               
               {filteredContentItems.length > 0 && (
-                <div className="p-4 border-t flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Items per page:</span>
-                    <Select 
-                      value={String(contentItemsPerPage)} 
-                      onValueChange={(value) => setContentItemsPerPage(Number(value))}
-                    >
-                      <SelectTrigger className="w-[80px] h-8">
-                        <SelectValue placeholder="10" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentContentPage(p => Math.max(1, p - 1))}
-                      disabled={currentContentPage === 1}
-                      className="text-muted-foreground font-normal"
-                    >
-                      ← Previous
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mx-2 h-10 w-10"
-                    >
-                      {currentContentPage}
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentContentPage(p => Math.min(totalContentPages, p + 1))}
-                      disabled={currentContentPage === totalContentPages || totalContentPages === 0}
-                      className="text-muted-foreground font-normal"
-                    >
-                      Next →
-                    </Button>
-                  </div>
+                <div className="p-4 border-t">
+                  <PaginationControls
+                    currentPage={currentContentPage}
+                    totalPages={totalContentPages}
+                    onPageChange={setCurrentContentPage}
+                    itemsPerPage={contentItemsPerPage}
+                    onItemsPerPageChange={setContentItemsPerPage}
+                    pageSizeOptions={[5, 10, 20, 50]}
+                  />
                 </div>
               )}
             </div>

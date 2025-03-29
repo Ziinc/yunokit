@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 
 // Mock workspaces for demonstration
 const mockWorkspaces = [
@@ -723,57 +724,18 @@ const SettingsPage: React.FC = () => {
                 </Table>
                 
                 {teamMembers.length > 0 && (
-                  <div className="p-4 border-t flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Items per page:</span>
-                      <Select 
-                        value={String(membersPerPage)} 
-                        onValueChange={(value) => {
-                          setMembersPerPage(Number(value));
-                          setCurrentMembersPage(1); // Reset to first page when changing items per page
-                        }}
-                      >
-                        <SelectTrigger className="w-[80px] h-8">
-                          <SelectValue placeholder="5" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="5">5</SelectItem>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="20">20</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCurrentMembersPage(p => Math.max(1, p - 1))}
-                        disabled={currentMembersPage === 1}
-                        className="text-muted-foreground font-normal"
-                      >
-                        ← Previous
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mx-2 h-10 w-10"
-                      >
-                        {currentMembersPage}
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCurrentMembersPage(p => Math.min(totalMembersPages, p + 1))}
-                        disabled={currentMembersPage === totalMembersPages || totalMembersPages === 0}
-                        className="text-muted-foreground font-normal"
-                      >
-                        Next →
-                      </Button>
-                    </div>
+                  <div className="p-4 border-t">
+                    <PaginationControls
+                      currentPage={currentMembersPage}
+                      totalPages={totalMembersPages}
+                      onPageChange={setCurrentMembersPage}
+                      itemsPerPage={membersPerPage}
+                      onItemsPerPageChange={(value) => {
+                        setMembersPerPage(value);
+                        setCurrentMembersPage(1); // Reset to first page when changing items per page
+                      }}
+                      pageSizeOptions={[5, 10, 20, 50]}
+                    />
                   </div>
                 )}
               </div>
@@ -1009,57 +971,18 @@ const SettingsPage: React.FC = () => {
                   </Table>
                   
                   {billingData.invoices.length > 0 && (
-                    <div className="p-4 border-t flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Items per page:</span>
-                        <Select 
-                          value={String(invoicesPerPage)} 
-                          onValueChange={(value) => {
-                            setInvoicesPerPage(Number(value));
-                            setCurrentInvoicesPage(1); // Reset to first page when changing items per page
-                          }}
-                        >
-                          <SelectTrigger className="w-[80px] h-8">
-                            <SelectValue placeholder="5" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5">5</SelectItem>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="20">20</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCurrentInvoicesPage(p => Math.max(1, p - 1))}
-                          disabled={currentInvoicesPage === 1}
-                          className="text-muted-foreground font-normal"
-                        >
-                          ← Previous
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mx-2 h-10 w-10"
-                        >
-                          {currentInvoicesPage}
-                        </Button>
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCurrentInvoicesPage(p => Math.min(totalInvoicesPages, p + 1))}
-                          disabled={currentInvoicesPage === totalInvoicesPages || totalInvoicesPages === 0}
-                          className="text-muted-foreground font-normal"
-                        >
-                          Next →
-                        </Button>
-                      </div>
+                    <div className="p-4 border-t">
+                      <PaginationControls
+                        currentPage={currentInvoicesPage}
+                        totalPages={totalInvoicesPages}
+                        onPageChange={setCurrentInvoicesPage}
+                        itemsPerPage={invoicesPerPage}
+                        onItemsPerPageChange={(value) => {
+                          setInvoicesPerPage(value);
+                          setCurrentInvoicesPage(1); // Reset to first page when changing items per page
+                        }}
+                        pageSizeOptions={[5, 10, 20, 50]}
+                      />
                     </div>
                   )}
                 </div>
