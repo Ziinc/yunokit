@@ -8,7 +8,7 @@ import NotFound from "./pages/NotFound";
 import MarkdownEditorPage from "./pages/MarkdownEditorPage";
 import JsonEditorPage from "./pages/JsonEditorPage";
 import BlockEditorPage from "./pages/BlockEditorPage";
-import ContentTypeBuilderPage from "./pages/ContentTypeBuilderPage";
+import ContentSchemaBuilderPage from "./pages/ContentSchemaBuilderPage";
 import ContentManagerPage from "./pages/ContentManagerPage";
 import ContentItemPage from "./pages/ContentItemPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -42,7 +42,7 @@ const App = () => (
                 <Route path="/manager/json" element={<JsonEditorPage />} />
                 <Route path="/manager/block" element={<BlockEditorPage />} />
                 <Route path="/manager/editor/:schemaId/:contentId" element={<ContentItemPage />} />
-                <Route path="/builder" element={<ContentTypeBuilderPage />} />
+                <Route path="/builder" element={<ContentSchemaBuilderPage />} />
                 <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/library" element={<AssetsLibraryPage />} />

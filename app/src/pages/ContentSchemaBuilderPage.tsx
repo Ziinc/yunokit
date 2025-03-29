@@ -93,7 +93,7 @@ const getContentField = (item: ContentItem) => {
   return item.data || item.content || {};
 };
 
-const ContentSchemasPage: React.FC = () => {
+const ContentSchemaBuilderPage: React.FC = () => {
   const [schemas, setSchemas] = useState<ContentSchema[]>(exampleSchemas);
   const [editingSchema, setEditingSchema] = useState<ContentSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -194,8 +194,8 @@ const ContentSchemasPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Content Type Builder</h1>
-            <DocsButton href="https://docs.supacontent.tznc.net/type-builder" />
+            <h1 className="text-3xl font-bold tracking-tight">Content Schema Builder</h1>
+            <DocsButton href="https://docs.supacontent.tznc.net/schema-builder" />
           </div>
           <p className="text-muted-foreground mt-1">
             Manage your content schemas for your content items.
@@ -400,4 +400,4 @@ const ContentSchemasPage: React.FC = () => {
   );
 };
 
-export default ContentSchemasPage;
+export default ContentSchemaBuilderPage;

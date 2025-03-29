@@ -199,7 +199,7 @@ const AssetsLibraryPage: React.FC = () => {
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="all">All File Types</SelectItem>
               <SelectItem value="image">Images</SelectItem>
               <SelectItem value="document">Documents</SelectItem>
               <SelectItem value="video">Videos</SelectItem>

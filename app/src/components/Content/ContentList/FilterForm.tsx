@@ -134,10 +134,10 @@ export const FilterForm: React.FC<FilterFormProps> = ({
                   defaultValue="all"
                 >
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Content Type" />
+                    <SelectValue placeholder="Content Schema" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="all">All Schemas</SelectItem>
                     {schemas.map(schema => (
                       <SelectItem key={schema.id} value={schema.id}>
                         {schema.name}

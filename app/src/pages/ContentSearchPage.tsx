@@ -28,7 +28,7 @@ const ContentSearchPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [sortBy, setSortBy] = useState<string>("relevance");
   const [availableSchemas, setAvailableSchemas] = useState<Array<{id: string, name: string}>>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedSchemas, setSelectedSchemas] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<ContentItemStatus[]>([]);
   const [filtersApplied, setFiltersApplied] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,7 +67,7 @@ const ContentSearchPage: React.FC = () => {
     
     setTimeout(() => {
       const filtered = searchResults.filter(item => 
-        (selectedTypes.length === 0 || selectedTypes.includes(item.schemaId)) &&
+        (selectedSchemas.length === 0 || selectedSchemas.includes(item.schemaId)) &&
         (selectedStatuses.length === 0 || selectedStatuses.includes(item.status))
       );
       
@@ -83,7 +83,7 @@ const ContentSearchPage: React.FC = () => {
 
   const clearFiltersAndSearch = () => {
     // Reset filters
-    setSelectedTypes([]);
+    setSelectedSchemas([]);
     setSelectedStatuses([]);
     setFiltersApplied(false);
     
@@ -99,11 +99,11 @@ const ContentSearchPage: React.FC = () => {
     });
   };
   
-  const handleTypeChange = (type: string) => {
-    setSelectedTypes(prev => 
-      prev.includes(type) 
-        ? prev.filter(t => t !== type) 
-        : [...prev, type]
+  const handleSchemaChange = (schemaId: string) => {
+    setSelectedSchemas(prev => 
+      prev.includes(schemaId) 
+        ? prev.filter(t => t !== schemaId) 
+        : [...prev, schemaId]
     );
   };
   
@@ -172,7 +172,7 @@ const ContentSearchPage: React.FC = () => {
                   <Filter size={18} />
                   <span>Filters</span>
                 </div>
-                {filtersApplied && (selectedTypes.length > 0 || selectedStatuses.length > 0) && (
+                {filtersApplied && (selectedSchemas.length > 0 || selectedStatuses.length > 0) && (
                   <Button 
                     onClick={clearFiltersAndSearch} 
                     variant="ghost" 
@@ -186,17 +186,17 @@ const ContentSearchPage: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <h3 className="text-sm font-medium">Content Type</h3>
+                <h3 className="text-sm font-medium">Content Schema</h3>
                 
                 <div className="space-y-1.5">
                   {availableSchemas.map(schema => (
                     <div key={schema.id} className="flex items-center space-x-2">
                       <Checkbox 
-                        id={`type-${schema.id}`} 
-                        checked={selectedTypes.includes(schema.id)}
-                        onCheckedChange={() => handleTypeChange(schema.id)}
+                        id={`schema-${schema.id}`} 
+                        checked={selectedSchemas.includes(schema.id)}
+                        onCheckedChange={() => handleSchemaChange(schema.id)}
                       />
-                      <Label htmlFor={`type-${schema.id}`}>{schema.name}</Label>
+                      <Label htmlFor={`schema-${schema.id}`}>{schema.name}</Label>
                     </div>
                   ))}
                 </div>

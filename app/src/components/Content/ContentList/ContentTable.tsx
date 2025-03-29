@@ -40,7 +40,7 @@ export const ContentTable: React.FC<ContentTableProps> = ({
       <TableHeader>
         <TableRow>
           <TableHead className="w-[300px]">Title</TableHead>
-          <TableHead>Type</TableHead>
+          <TableHead>Schema</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>
             <span className="flex items-center gap-2">
