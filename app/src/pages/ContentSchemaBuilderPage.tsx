@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, FileText, Search, Files, File, Layers } from "lucide-react";
+import { Plus, Settings, FileText, Search, Files, File, Layers, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
-import { ContentSchema, exampleSchemas, ContentItem } from "@/lib/contentSchema";
+import { ContentSchema, ContentItem } from "@/lib/contentSchema";
+import { SchemaApi } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -91,7 +92,8 @@ const getContentField = (item: ContentItem) => {
 };
 
 const ContentSchemaBuilderPage: React.FC = () => {
-  const [schemas, setSchemas] = useState<ContentSchema[]>(exampleSchemas);
+  const [schemas, setSchemas] = useState<ContentSchema[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingSchema, setEditingSchema] = useState<ContentSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,6 +102,28 @@ const ContentSchemaBuilderPage: React.FC = () => {
   const [currentSchemasPage, setCurrentSchemasPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Load schemas from API
+  useEffect(() => {
+    const loadSchemas = async () => {
+      try {
+        setIsLoading(true);
+        const data = await SchemaApi.getSchemas();
+        setSchemas(data);
+      } catch (error) {
+        console.error("Error loading schemas:", error);
+        toast({
+          title: "Error loading schemas",
+          description: "There was a problem loading your content schemas.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSchemas();
+  }, [toast]);
 
   // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
@@ -131,24 +155,62 @@ const ContentSchemaBuilderPage: React.FC = () => {
   // Total pages for schemas
   const totalSchemaPages = Math.ceil(filteredSchemas.length / schemasPerPage);
 
-  const handleCreateSchema = (schema: ContentSchema) => {
-    setSchemas([...schemas, schema]);
-    setIsCreating(false);
-    toast({
-      title: "Schema created",
-      description: `${schema.name} schema has been created successfully`,
-    });
+  const handleCreateSchema = async (schema: ContentSchema) => {
+    try {
+      const savedSchema = await SchemaApi.saveSchema(schema);
+      setSchemas([...schemas, savedSchema]);
+      setIsCreating(false);
+      toast({
+        title: "Schema created",
+        description: `${schema.name} schema has been created successfully`,
+      });
+    } catch (error) {
+      console.error("Error creating schema:", error);
+      toast({
+        title: "Error creating schema",
+        description: "There was a problem creating the schema.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleUpdateSchema = (updatedSchema: ContentSchema) => {
-    setSchemas(schemas.map(schema => 
-      schema.id === updatedSchema.id ? updatedSchema : schema
-    ));
-    setEditingSchema(null);
-    toast({
-      title: "Schema updated",
-      description: `${updatedSchema.name} schema has been updated successfully`,
-    });
+  const handleUpdateSchema = async (updatedSchema: ContentSchema) => {
+    try {
+      const savedSchema = await SchemaApi.saveSchema(updatedSchema);
+      setSchemas(schemas.map(schema => 
+        schema.id === savedSchema.id ? savedSchema : schema
+      ));
+      setEditingSchema(null);
+      toast({
+        title: "Schema updated",
+        description: `${updatedSchema.name} schema has been updated successfully`,
+      });
+    } catch (error) {
+      console.error("Error updating schema:", error);
+      toast({
+        title: "Error updating schema",
+        description: "There was a problem updating the schema.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteSchema = async (schemaId: string) => {
+    try {
+      await SchemaApi.deleteSchema(schemaId);
+      setSchemas(schemas.filter(schema => schema.id !== schemaId));
+      toast({
+        title: "Schema deleted",
+        description: "The schema has been deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting schema:", error);
+      toast({
+        title: "Error deleting schema",
+        description: "There was a problem deleting the schema.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Navigate to Content Manager with schema filter
@@ -217,80 +279,96 @@ const ContentSchemaBuilderPage: React.FC = () => {
       
       {/* Schema list with white background */}
       <div className="overflow-hidden border rounded-md bg-white">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Fields</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedSchemas.map((schema) => (
-                <TableRow key={schema.id}>
-                  <TableCell className="font-medium">{schema.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={schema.isCollection ? "default" : "outline"}>
-                      {schema.isCollection ? "Collection" : "Single"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{schema.fields.length} field{schema.fields.length !== 1 && "s"}</TableCell>
-                  <TableCell className="max-w-xs truncate">{schema.description || "No description"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewContent(schema.id)}
-                      >
-                        <FileText size={16} className="mr-2" />
-                        View Content
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-muted-foreground"
-                            onClick={() => setEditingSchema(schema)}
-                          >
-                            <Settings size={16} className="mr-2" />
-                            Manage Schema
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                          {editingSchema && (
-                            <ContentSchemaEditor
-                              initialSchema={editingSchema}
-                              onSave={handleUpdateSchema}
-                            />
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </TableCell>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+            <p className="text-lg">Loading schemas...</p>
+          </div>
+        ) : paginatedSchemas.length === 0 ? (
+          <div className="py-10 text-center text-muted-foreground">
+            {searchQuery ? 'No schemas match your search criteria' : 'No schemas found. Click "Create Schema" to get started.'}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Fields</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {filteredSchemas.length > 0 && (
-            <div className="p-4 border-t">
-              <PaginationControls
-                currentPage={currentSchemasPage}
-                totalPages={totalSchemaPages}
-                onPageChange={setCurrentSchemasPage}
-                itemsPerPage={schemasPerPage}
-                onItemsPerPageChange={setSchemasPerPage}
-                pageSizeOptions={[5, 10, 20, 50]}
-              />
-            </div>
-          )}
-        </div>
+              </TableHeader>
+              <TableBody>
+                {paginatedSchemas.map((schema) => (
+                  <TableRow key={schema.id}>
+                    <TableCell className="font-medium">{schema.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={schema.isCollection ? "default" : "outline"}>
+                        {schema.isCollection ? "Collection" : "Single"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{schema.fields.length} field{schema.fields.length !== 1 && "s"}</TableCell>
+                    <TableCell className="max-w-xs truncate">{schema.description || "No description"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewContent(schema.id)}
+                        >
+                          <FileText size={16} className="mr-2" />
+                          View Content
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingSchema(schema)}
+                            >
+                              <Settings size={16} className="mr-2" />
+                              Edit Schema
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                            {editingSchema && (
+                              <ContentSchemaEditor 
+                                initialSchema={editingSchema} 
+                                onSave={handleUpdateSchema}
+                              />
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
+      
+      {/* Pagination */}
+      {totalSchemaPages > 1 && (
+        <div className="flex justify-between items-center mt-4 px-2">
+          <div className="text-sm text-muted-foreground">
+            Showing {((currentSchemasPage - 1) * schemasPerPage) + 1} to {
+              Math.min(currentSchemasPage * schemasPerPage, filteredSchemas.length)
+            } of {filteredSchemas.length} schemas
+          </div>
+          <PaginationControls
+            currentPage={currentSchemasPage}
+            totalPages={totalSchemaPages}
+            onPageChange={setCurrentSchemasPage}
+            itemsPerPage={schemasPerPage}
+            onItemsPerPageChange={setSchemasPerPage}
+            pageSizeOptions={[5, 10, 20, 50]}
+          />
+        </div>
+      )}
     </div>
   );
 };

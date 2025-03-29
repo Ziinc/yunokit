@@ -1,192 +1,134 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase, signOut } from '@/lib/supabase';
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { supabase, getUserProfile } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-
-type AuthProviderProps = {
-  children: React.ReactNode;
-};
-
-type User = {
+export interface User {
   id: string;
   email?: string;
-  username: string;
+  username?: string;
   avatarUrl?: string;
-  providers: Array<{
+  providers?: {
     id: string;
     provider: string;
     avatarUrl?: string;
-  }>;
-  selectedAvatarProvider?: string;
-};
+  }[];
+}
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
-  loading: boolean;
-  signInWithGithub: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithMicrosoft: () => Promise<void>;
+  isAuthenticated: boolean;
+  isLoading: boolean;
   signOut: () => Promise<void>;
-  updateUser: (data: Partial<User>) => void;
-};
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  signOut: async () => {},
+});
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
+  // On mount, check if user is authenticated with Supabase
   useEffect(() => {
-    // Check for existing session
-    const checkSession = async () => {
+    const loadAuthState = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const profile = await getUserProfile();
-          if (profile) {
-            setUser(profile);
+        setIsLoading(true);
+        
+        // Get the initial session
+        const { data } = await supabase.auth.getSession();
+        
+        if (data?.session) {
+          // Get user data from Supabase
+          const { data: userData } = await supabase.auth.getUser();
+          
+          if (userData?.user) {
+            // Format the user data
+            const formattedUser: User = {
+              id: userData.user.id,
+              email: userData.user.email || undefined,
+              username: userData.user.user_metadata?.name || userData.user.email?.split('@')[0] || 'User',
+              avatarUrl: userData.user.user_metadata?.avatar_url,
+              providers: userData.user.identities?.map(identity => ({
+                id: identity.id,
+                provider: identity.provider,
+                avatarUrl: identity.identity_data?.avatar_url
+              })) || [],
+            };
+            
+            setUser(formattedUser);
           }
         }
       } catch (error) {
-        console.error('Error checking auth session:', error);
+        console.error('Error loading auth state:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    checkSession();
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          const profile = await getUserProfile();
-          if (profile) {
-            setUser(profile);
-            toast({
-              title: 'Signed in successfully',
-              description: `Welcome back, ${profile.username}!`,
-            });
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          toast({
-            title: 'Signed out',
-            description: 'You have been signed out successfully.',
-          });
+    loadAuthState();
+    
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setIsLoading(true);
+      
+      if (event === 'SIGNED_IN' && session) {
+        // Get user data
+        const { data } = await supabase.auth.getUser();
+        
+        if (data?.user) {
+          // Format the user data
+          const formattedUser: User = {
+            id: data.user.id,
+            email: data.user.email || undefined,
+            username: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+            avatarUrl: data.user.user_metadata?.avatar_url,
+            providers: data.user.identities?.map(identity => ({
+              id: identity.id,
+              provider: identity.provider,
+              avatarUrl: identity.identity_data?.avatar_url
+            })) || [],
+          };
+          
+          setUser(formattedUser);
         }
-        setLoading(false);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
       }
-    );
-
+      
+      setIsLoading(false);
+    });
+    
+    // Clean up the listener on unmount
     return () => {
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []);
 
-  const signInWithGithub = async () => {
+  const handleSignOut = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: 'Sign in failed',
-        description: error.message || 'An error occurred during sign in.',
-        variant: 'destructive',
-      });
+      await signOut();
+      setUser(null);
+      // Navigate to sign-in page after sign out
+      navigate('/sign-in');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: 'Sign in failed',
-        description: error.message || 'An error occurred during sign in.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signInWithMicrosoft = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'azure',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: 'Sign in failed',
-        description: error.message || 'An error occurred during sign in.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: 'Sign out failed',
-        description: error.message || 'An error occurred during sign out.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateUser = (data: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...data });
+      setIsLoading(false);
     }
   };
 
   const value = {
     user,
-    loading,
-    signInWithGithub,
-    signInWithGoogle,
-    signInWithMicrosoft,
-    signOut,
-    updateUser,
+    isAuthenticated: !!user,
+    isLoading,
+    signOut: handleSignOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

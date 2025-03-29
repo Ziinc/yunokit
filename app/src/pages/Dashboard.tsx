@@ -1,42 +1,76 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NewContentDialog } from "@/components/Content/NewContentDialog";
 import { Badge } from "@/components/ui/badge";
-import { mockContentItems, exampleSchemas } from "@/lib/contentSchema";
+import { ContentApi } from "@/lib/api";
+import { ContentItem } from "@/lib/contentSchema";
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
+import { toast } from "@/hooks/use-toast";
 
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<"ecommerce" | "blogging" | "tutorials" | null>(null);
+  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [schemas, setSchemas] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  // Track approval state by item id instead of a single global state
+  const [approvingItems, setApprovingItems] = useState<Record<string, boolean>>({});
+
+  // Load content items and schemas
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const items = await ContentApi.getContentItems();
+        const schemaData = await ContentApi.getSchemas();
+        setContentItems(items);
+        setSchemas(schemaData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   // Filter content by status
-  const publishedContent = mockContentItems
+  const publishedContent = contentItems
     .filter(item => item.status === 'published')
     .sort((a, b) => new Date(b.publishedAt || b.updatedAt).getTime() - new Date(a.publishedAt || a.updatedAt).getTime())
     .slice(0, 5);
   
-  const draftContent = mockContentItems
+  const draftContent = contentItems
     .filter(item => item.status === 'draft')
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
   
-  const pendingReviewContent = mockContentItems
+  const pendingReviewContent = contentItems
     .filter(item => item.status === 'pending_review')
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
   
   // Get most recently edited content
-  const recentlyEditedContent = [...mockContentItems]
+  const recentlyEditedContent = [...contentItems]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
 
   // Find schema name
   const getSchemaName = (schemaId: string) => {
-    const schema = exampleSchemas.find(s => s.id === schemaId);
+    const schema = schemas.find(s => s.id === schemaId);
     return schema?.name || schemaId;
+  };
+
+  // Helper function to extract author name from email or use a default
+  const getAuthorName = (item: ContentItem) => {
+    if (item.author?.name) return item.author.name;
+    if (item.updatedBy) return item.updatedBy.split('@')[0];
+    if (item.createdBy) return item.createdBy.split('@')[0];
+    return 'Unknown';
   };
 
   // Handle template selection
@@ -45,15 +79,70 @@ const Dashboard: React.FC = () => {
     setQuickstartDialogOpen(true);
   };
 
+  // Handle approval of content item
+  const handleApproveContent = async (item: ContentItem) => {
+    try {
+      // Set approving state for this specific item only
+      setApprovingItems(prev => ({ ...prev, [item.id]: true }));
+      
+      // Get the current timestamp
+      const now = new Date().toISOString();
+      
+      // Update the content item with approved status and publish it
+      const updatedItem: ContentItem = {
+        ...item,
+        status: 'published',
+        updatedAt: now,
+        publishedAt: now,
+        publishedBy: 'Current User', // In a real app, get this from auth context
+        reviewStatus: 'approved',
+        reviewedAt: now,
+        reviewedBy: 'Current User', // In a real app, get this from auth context
+        reviewComments: 'Approved for publishing'
+      };
+      
+      await ContentApi.saveContentItem(updatedItem);
+      
+      // Update the local state to remove the approved item from the list
+      setContentItems(prevItems => 
+        prevItems.map(prevItem => 
+          prevItem.id === item.id ? updatedItem : prevItem
+        )
+      );
+      
+      toast({
+        title: "Content approved",
+        description: `"${item.title}" has been approved and published.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error approving content:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve content. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      // Clear approving state for this specific item
+      setApprovingItems(prev => {
+        const newState = { ...prev };
+        delete newState[item.id];
+        return newState;
+      });
+    }
+  };
+
   // Render content list item
-  const renderContentItem = (item: typeof mockContentItems[0], action?: React.ReactNode) => (
+  const renderContentItem = (item: ContentItem) => (
     <div className="flex items-center justify-between py-3 group border-b last:border-0">
       <div className="flex items-center gap-3">
         <FileText className="h-5 w-5 text-primary" />
         <div>
-          <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
+          <Link to={`/manager/editor/${item.schemaId}/${item.id}`} className="hover:underline">
+            <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
+          </Link>
           <p className="text-xs text-muted-foreground">
-            {getSchemaName(item.schemaId)} • Updated {new Date(item.updatedAt).toLocaleDateString()}
+            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {new Date(item.updatedAt).toLocaleDateString()}
           </p>
         </div>
       </div>
@@ -65,43 +154,81 @@ const Dashboard: React.FC = () => {
         {item.status === 'published' && (
           <Badge variant="default" className="bg-green-100 text-green-800">Published</Badge>
         )}
-        {action || (
-          <Link to={`/content/${item.schemaId}/${item.id}`}>
-            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </Link>
-        )}
       </div>
     </div>
+  );
+
+  // Special render function for approval requests without status badge
+  const renderApprovalItem = (item: ContentItem) => (
+    <div className="flex items-center justify-between py-3 group border-b last:border-0">
+      <div className="flex items-center gap-3">
+        <FileText className="h-5 w-5 text-primary" />
+        <div>
+          <Link to={`/manager/editor/${item.schemaId}/${item.id}`} className="hover:underline">
+            <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {new Date(item.updatedAt).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button 
+          size="sm" 
+          className="bg-green-600 hover:bg-green-700" 
+          onClick={() => handleApproveContent(item)}
+          disabled={!!approvingItems[item.id]}
+        >
+          {approvingItems[item.id] ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Approving...
+            </>
+          ) : (
+            'Approve'
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Loading placeholder
+  const renderLoadingPlaceholder = () => (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+      <p>Loading content...</p>
+    </div>
+  );
+
+  // Empty state
+  const renderEmptyState = (message: string) => (
+    <p className="py-3 text-center text-sm text-muted-foreground">{message}</p>
   );
 
   return (
     <div className="space-y-6 max-w-full">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <NewContentDialog>
-          <Button className="gap-2">
-            <Plus size={18} />
-            <span>Create Content</span>
-          </Button>
-        </NewContentDialog>
       </div>
 
       {/* Quickstart Templates Section */}
       <Card className="w-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Quickstart Templates</CardTitle>
-          <CardDescription>
-            Get started quickly with pre-built content schemas for common use cases
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <img src="/supacontent-icon-fill.png" alt="SupaContent" className="w-8 h-8" />
+            <div>
+              <CardTitle className="text-lg">Quickstart Templates</CardTitle>
+              <CardDescription>
+                Get started quickly with pre-built content schemas for common use cases
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
               <CardHeader className="p-4">
-                <ShoppingBag className="h-8 w-8 text-cms-purple mb-2" />
+                <ShoppingBag className="h-12 w-12 text-cms-purple mb-3" />
                 <CardTitle className="text-base group-hover:text-primary transition-colors">E-commerce</CardTitle>
                 <CardDescription className="text-xs">
                   Products, categories, orders, and customers
@@ -113,7 +240,7 @@ const Dashboard: React.FC = () => {
                   className="w-full justify-between group-hover:text-primary" 
                   onClick={() => handleSelectTemplate("ecommerce")}
                 >
-                  <span>Get Started</span>
+                  <span>Use Template</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardFooter>
@@ -121,7 +248,7 @@ const Dashboard: React.FC = () => {
 
             <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
               <CardHeader className="p-4">
-                <BookOpen className="h-8 w-8 text-cms-blue mb-2" />
+                <BookOpen className="h-12 w-12 text-cms-blue mb-3" />
                 <CardTitle className="text-base group-hover:text-primary transition-colors">Blogging</CardTitle>
                 <CardDescription className="text-xs">
                   Posts, authors, categories, and comments
@@ -133,7 +260,7 @@ const Dashboard: React.FC = () => {
                   className="w-full justify-between group-hover:text-primary" 
                   onClick={() => handleSelectTemplate("blogging")}
                 >
-                  <span>Get Started</span>
+                  <span>Use Template</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardFooter>
@@ -141,7 +268,7 @@ const Dashboard: React.FC = () => {
 
             <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
               <CardHeader className="p-4">
-                <GraduationCap className="h-8 w-8 text-cms-orange mb-2" />
+                <GraduationCap className="h-12 w-12 text-cms-orange mb-3" />
                 <CardTitle className="text-base group-hover:text-primary transition-colors">Tutorials</CardTitle>
                 <CardDescription className="text-xs">
                   Courses, lessons, quizzes, and students
@@ -153,7 +280,7 @@ const Dashboard: React.FC = () => {
                   className="w-full justify-between group-hover:text-primary" 
                   onClick={() => handleSelectTemplate("tutorials")}
                 >
-                  <span>Get Started</span>
+                  <span>Use Template</span>
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </CardFooter>
@@ -185,12 +312,12 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="px-6">
               <div className="divide-y">
-                {recentlyEditedContent.length > 0 ? (
+                {isLoading ? (
+                  renderLoadingPlaceholder()
+                ) : recentlyEditedContent.length > 0 ? (
                   recentlyEditedContent.map(item => renderContentItem(item))
                 ) : (
-                  <p className="py-3 text-center text-sm text-muted-foreground">
-                    No recently edited content
-                  </p>
+                  renderEmptyState("No recently edited content")
                 )}
               </div>
             </CardContent>
@@ -217,12 +344,12 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="px-6">
               <div className="divide-y">
-                {draftContent.length > 0 ? (
+                {isLoading ? (
+                  renderLoadingPlaceholder()
+                ) : draftContent.length > 0 ? (
                   draftContent.map(item => renderContentItem(item))
                 ) : (
-                  <p className="py-3 text-center text-sm text-muted-foreground">
-                    No draft content
-                  </p>
+                  renderEmptyState("No draft content")
                 )}
               </div>
             </CardContent>
@@ -249,12 +376,12 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="px-6">
               <div className="divide-y">
-                {publishedContent.length > 0 ? (
+                {isLoading ? (
+                  renderLoadingPlaceholder()
+                ) : publishedContent.length > 0 ? (
                   publishedContent.map(item => renderContentItem(item))
                 ) : (
-                  <p className="py-3 text-center text-sm text-muted-foreground">
-                    No published content
-                  </p>
+                  renderEmptyState("No published content")
                 )}
               </div>
             </CardContent>
@@ -283,21 +410,12 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="px-6">
               <div className="divide-y">
-                {pendingReviewContent.length > 0 ? (
-                  pendingReviewContent.map(item => (
-                    renderContentItem(item, (
-                      <div className="flex gap-2">
-                        <Link to={`/manager/editor/${item.schemaId}/${item.id}`}>
-                          <Button variant="outline" size="sm">View Changes</Button>
-                        </Link>
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700">Approve</Button>
-                      </div>
-                    ))
-                  ))
+                {isLoading ? (
+                  renderLoadingPlaceholder()
+                ) : pendingReviewContent.length > 0 ? (
+                  pendingReviewContent.map(item => renderApprovalItem(item))
                 ) : (
-                  <p className="py-3 text-center text-sm text-muted-foreground">
-                    No content waiting for review
-                  </p>
+                  renderEmptyState("No content waiting for review")
                 )}
               </div>
             </CardContent>

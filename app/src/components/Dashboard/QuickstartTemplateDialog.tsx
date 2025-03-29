@@ -1,11 +1,11 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, BookOpen, GraduationCap, Check } from "lucide-react";
+import { ShoppingBag, BookOpen, GraduationCap, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TemplateService, TemplateType } from "@/lib/api/TemplateService";
 
 interface QuickstartTemplateDialogProps {
   open: boolean;
@@ -20,71 +20,54 @@ export const QuickstartTemplateDialog: React.FC<QuickstartTemplateDialogProps> =
 }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   
   if (!templateType) return null;
   
-  const getTemplateInfo = () => {
-    switch (templateType) {
+  const getTemplateIcon = (type: TemplateType) => {
+    switch (type) {
       case "ecommerce":
-        return {
-          title: "E-commerce Template",
-          description: "Create a complete e-commerce content structure with products, categories, orders, and customers.",
-          icon: <ShoppingBag className="h-6 w-6 text-cms-purple" />,
-          features: [
-            "Product catalog with variants",
-            "Product categories and tags",
-            "Customer profiles",
-            "Order management",
-            "Shopping cart"
-          ]
-        };
+        return <ShoppingBag className="h-6 w-6 text-cms-purple" />;
       case "blogging":
-        return {
-          title: "Blogging Template",
-          description: "Set up a complete blog with posts, categories, authors, and comments.",
-          icon: <BookOpen className="h-6 w-6 text-cms-blue" />,
-          features: [
-            "Blog posts with rich text editing",
-            "Author profiles",
-            "Categories and tags",
-            "Comments system",
-            "Featured posts"
-          ]
-        };
+        return <BookOpen className="h-6 w-6 text-cms-blue" />;
       case "tutorials":
-        return {
-          title: "Tutorials Platform Template",
-          description: "Create educational content with courses, lessons, quizzes, and student tracking.",
-          icon: <GraduationCap className="h-6 w-6 text-cms-orange" />,
-          features: [
-            "Course structure with modules",
-            "Video and text lessons",
-            "Quizzes and assessments",
-            "Student progress tracking",
-            "Certificate generation"
-          ]
-        };
+        return <GraduationCap className="h-6 w-6 text-cms-orange" />;
     }
   };
   
-  const handleCreate = () => {
-    // In a real implementation, this would create the actual content schemas
-    toast({
-      title: "Template installed",
-      description: `The ${templateType} template has been added to your workspace`,
-    });
-    
-    onOpenChange(false);
-    navigate("/schemas");
+  const handleCreateTemplate = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Apply the template
+      await TemplateService.applyTemplate(templateType);
+      
+      toast({
+        title: "Template installed",
+        description: `The ${templateType} template has been added to your workspace`,
+      });
+      
+      setIsLoading(false);
+      onOpenChange(false);
+      navigate("/manager");
+    } catch (error) {
+      console.error("Error creating template:", error);
+      toast({
+        title: "Error creating template",
+        description: "There was an error creating the template. Please try again.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
   };
   
-  const templateInfo = getTemplateInfo();
+  const templateInfo = TemplateService.getTemplateInfo(templateType);
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={isLoading ? undefined : onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex-row items-center gap-4 mb-4">
-          {templateInfo.icon}
+          {getTemplateIcon(templateType)}
           <div>
             <DialogTitle>{templateInfo.title}</DialogTitle>
             <DialogDescription className="mt-1">
@@ -105,7 +88,7 @@ export const QuickstartTemplateDialog: React.FC<QuickstartTemplateDialogProps> =
             <ul className="space-y-2">
               {templateInfo.features.map((feature, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span>{feature}</span>
                 </li>
               ))}
@@ -114,11 +97,25 @@ export const QuickstartTemplateDialog: React.FC<QuickstartTemplateDialogProps> =
         </div>
         
         <DialogFooter className="flex justify-between sm:justify-between mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleCreate}>
-            Create Template
+          <Button 
+            onClick={handleCreateTemplate}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              'Use Template'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,26 +1,21 @@
-
-import React, { useState } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { 
   FileText, 
   Home,
   Settings,
-  Sparkles,
   Database,
   Image,
   Code,
   BookOpen,
-  CreditCard,
   MessageCircle,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface SidebarProps {
-  isOpen: boolean;
-}
+interface SidebarProps {}
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+export const Sidebar: React.FC<SidebarProps> = () => {
   const location = useLocation();
   
   const navItems = [
@@ -33,25 +28,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   ];
 
   return (
-    <aside 
-      className={cn(
-        "sidebar bg-sidebar h-screen border-r border-border transition-all duration-300 flex flex-col",
-        isOpen ? "w-64" : "w-20"
-      )}
-    >
-      <div className="p-4 flex items-center justify-center h-16 border-b border-border">
-        <div className={cn("flex items-center gap-2", !isOpen && "justify-center")}>
-          <div className="p-1.5 rounded-md bg-gradient-to-br from-cms-purple to-cms-blue animate-pulse-gentle">
-            <Sparkles className="h-5 w-5 text-white" />
+    <aside className="sidebar bg-sidebar h-screen border-r border-border w-56 flex flex-col">
+      <div className="p-4 flex items-center h-16 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6">
+            <img src="/supacontent-logo.png" alt="SupaContent" className="w-full h-full" />
           </div>
-          {isOpen && <span className="font-bold text-lg">SupaContent</span>}
+          <span className="font-bold text-lg">SupaContent</span>
         </div>
       </div>
 
       {/* Workspace selector */}
-      <div className={cn("px-4 py-3 border-b border-border", !isOpen && "px-2")}>
+      <div className="px-4 py-3 border-b border-border">
         <Select defaultValue="primary">
-          <SelectTrigger className={cn("w-full", !isOpen && "hidden")}>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select workspace" />
           </SelectTrigger>
           <SelectContent>
@@ -71,15 +61,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 "group flex items-center gap-3 px-4 py-2.5 mx-2 rounded-md transition-colors",
                 location.pathname === item.path 
                   ? "bg-primary text-primary-foreground" 
-                  : "hover:bg-accent text-foreground hover:text-accent-foreground",
-                !isOpen && "justify-center px-2"
+                  : "hover:bg-accent text-foreground hover:text-accent-foreground"
               )}
             >
               <span className="fun-icon">{item.icon}</span>
-              {isOpen && <span>{item.name}</span>}
+              <span>{item.name}</span>
             </Link>
-            
-
           </React.Fragment>
         ))}
       </nav>
@@ -87,23 +74,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       <div className="p-4 border-t border-border flex flex-col gap-2">
         <Link 
           to="/documentation"
-          className={cn(
-            "flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors hover:bg-accent text-foreground",
-            !isOpen && "justify-center px-2"
-          )}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors hover:bg-accent text-foreground"
         >
           <BookOpen size={20} className="fun-icon" />
-          {isOpen && <span>Documentation</span>}
+          <span>Documentation</span>
         </Link>
         <Link 
           to="/settings"
-          className={cn(
-            "flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors hover:bg-accent text-foreground",
-            !isOpen && "justify-center px-2"
-          )}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors hover:bg-accent text-foreground"
         >
           <Settings size={20} className="fun-icon" />
-          {isOpen && <span>Settings</span>}
+          <span>Settings</span>
         </Link>
       </div>
     </aside>

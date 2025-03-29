@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ContentItem } from "@/lib/contentSchema";
-import { mockContentItems, contentSchemas } from "@/lib/mocks";
+import { ContentItem, ContentSchema } from "@/lib/contentSchema";
+import { ContentApi } from "@/lib/api";
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
 import { ContentTable } from "@/components/Content/ContentList/ContentTable";
@@ -9,12 +9,16 @@ import { ContentPagination } from "@/components/Content/ContentList/ContentPagin
 import { getUniqueAuthors, paginateItems } from "@/components/Content/ContentList/utils";
 import { SortSelect, SortOption } from "@/components/Content/ContentList/SortSelect";
 import { ResultsBar } from "@/components/Content/ContentList/ResultsBar";
+import { Loader2 } from "lucide-react";
 
 const ContentManagerPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState(1);
-  const [items, setItems] = useState<ContentItem[]>(mockContentItems);
+  const [allItems, setAllItems] = useState<ContentItem[]>([]);
+  const [items, setItems] = useState<ContentItem[]>([]);
+  const [schemas, setSchemas] = useState<ContentSchema[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("title");
   const [filterValues, setFilterValues] = useState<FilterValues>({
@@ -26,8 +30,30 @@ const ContentManagerPage: React.FC = () => {
     perPage: 10,
   });
   
+  // Load data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const contentItems = await ContentApi.getContentItems();
+        const schemaData = await ContentApi.getSchemas();
+        setAllItems(contentItems);
+        setSchemas(schemaData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+  
   // Parse and apply filters from URL query parameters
   useEffect(() => {
+    // Skip if data isn't loaded yet
+    if (isLoading || allItems.length === 0) return;
+    
     const queryParams = new URLSearchParams(location.search);
     
     // Get and validate status from URL
@@ -63,15 +89,15 @@ const ContentManagerPage: React.FC = () => {
     
     // Apply the filters from URL
     applyFilters(initialFilters, sort);
-  }, [location.search]);
+  }, [location.search, isLoading, allItems]);
   
   const totalItems = items.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const uniqueAuthors = getUniqueAuthors(mockContentItems);
+  const uniqueAuthors = getUniqueAuthors(allItems);
   const displayedItems = paginateItems(items, currentPage, itemsPerPage);
   
   const applyFilters = (values: FilterValues, sortBy?: string | null) => {
-    let filteredItems = [...mockContentItems];
+    let filteredItems = [...allItems];
     
     if (values.schemaId && values.schemaId !== "all") {
       filteredItems = filteredItems.filter(item => item.schemaId === values.schemaId);
@@ -153,7 +179,7 @@ const ContentManagerPage: React.FC = () => {
     
     setFilterValues(defaultValues);
     setSortField("title");
-    setItems(mockContentItems);
+    setItems(allItems);
     setCurrentPage(1);
     setItemsPerPage(10);
     
@@ -199,7 +225,7 @@ const ContentManagerPage: React.FC = () => {
     <div className="space-y-6">
       <ContentListHeader 
         handleCreateNew={handleCreateNew}
-        schemas={contentSchemas} 
+        schemas={schemas} 
       />
       
       <div className="rounded-md border bg-white">
@@ -207,7 +233,7 @@ const ContentManagerPage: React.FC = () => {
           <FilterForm
             onSubmitFilters={onSubmitFilters}
             resetFilters={resetFilters}
-            schemas={contentSchemas}
+            schemas={schemas}
             uniqueAuthors={uniqueAuthors}
             initialValues={filterValues}
           />
@@ -220,16 +246,23 @@ const ContentManagerPage: React.FC = () => {
           sortOptions={sortOptions}
         />
         
-        <ContentTable 
-          items={displayedItems}
-          schemas={contentSchemas}
-          onRowClick={handleRowClick}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={setItemsPerPage}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+            <p className="text-lg">Loading content...</p>
+          </div>
+        ) : (
+          <ContentTable 
+            items={displayedItems}
+            schemas={schemas}
+            onRowClick={handleRowClick}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
+        )}
       </div>
     </div>
   );

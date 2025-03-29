@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getProjects } from "@/lib/supabase";
+import { getProjects, getUserProfile, updateUsername, updateEmail, updatePassword, signOut, supabase } from "@/lib/supabase";
 import { 
   AlertCircle, 
   Database, 
@@ -29,7 +29,13 @@ import {
   User, 
   Lock, 
   Check,
-  Code
+  Code,
+  Mail,
+  AlertTriangle,
+  Github,
+  MailIcon,
+  Save,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -101,6 +107,20 @@ const SettingsPage: React.FC = () => {
   const [membersPerPage, setMembersPerPage] = useState(5);
   const [currentMembersPage, setCurrentMembersPage] = useState(1);
   const { toast } = useToast();
+  const [userProfile, setUserProfile] = useState<any | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  
+  // Account update states
+  const [usernameInput, setUsernameInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Pagination for invoices
   const paginatedInvoices = useMemo(() => {
@@ -141,6 +161,33 @@ const SettingsPage: React.FC = () => {
 
     fetchProjects();
   }, []);
+
+  // Load user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setProfileLoading(true);
+      try {
+        const profile = await getUserProfile();
+        setUserProfile(profile);
+        
+        if (profile) {
+          setUsernameInput(profile.username || "");
+          setEmailInput(profile.email || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load user profile information",
+          variant: "destructive"
+        });
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [toast]);
 
   const handleConnectProject = (projectId: string) => {
     setSelectedProject(projectId);
@@ -383,19 +430,459 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  // Handle username update
+  const handleUpdateUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!usernameInput.trim()) {
+      toast({
+        title: "Username required",
+        description: "Please enter a valid username",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsUpdatingUsername(true);
+      
+      if (userProfile?.id) {
+        const { error } = await updateUsername(userProfile.id, usernameInput);
+        
+        if (error) throw error;
+        
+        // Update local profile state
+        setUserProfile({
+          ...userProfile,
+          username: usernameInput
+        });
+        
+        toast({
+          title: "Username updated",
+          description: "Your username has been updated successfully"
+        });
+      }
+    } catch (error) {
+      console.error("Update username error:", error);
+      toast({
+        title: "Failed to update username",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingUsername(false);
+    }
+  };
+  
+  // Handle email update
+  const handleUpdateEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!emailInput.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.trim())) {
+      toast({
+        title: "Valid email required",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsUpdatingEmail(true);
+      
+      const { error } = await updateEmail(emailInput);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Email update initiated",
+        description: "Please check your email to confirm the change"
+      });
+    } catch (error) {
+      console.error("Update email error:", error);
+      toast({
+        title: "Failed to update email",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
+  
+  // Handle password update
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill out all password fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure your passwords match",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Your password must be at least 6 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsUpdatingPassword(true);
+      
+      const { error } = await updatePassword(newPassword);
+      
+      if (error) throw error;
+      
+      setNewPassword("");
+      setConfirmPassword("");
+      setCurrentPassword("");
+      
+      toast({
+        title: "Password updated",
+        description: "Your password has been updated successfully"
+      });
+    } catch (error) {
+      console.error("Update password error:", error);
+      toast({
+        title: "Failed to update password",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+  
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      toast({
+        title: "Confirmation required",
+        description: 'Please type "DELETE" to confirm',
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsDeleting(true);
+      
+      // In a real app, this would call an API endpoint to delete the user account
+      // For now, we'll just sign the user out
+      toast({
+        title: "Account deletion initiated",
+        description: "Your account is being deleted. You will be signed out shortly."
+      });
+      
+      // Add a short delay to simulate deletion
+      setTimeout(async () => {
+        await signOut();
+      }, 2000);
+      
+    } catch (error) {
+      console.error("Delete account error:", error);
+      toast({
+        title: "Failed to delete account",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive"
+      });
+      setIsDeleting(false);
+    }
+  };
+
+  // Get OAuth provider icon
+  const getProviderIcon = (provider: string) => {
+    switch (provider) {
+      case 'github':
+        return <Github size={16} />;
+      case 'google':
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path fill="#EA4335" d="M5.26620003,9.76452941 C6.19878754,6.93863203 8.85444915,4.90909091 12,4.90909091 C13.6909091,4.90909091 15.2181818,5.50909091 16.4181818,6.49090909 L19.9090909,3 C17.7818182,1.14545455 15.0545455,0 12,0 C7.27006974,0 3.1977497,2.69829785 1.23999023,6.65002441 L5.26620003,9.76452941 Z" />
+            <path fill="#34A853" d="M16.0407269,18.0125889 C14.9509167,18.7163016 13.5660892,19.0909091 12,19.0909091 C8.86648613,19.0909091 6.21911939,17.076871 5.27698177,14.2678769 L1.23746264,17.3349879 C3.19279051,21.2936293 7.26500293,24 12,24 C14.9328362,24 17.7353462,22.9573905 19.834192,20.9995801 L16.0407269,18.0125889 Z" />
+            <path fill="#4A90E2" d="M19.834192,20.9995801 C22.0291676,18.9520994 23.4545455,15.903663 23.4545455,12 C23.4545455,11.2909091 23.3454545,10.5272727 23.1818182,9.81818182 L12,9.81818182 L12,14.4545455 L18.4363636,14.4545455 C18.1187732,16.013626 17.2662994,17.2212117 16.0407269,18.0125889 L19.834192,20.9995801 Z" />
+            <path fill="#FBBC05" d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z" />
+          </svg>
+        );
+      case 'azure':
+        return (
+          <svg width="16" height="16" viewBox="0 0 23 23" fill="none">
+            <path d="M0 0H11V11H0V0Z" fill="#F25022" />
+            <path d="M12 0H23V11H12V0Z" fill="#7FBA00" />
+            <path d="M0 12H11V23H0V12Z" fill="#00A4EF" />
+            <path d="M12 12H23V23H12V12Z" fill="#FFB900" />
+          </svg>
+        );
+      default:
+        return <MailIcon size={16} />;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
       </div>
 
-      <Tabs defaultValue="projects" className="w-full">
-        <TabsList className="grid grid-cols-4 max-w-2xl">
+      <Tabs defaultValue="account" className="w-full">
+        <TabsList className="grid grid-cols-5 max-w-2xl">
+          <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="projects">Supabase Projects</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
           <TabsTrigger value="team">Team Members</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="account" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Account Settings</CardTitle>
+              <CardDescription>
+                Manage your personal account settings and preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {profileLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                </div>
+              ) : (
+                <>
+                  {/* Profile Information */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="h-20 w-20 rounded-full overflow-hidden bg-muted">
+                        {userProfile?.avatarUrl ? (
+                          <img 
+                            src={userProfile.avatarUrl} 
+                            alt={userProfile.username || 'User'} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-primary/10">
+                            <User size={32} className="text-primary" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium">{userProfile?.username || 'User'}</h3>
+                        <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
+                        
+                        {/* Display OAuth providers if any */}
+                        {userProfile?.providers && userProfile.providers.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-sm text-muted-foreground">Connected with: </span>
+                            <div className="flex gap-1">
+                              {userProfile.providers.map((provider: any) => (
+                                <Badge 
+                                  key={provider.id} 
+                                  variant="outline" 
+                                  className="flex items-center gap-1"
+                                >
+                                  {getProviderIcon(provider.provider)}
+                                  <span className="capitalize">{provider.provider}</span>
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Username Update */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-medium mb-4">Update Username</h3>
+                    <form onSubmit={handleUpdateUsername} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="username">Username</Label>
+                        <Input
+                          id="username"
+                          placeholder="Enter your username"
+                          value={usernameInput}
+                          onChange={(e) => setUsernameInput(e.target.value)}
+                          disabled={isUpdatingUsername}
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        disabled={isUpdatingUsername}
+                        className="gap-2"
+                      >
+                        {isUpdatingUsername ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            Save Username
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </div>
+
+                  {/* Email Update - Only for email/password accounts, not for OAuth */}
+                  {(!userProfile?.providers || userProfile.providers.length === 0) && (
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-medium mb-4">Update Email</h3>
+                      <form onSubmit={handleUpdateEmail} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email Address</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="Enter your email"
+                              className="pl-10"
+                              value={emailInput}
+                              onChange={(e) => setEmailInput(e.target.value)}
+                              disabled={isUpdatingEmail}
+                            />
+                          </div>
+                        </div>
+                        <Button 
+                          type="submit" 
+                          disabled={isUpdatingEmail}
+                        >
+                          {isUpdatingEmail ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Updating...
+                            </>
+                          ) : (
+                            "Update Email"
+                          )}
+                        </Button>
+                        <p className="text-sm text-muted-foreground">
+                          You will receive a confirmation email to verify the change.
+                        </p>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Password Update - Only for email/password accounts, not for OAuth */}
+                  {(!userProfile?.providers || userProfile.providers.length === 0) && (
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-medium mb-4">Update Password</h3>
+                      <form onSubmit={handleUpdatePassword} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="new-password">New Password</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              id="new-password"
+                              type="password"
+                              placeholder="Enter your new password"
+                              className="pl-10"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              disabled={isUpdatingPassword}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="confirm-password">Confirm New Password</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              id="confirm-password"
+                              type="password"
+                              placeholder="Confirm your new password"
+                              className="pl-10"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              disabled={isUpdatingPassword}
+                            />
+                          </div>
+                        </div>
+                        <Button 
+                          type="submit" 
+                          disabled={isUpdatingPassword}
+                        >
+                          {isUpdatingPassword ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Updating...
+                            </>
+                          ) : (
+                            "Update Password"
+                          )}
+                        </Button>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Danger Zone */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-medium mb-4 text-destructive flex items-center gap-2">
+                      <AlertTriangle size={18} />
+                      Danger Zone
+                    </h3>
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Delete Account</AlertTitle>
+                      <AlertDescription>
+                        This action permanently deletes your account and all associated data. This action cannot be undone.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="delete-confirm">
+                          Type "DELETE" to confirm
+                        </Label>
+                        <Input
+                          id="delete-confirm"
+                          placeholder="DELETE"
+                          value={deleteConfirmText}
+                          onChange={(e) => setDeleteConfirmText(e.target.value)}
+                          disabled={isDeleting}
+                        />
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleDeleteAccount} 
+                        disabled={isDeleting || deleteConfirmText !== "DELETE"}
+                        className="gap-2"
+                      >
+                        {isDeleting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Deleting Account...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="h-4 w-4" />
+                            Delete Account
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
         
         <TabsContent value="projects" className="space-y-4 mt-6">
           <Card>

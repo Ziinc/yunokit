@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,8 @@ import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import AssetsLibraryPage from "./pages/AssetsLibraryPage";
 import SignInPage from "./pages/SignInPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DeveloperPage from "./pages/DeveloperPage";
 import DocumentationPage from "./pages/DocumentationPage";
 import ContentSearchPage from "./pages/ContentSearchPage";
@@ -22,44 +25,70 @@ import CommentsPage from "./pages/CommentsPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
+import { initializeApiStorage } from "@/lib/api";
+import { ThemeProvider } from "@/components/theme-provider";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Load markdown-it for the markdown editor
 import "./utils/markdownIt";
 
+const App = () => {
+  // Initialize API storage on app start
+  useEffect(() => {
+    const init = async () => {
+      await initializeApiStorage();
+    };
+    
+    init();
+  }, []);
 
-const App = () => (
-    <AuthProvider>
-      <SearchProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/manager" element={<ContentManagerPage />} />
-                <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
-                <Route path="/manager/json" element={<JsonEditorPage />} />
-                <Route path="/manager/block" element={<BlockEditorPage />} />
-                <Route path="/manager/editor/:schemaId/:contentId" element={<ContentItemPage />} />
-                <Route path="/builder" element={<ContentSchemaBuilderPage />} />
-                <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/library" element={<AssetsLibraryPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/developer/*" element={<DeveloperPage />} />
-                <Route path="/documentation" element={<DocumentationPage />} />
-                <Route path="/search" element={<ContentSearchPage />} />
-                <Route path="/comments" element={<CommentsPage />} />
-              </Route>
-              <Route path="/signin" element={<SignInPage />} />
-              <Route path="/auth/callback" element={<Navigate to="/profile" />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </SearchProvider>
-    </AuthProvider>
-);
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <BrowserRouter>
+        <AuthProvider>
+          <SearchProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/sign-in" element={<SignInPage />} />
+                <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+                <Route path="*" element={<NotFound />} />
+                
+                {/* Protected Routes */}
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route index element={<Index />} />
+                  <Route path="/manager" element={<ContentManagerPage />} />
+                  <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
+                  <Route path="/manager/json" element={<JsonEditorPage />} />
+                  <Route path="/manager/block" element={<BlockEditorPage />} />
+                  <Route path="/manager/editor/:schemaId/:contentId" element={<ContentItemPage />} />
+                  <Route path="/builder" element={<ContentSchemaBuilderPage />} />
+                  <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/library" element={<AssetsLibraryPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/developer/*" element={<DeveloperPage />} />
+                  <Route path="/documentation" element={<DocumentationPage />} />
+                  <Route path="/search" element={<ContentSearchPage />} />
+                  <Route path="/comments" element={<CommentsPage />} />
+                </Route>
+                
+                {/* Redirect older routes */}
+                <Route path="/signin" element={<Navigate to="/sign-in" replace />} />
+              </Routes>
+            </TooltipProvider>
+          </SearchProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+};
 
 export default App;

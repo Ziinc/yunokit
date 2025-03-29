@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -10,9 +9,13 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
   : {
       auth: {
         signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('Supabase credentials missing') }),
+        signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase credentials missing') }),
+        signUp: () => Promise.resolve({ data: null, error: new Error('Supabase credentials missing') }),
+        resetPasswordForEmail: () => Promise.resolve({ data: null, error: new Error('Supabase credentials missing') }),
+        updateUser: () => Promise.resolve({ data: null, error: new Error('Supabase credentials missing') }),
         signOut: () => Promise.resolve({ error: null }),
-        getSession: () => Promise.resolve({ data: { session: null } }),
-        getUser: () => Promise.resolve({ data: { user: null } }),
+        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
       },
       from: () => ({
@@ -139,4 +142,60 @@ export const getProjects = async () => {
       { id: 'proj3', name: 'Development', region: 'ap-southeast-1', isConnected: false }
     ]
   };
+};
+
+// Email/password authentication
+export const signInWithEmail = async (email: string, password: string) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { data: null, error: new Error('Supabase credentials missing') };
+  }
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  return { data, error };
+};
+
+export const signUpWithEmail = async (email: string, password: string) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { data: null, error: new Error('Supabase credentials missing') };
+  }
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback`
+    }
+  });
+  return { data, error };
+};
+
+export const resetPassword = async (email: string) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { data: null, error: new Error('Supabase credentials missing') };
+  }
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/auth/reset-password`,
+  });
+  return { data, error };
+};
+
+export const updatePassword = async (newPassword: string) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { data: null, error: new Error('Supabase credentials missing') };
+  }
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword
+  });
+  return { data, error };
+};
+
+export const updateEmail = async (newEmail: string) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { data: null, error: new Error('Supabase credentials missing') };
+  }
+  const { data, error } = await supabase.auth.updateUser({
+    email: newEmail
+  });
+  return { data, error };
 };

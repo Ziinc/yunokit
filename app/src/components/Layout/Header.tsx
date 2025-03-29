@@ -45,6 +45,11 @@ export const Header: React.FC = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    // Navigation is handled in the AuthContext signOut method
+  };
+
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm h-16 flex items-center px-4 sticky top-0 z-10">
 
@@ -96,24 +101,21 @@ export const Header: React.FC = () => {
                 <Link to="/profile">
                   <Button variant="ghost" className="w-full justify-start" size="sm">Profile</Button>
                 </Link>
-                <Link to="/settings">
-                  <Button variant="ghost" className="w-full justify-start" size="sm">Settings</Button>
-                </Link>
                 {user ? (
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-destructive" 
                     size="sm"
-                    onClick={() => signOut()}
+                    onClick={handleSignOut}
                   >
-                    Logout
+                    Sign Out
                   </Button>
                 ) : (
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-primary" 
                     size="sm"
-                    onClick={() => navigate('/signin')}
+                    onClick={() => navigate('/sign-in')}
                   >
                     Sign In
                   </Button>
