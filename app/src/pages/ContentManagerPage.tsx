@@ -203,7 +203,7 @@ const ContentManagerPage: React.FC = () => {
         schemas={contentSchemas} 
       />
       
-      <div className="rounded-md border">
+      <div className="rounded-md border bg-white">
         <div className="px-3 py-3 bg-muted/20">
           <FilterForm
             onSubmitFilters={onSubmitFilters}
