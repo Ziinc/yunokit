@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Image, Upload, FileImage, PlusCircle, Search, Trash2, Edit, Plus, X, Info } from "lucide-react";
 import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
+import { DocsButton } from "@/components/ui/DocsButton";
 
 // Mock data for assets - this would come from Supabase in a real app
 const mockAssets = [
@@ -172,7 +173,10 @@ const AssetsLibraryPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Assets Library</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight">Assets Library</h1>
+          <DocsButton href="https://docs.supacontent.tznc.net/assets" />
+        </div>
         <Button className="gap-2" onClick={() => setUploadDialogOpen(true)}>
           <Upload size={16} />
           Upload New Asset

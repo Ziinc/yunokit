@@ -204,6 +204,131 @@ export const mockContentItems: ContentItem[] = [
       name: "Marketing Team",
       avatar: "/placeholder.svg"
     }
+  },
+  {
+    id: "6",
+    schemaId: "blog-post",
+    title: "UI Design Principles",
+    content: {
+      title: "UI Design Principles",
+      content: "# Fundamental UI Design Principles\n\nDesign systems create consistency across products and can speed up development time...",
+      featured: true,
+      category: "Design",
+      tags: ["UI/UX", "Design"]
+    },
+    data: {
+      title: "UI Design Principles",
+      content: "# Fundamental UI Design Principles\n\nDesign systems create consistency across products and can speed up development time...",
+      featured: true,
+      category: "Design",
+      tags: ["UI/UX", "Design"]
+    },
+    status: "pending_review" as ContentItemStatus,
+    createdAt: "2023-10-18T09:15:00Z",
+    updatedAt: "2023-10-18T11:30:00Z",
+    createdBy: "Sarah Johnson",
+    updatedBy: "Sarah Johnson",
+    reviewStatus: "awaiting_review",
+    reviewRequestedAt: "2023-10-18T11:35:00Z",
+    reviewRequestedBy: "Sarah Johnson",
+    // Additional fields for search page
+    type: "article",
+    lastUpdated: "2023-10-18T11:30:00Z",
+    tags: ["ui-design", "principles", "best-practices"],
+    author: {
+      name: "Sarah Johnson",
+      avatar: "/placeholder.svg"
+    },
+    comments: [
+      {
+        id: "c1",
+        contentItemId: "6",
+        userId: "user123",
+        userName: "Design Lead",
+        text: "Please add more examples in the consistency section.",
+        createdAt: "2023-10-18T12:45:00Z",
+        fieldId: "content",
+        resolved: false
+      }
+    ]
+  },
+  {
+    id: "7",
+    schemaId: "product-catalog",
+    title: "Winter Collection Preview",
+    content: {
+      name: "Winter Collection Preview",
+      details: {
+        description: "A preview of our upcoming winter fashion collection...",
+        price: 149.99,
+        inventory: 25
+      },
+      inStock: false,
+      productType: "Physical",
+      features: ["Premium", "Preview", "Limited Edition"]
+    },
+    data: {
+      name: "Winter Collection Preview",
+      details: {
+        description: "A preview of our upcoming winter fashion collection...",
+        price: 149.99,
+        inventory: 25
+      },
+      inStock: false,
+      productType: "Physical",
+      features: ["Premium", "Preview", "Limited Edition"]
+    },
+    status: "pending_review" as ContentItemStatus,
+    createdAt: "2023-10-15T14:20:00Z",
+    updatedAt: "2023-10-16T10:15:00Z",
+    createdBy: "Product Team",
+    updatedBy: "Product Team",
+    reviewStatus: "awaiting_review",
+    reviewRequestedAt: "2023-10-16T10:20:00Z",
+    reviewRequestedBy: "Product Team",
+    // Additional fields for search page
+    type: "collection",
+    lastUpdated: "2023-10-16T10:15:00Z",
+    tags: ["winter", "collection", "preview", "fashion"],
+    author: {
+      name: "Product Team",
+      avatar: "/placeholder.svg"
+    }
+  },
+  {
+    id: "8",
+    schemaId: "page-builder",
+    title: "Updated Terms of Service",
+    content: {
+      title: "Terms of Service",
+      content: "<div>Our updated terms of service details...</div>",
+      published: false,
+      layout: "Full Width",
+      components: ["Header", "Footer", "Legal Notices"]
+    },
+    data: {
+      title: "Terms of Service",
+      content: "<div>Our updated terms of service details...</div>",
+      published: false,
+      layout: "Full Width",
+      components: ["Header", "Footer", "Legal Notices"]
+    },
+    status: "pending_review" as ContentItemStatus,
+    createdAt: "2023-10-12T09:00:00Z",
+    updatedAt: "2023-10-14T16:45:00Z",
+    createdBy: "Legal Team",
+    updatedBy: "Legal Team",
+    reviewStatus: "awaiting_review",
+    reviewRequestedAt: "2023-10-14T16:50:00Z",
+    reviewRequestedBy: "Legal Team",
+    // Additional fields for search page
+    type: "page",
+    lastUpdated: "2023-10-14T16:45:00Z",
+    tags: ["legal", "terms", "updated"],
+    author: {
+      name: "Legal Team",
+      avatar: "/placeholder.svg"
+    }
   }
 ];
 

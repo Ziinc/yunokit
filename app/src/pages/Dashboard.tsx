@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NewContentDialog } from "@/components/Content/NewContentDialog";
 import { Badge } from "@/components/ui/badge";
@@ -164,14 +164,23 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="w-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5 text-primary" />
-              Last Edited
-            </CardTitle>
-            <CardDescription>
-              Recently updated content
-            </CardDescription>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock className="h-5 w-5 text-primary" />
+                Last Edited
+              </CardTitle>
+              <CardDescription>
+                Recently updated content
+              </CardDescription>
+            </div>
+            <Link 
+              to="/manager?sort=updatedAt" 
+              className="text-sm text-primary font-medium flex items-center hover:underline"
+            >
+              View more
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
           </CardHeader>
           <CardContent className="px-6">
             <div className="divide-y">
@@ -183,25 +192,27 @@ const Dashboard: React.FC = () => {
                 </p>
               )}
             </div>
-            <div className="mt-4 text-center">
-              <Link to="/schemas">
-                <Button variant="outline" size="sm">
-                  View All Content
-                </Button>
-              </Link>
-            </div>
           </CardContent>
         </Card>
 
         <Card className="w-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              Approval Requests
-            </CardTitle>
-            <CardDescription>
-              Content waiting for your review
-            </CardDescription>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                Approval Requests
+              </CardTitle>
+              <CardDescription>
+                Content waiting for your review
+              </CardDescription>
+            </div>
+            <Link 
+              to="/manager?status=pending_review" 
+              className="text-sm text-primary font-medium flex items-center hover:underline"
+            >
+              View more
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
           </CardHeader>
           <CardContent className="px-6">
             <div className="divide-y">
@@ -226,14 +237,23 @@ const Dashboard: React.FC = () => {
         </Card>
 
         <Card className="w-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              Published Content
-            </CardTitle>
-            <CardDescription>
-              Recently published content
-            </CardDescription>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Published Content
+              </CardTitle>
+              <CardDescription>
+                Recently published content
+              </CardDescription>
+            </div>
+            <Link 
+              to="/manager?status=published" 
+              className="text-sm text-primary font-medium flex items-center hover:underline"
+            >
+              View more
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
           </CardHeader>
           <CardContent className="px-6">
             <div className="divide-y">
@@ -245,25 +265,27 @@ const Dashboard: React.FC = () => {
                 </p>
               )}
             </div>
-            <div className="mt-4 text-center">
-              <Link to="/schemas">
-                <Button variant="outline" size="sm">
-                  View All Published
-                </Button>
-              </Link>
-            </div>
           </CardContent>
         </Card>
 
         <Card className="w-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
-              Draft Content
-            </CardTitle>
-            <CardDescription>
-              Content in draft stage
-            </CardDescription>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <AlertCircle className="h-5 w-5 text-amber-500" />
+                Draft Content
+              </CardTitle>
+              <CardDescription>
+                Content in draft stage
+              </CardDescription>
+            </div>
+            <Link 
+              to="/manager?status=draft" 
+              className="text-sm text-primary font-medium flex items-center hover:underline"
+            >
+              View more
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
           </CardHeader>
           <CardContent className="px-6">
             <div className="divide-y">
@@ -274,13 +296,6 @@ const Dashboard: React.FC = () => {
                   No draft content
                 </p>
               )}
-            </div>
-            <div className="mt-4 text-center">
-              <Link to="/schemas">
-                <Button variant="outline" size="sm">
-                  View All Drafts
-                </Button>
-              </Link>
             </div>
           </CardContent>
         </Card>

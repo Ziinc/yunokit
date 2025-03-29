@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ContentSchema } from "@/lib/contentSchema";
+import { DocsButton } from "@/components/ui/DocsButton";
 
 interface ContentListHeaderProps {
   handleCreateNew: (schemaId: string) => void;
@@ -25,7 +25,10 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Content Management</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">Content Management</h1>
+          <DocsButton href="https://docs.supacontent.tznc.net/content-management" />
+        </div>
         <p className="text-muted-foreground">
           Manage and organize all your content items
         </p>

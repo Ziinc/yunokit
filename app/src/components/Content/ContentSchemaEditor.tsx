@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { ContentSchema, ContentField, ContentFieldType } from "@/lib/contentSche
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { DocsButton } from "@/components/ui/DocsButton";
 
 interface ContentSchemaEditorProps {
   initialSchema?: ContentSchema;
@@ -167,9 +167,12 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            {initialSchema ? "Edit Content Schema" : "Create Content Schema"}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-bold">
+              {initialSchema ? "Edit Content Schema" : "Create Content Schema"}
+            </CardTitle>
+            <DocsButton href="https://docs.supacontent.tznc.net/schemas" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4">
