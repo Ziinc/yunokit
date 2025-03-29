@@ -8,8 +8,8 @@ import NotFound from "./pages/NotFound";
 import MarkdownEditorPage from "./pages/MarkdownEditorPage";
 import JsonEditorPage from "./pages/JsonEditorPage";
 import BlockEditorPage from "./pages/BlockEditorPage";
-import ContentSchemasPage from "./pages/ContentSchemasPage";
-import ContentEditorPage from "./pages/ContentEditorPage";
+import ContentTypeBuilderPage from "./pages/ContentTypeBuilderPage";
+import ContentManagerPage from "./pages/ContentManagerPage";
 import ContentItemPage from "./pages/ContentItemPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
@@ -37,13 +37,13 @@ const App = () => (
             <Routes>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Index />} />
-                <Route path="/manager" element={<ContentEditorPage />} />
+                <Route path="/manager" element={<ContentManagerPage />} />
                 <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
                 <Route path="/manager/json" element={<JsonEditorPage />} />
                 <Route path="/manager/block" element={<BlockEditorPage />} />
-                <Route path="/builder" element={<ContentSchemasPage />} />
+                <Route path="/manager/editor/:schemaId/:contentId" element={<ContentItemPage />} />
+                <Route path="/builder" element={<ContentTypeBuilderPage />} />
                 <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
-                <Route path="/builder/:schemaId/:contentId" element={<ContentItemPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/library" element={<AssetsLibraryPage />} />
                 <Route path="/settings" element={<SettingsPage />} />

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -63,6 +62,12 @@ const mockBillingData = {
     { id: "INV-001", date: "2023-09-01", amount: 0, status: "paid", items: "Free Plan" },
     { id: "INV-002", date: "2023-08-01", amount: 0, status: "paid", items: "Free Plan" },
     { id: "INV-003", date: "2023-07-01", amount: 0, status: "paid", items: "Free Plan" },
+    { id: "INV-004", date: "2023-06-01", amount: 0, status: "paid", items: "Free Plan" },
+    { id: "INV-005", date: "2023-05-01", amount: 0, status: "paid", items: "Free Plan" },
+    { id: "INV-006", date: "2023-04-01", amount: 0, status: "paid", items: "Free Plan" },
+    { id: "INV-007", date: "2023-03-01", amount: 0, status: "paid", items: "Free Plan" },
+    { id: "INV-008", date: "2023-02-01", amount: 0, status: "paid", items: "Free Plan" },
+    { id: "INV-009", date: "2023-01-01", amount: 0, status: "paid", items: "Free Plan" },
   ],
   monthlyCharges: [
     { month: "Jan", amount: 0 },
@@ -90,7 +95,29 @@ const SettingsPage: React.FC = () => {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("writer");
   const [billingData, setBillingData] = useState(mockBillingData);
+  const [invoicesPerPage, setInvoicesPerPage] = useState(5);
+  const [currentInvoicesPage, setCurrentInvoicesPage] = useState(1);
+  const [membersPerPage, setMembersPerPage] = useState(5);
+  const [currentMembersPage, setCurrentMembersPage] = useState(1);
   const { toast } = useToast();
+
+  // Pagination for invoices
+  const paginatedInvoices = useMemo(() => {
+    const startIndex = (currentInvoicesPage - 1) * invoicesPerPage;
+    const endIndex = startIndex + invoicesPerPage;
+    return billingData.invoices.slice(startIndex, endIndex);
+  }, [billingData.invoices, currentInvoicesPage, invoicesPerPage]);
+
+  const totalInvoicesPages = Math.ceil(billingData.invoices.length / invoicesPerPage);
+
+  // Pagination for team members
+  const paginatedTeamMembers = useMemo(() => {
+    const startIndex = (currentMembersPage - 1) * membersPerPage;
+    const endIndex = startIndex + membersPerPage;
+    return teamMembers.slice(startIndex, endIndex);
+  }, [teamMembers, currentMembersPage, membersPerPage]);
+
+  const totalMembersPages = Math.ceil(teamMembers.length / membersPerPage);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -644,7 +671,7 @@ const SettingsPage: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {teamMembers.map(member => (
+                    {paginatedTeamMembers.map(member => (
                       <TableRow key={member.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -694,6 +721,61 @@ const SettingsPage: React.FC = () => {
                     ))}
                   </TableBody>
                 </Table>
+                
+                {teamMembers.length > 0 && (
+                  <div className="p-4 border-t flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Items per page:</span>
+                      <Select 
+                        value={String(membersPerPage)} 
+                        onValueChange={(value) => {
+                          setMembersPerPage(Number(value));
+                          setCurrentMembersPage(1); // Reset to first page when changing items per page
+                        }}
+                      >
+                        <SelectTrigger className="w-[80px] h-8">
+                          <SelectValue placeholder="5" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentMembersPage(p => Math.max(1, p - 1))}
+                        disabled={currentMembersPage === 1}
+                        className="text-muted-foreground font-normal"
+                      >
+                        ← Previous
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mx-2 h-10 w-10"
+                      >
+                        {currentMembersPage}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentMembersPage(p => Math.min(totalMembersPages, p + 1))}
+                        disabled={currentMembersPage === totalMembersPages || totalMembersPages === 0}
+                        className="text-muted-foreground font-normal"
+                      >
+                        Next →
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="mt-4">
@@ -902,7 +984,7 @@ const SettingsPage: React.FC = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {billingData.invoices.map((invoice) => (
+                      {paginatedInvoices.map((invoice) => (
                         <TableRow key={invoice.id}>
                           <TableCell className="font-medium">{invoice.id}</TableCell>
                           <TableCell>{invoice.date}</TableCell>
@@ -925,6 +1007,61 @@ const SettingsPage: React.FC = () => {
                       ))}
                     </TableBody>
                   </Table>
+                  
+                  {billingData.invoices.length > 0 && (
+                    <div className="p-4 border-t flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Items per page:</span>
+                        <Select 
+                          value={String(invoicesPerPage)} 
+                          onValueChange={(value) => {
+                            setInvoicesPerPage(Number(value));
+                            setCurrentInvoicesPage(1); // Reset to first page when changing items per page
+                          }}
+                        >
+                          <SelectTrigger className="w-[80px] h-8">
+                            <SelectValue placeholder="5" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentInvoicesPage(p => Math.max(1, p - 1))}
+                          disabled={currentInvoicesPage === 1}
+                          className="text-muted-foreground font-normal"
+                        >
+                          ← Previous
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mx-2 h-10 w-10"
+                        >
+                          {currentInvoicesPage}
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentInvoicesPage(p => Math.min(totalInvoicesPages, p + 1))}
+                          disabled={currentInvoicesPage === totalInvoicesPages || totalInvoicesPages === 0}
+                          className="text-muted-foreground font-normal"
+                        >
+                          Next →
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               

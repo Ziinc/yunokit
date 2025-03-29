@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Settings, FileText, Edit, Search, Files, File, Layers } from "lucide-react";
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Simple query parser for search filtering
 const parseQuery = (query: string) => {
@@ -76,13 +76,19 @@ const filterContentItems = (items: ContentItem[], query: string) => {
     if (searchTerms) {
       const searchLower = searchTerms.toLowerCase();
       const titleMatches = item.title.toLowerCase().includes(searchLower);
-      const contentMatches = JSON.stringify(item.content).toLowerCase().includes(searchLower);
+      const contentMatches = JSON.stringify(getContentField(item)).toLowerCase().includes(searchLower);
       
       if (!titleMatches && !contentMatches) return false;
     }
     
     return true;
   });
+};
+
+// Helper function to get content fields (supporting both data and content)
+const getContentField = (item: ContentItem) => {
+  // Prioritize data field, then fall back to content field
+  return item.data || item.content || {};
 };
 
 const ContentSchemasPage: React.FC = () => {
@@ -92,6 +98,10 @@ const ContentSchemasPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState<"schemas" | "content">("schemas");
   const [schemaTypeFilter, setSchemaTypeFilter] = useState<"all" | "collection" | "single">("all");
+  const [schemasPerPage, setSchemasPerPage] = useState(10);
+  const [contentItemsPerPage, setContentItemsPerPage] = useState(10);
+  const [currentSchemasPage, setCurrentSchemasPage] = useState(1);
+  const [currentContentPage, setCurrentContentPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -116,6 +126,26 @@ const ContentSchemasPage: React.FC = () => {
   const filteredContentItems = useMemo(() => {
     return filterContentItems(mockContentItems, searchQuery);
   }, [searchQuery]);
+
+  // Get paginated schemas
+  const paginatedSchemas = useMemo(() => {
+    const startIndex = (currentSchemasPage - 1) * schemasPerPage;
+    const endIndex = startIndex + schemasPerPage;
+    return filteredSchemas.slice(startIndex, endIndex);
+  }, [filteredSchemas, currentSchemasPage, schemasPerPage]);
+
+  // Get paginated content items
+  const paginatedContentItems = useMemo(() => {
+    const startIndex = (currentContentPage - 1) * contentItemsPerPage;
+    const endIndex = startIndex + contentItemsPerPage;
+    return filteredContentItems.slice(startIndex, endIndex);
+  }, [filteredContentItems, currentContentPage, contentItemsPerPage]);
+
+  // Total pages for schemas
+  const totalSchemaPages = Math.ceil(filteredSchemas.length / schemasPerPage);
+  
+  // Total pages for content items
+  const totalContentPages = Math.ceil(filteredContentItems.length / contentItemsPerPage);
 
   const handleCreateSchema = (schema: ContentSchema) => {
     setSchemas([...schemas, schema]);
@@ -237,7 +267,7 @@ const ContentSchemasPage: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSchemas.map((schema) => (
+                  {paginatedSchemas.map((schema) => (
                     <TableRow key={schema.id}>
                       <TableCell className="font-medium">{schema.name}</TableCell>
                       <TableCell>
@@ -284,56 +314,158 @@ const ContentSchemasPage: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+              
+              {filteredSchemas.length > 0 && (
+                <div className="p-4 border-t flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Items per page:</span>
+                    <Select 
+                      value={String(schemasPerPage)} 
+                      onValueChange={(value) => setSchemasPerPage(Number(value))}
+                    >
+                      <SelectTrigger className="w-[80px] h-8">
+                        <SelectValue placeholder="10" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentSchemasPage(p => Math.max(1, p - 1))}
+                      disabled={currentSchemasPage === 1}
+                      className="text-muted-foreground font-normal"
+                    >
+                      ← Previous
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mx-2 h-10 w-10"
+                    >
+                      {currentSchemasPage}
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentSchemasPage(p => Math.min(totalSchemaPages, p + 1))}
+                      disabled={currentSchemasPage === totalSchemaPages || totalSchemaPages === 0}
+                      className="text-muted-foreground font-normal"
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="content" className="mt-4">
           <div className="border rounded-md overflow-hidden">
-            <ScrollArea className="h-[600px]">
-              <div className="min-w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Updated</TableHead>
-                      <TableHead>Author</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredContentItems.map((item) => {
-                      const schema = schemas.find(s => s.id === item.schemaId);
-                      return (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.title}</TableCell>
-                          <TableCell>{schema?.name || item.schemaId}</TableCell>
-                          <TableCell>{renderStatusBadge(item.status)}</TableCell>
-                          <TableCell>
-                            {new Date(item.updatedAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            {item.createdBy?.split('@')[0] || 'Unknown'}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditContent(item.schemaId, item.id)}
-                            >
-                              <Edit size={16} className="mr-2" />
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </ScrollArea>
+            <div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead>Author</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedContentItems.map((item) => {
+                    const schema = schemas.find(s => s.id === item.schemaId);
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.title}</TableCell>
+                        <TableCell>{schema?.name || item.schemaId}</TableCell>
+                        <TableCell>{renderStatusBadge(item.status)}</TableCell>
+                        <TableCell>
+                          {new Date(item.updatedAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          {item.createdBy?.split('@')[0] || 'Unknown'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditContent(item.schemaId, item.id)}
+                          >
+                            <Edit size={16} className="mr-2" />
+                            Edit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              
+              {filteredContentItems.length > 0 && (
+                <div className="p-4 border-t flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Items per page:</span>
+                    <Select 
+                      value={String(contentItemsPerPage)} 
+                      onValueChange={(value) => setContentItemsPerPage(Number(value))}
+                    >
+                      <SelectTrigger className="w-[80px] h-8">
+                        <SelectValue placeholder="10" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentContentPage(p => Math.max(1, p - 1))}
+                      disabled={currentContentPage === 1}
+                      className="text-muted-foreground font-normal"
+                    >
+                      ← Previous
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mx-2 h-10 w-10"
+                    >
+                      {currentContentPage}
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentContentPage(p => Math.min(totalContentPages, p + 1))}
+                      disabled={currentContentPage === totalContentPages || totalContentPages === 0}
+                      className="text-muted-foreground font-normal"
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </TabsContent>
       </Tabs>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FileText, MessageSquare, Calendar, User } from "lucide-react";
 import { ContentItem, ContentSchema } from "@/lib/contentSchema";
@@ -13,6 +12,7 @@ import {
 import { ContentStatusBadge } from "./ContentStatusBadge";
 import { ContentPagination } from "./ContentPagination";
 import { formatDate } from "@/utils/formatDate";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ContentTableProps {
   items: ContentItem[];
@@ -21,6 +21,8 @@ interface ContentTableProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  itemsPerPage: number;
+  onItemsPerPageChange: (value: number) => void;
 }
 
 export const ContentTable: React.FC<ContentTableProps> = ({ 
@@ -29,7 +31,9 @@ export const ContentTable: React.FC<ContentTableProps> = ({
   onRowClick,
   currentPage,
   totalPages,
-  onPageChange
+  onPageChange,
+  itemsPerPage,
+  onItemsPerPageChange
 }) => {
   return (
     <div>
@@ -97,7 +101,24 @@ export const ContentTable: React.FC<ContentTableProps> = ({
         )}
       </TableBody>
     </Table>
-    <div className="p-4 border-t">
+    <div className="p-4 border-t flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Items per page:</span>
+        <Select 
+          value={String(itemsPerPage)} 
+          onValueChange={(value) => onItemsPerPageChange(Number(value))}
+        >
+          <SelectTrigger className="w-[80px] h-8">
+            <SelectValue placeholder="10" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="5">5</SelectItem>
+            <SelectItem value="10">10</SelectItem>
+            <SelectItem value="20">20</SelectItem>
+            <SelectItem value="50">50</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <ContentPagination
         currentPage={currentPage}
         totalPages={totalPages}

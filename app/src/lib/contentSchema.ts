@@ -1,4 +1,3 @@
-
 export type ContentFieldType = 
   | 'markdown'
   | 'json'
@@ -50,7 +49,8 @@ export interface ContentItem {
   id: string;
   schemaId: string;
   title: string; // Display title
-  content: Record<string, any>; // Actual content data
+  content?: Record<string, any>; // Backward compatibility field name
+  data?: Record<string, any>; // New field name for schema-specific content
   status: ContentItemStatus;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +59,21 @@ export interface ContentItem {
   updatedBy?: string;
   publishedBy?: string;
   comments?: ContentItemComment[];
+  // Review-related fields at the top level
+  reviewStatus?: 'awaiting_review' | 'changes_requested' | 'approved';
+  reviewRequestedAt?: string;
+  reviewRequestedBy?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  reviewComments?: string;
+  // Additional fields for search functionality
+  type?: string;
+  lastUpdated?: string;
+  tags?: string[];
+  author?: {
+    name: string;
+    avatar: string;
+  };
 }
 
 // Comment interface for review process

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Flag, Shield, MessageSquare, Users, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,6 +10,8 @@ import ForumTab from "@/components/Comments/ForumTab";
 import ChatTab from "@/components/Comments/ChatTab";
 import UsersTab from "@/components/Comments/UsersTab";
 import { formatDate } from "@/utils/formatDate";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CommentsPage: React.FC = () => {
   const { toast } = useToast();
@@ -24,6 +26,30 @@ const CommentsPage: React.FC = () => {
   const [postsSearchQuery, setPostsSearchQuery] = useState("");
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [userSearchQuery, setUserSearchQuery] = useState("");
+  
+  // Pagination state for comments
+  const [commentsPerPage, setCommentsPerPage] = useState(10);
+  const [currentCommentsPage, setCurrentCommentsPage] = useState(1);
+  
+  // Pagination state for forum posts
+  const [postsPerPage, setPostsPerPage] = useState(10);
+  const [currentPostsPage, setCurrentPostsPage] = useState(1);
+  
+  // Pagination state for chat messages
+  const [messagesPerPage, setMessagesPerPage] = useState(10);
+  const [currentMessagesPage, setCurrentMessagesPage] = useState(1);
+  
+  // Pagination state for users
+  const [usersPerPage, setUsersPerPage] = useState(10);
+  const [currentUsersPage, setCurrentUsersPage] = useState(1);
+  
+  // Pagination state for reports
+  const [reportsPerPage, setReportsPerPage] = useState(10);
+  const [currentReportsPage, setCurrentReportsPage] = useState(1);
+  
+  // Pagination state for banned words
+  const [bannedWordsPerPage, setBannedWordsPerPage] = useState(10);
+  const [currentBannedWordsPage, setCurrentBannedWordsPage] = useState(1);
 
   const [comments, setComments] = useState<Comment[]>([
     {
@@ -633,6 +659,130 @@ const CommentsPage: React.FC = () => {
     });
   };
 
+  // Filter comments based on currentTab and search query
+  const filteredComments = useMemo(() => {
+    let filtered = comments;
+    
+    if (currentTab !== "all") {
+      filtered = filtered.filter(comment => comment.status === currentTab);
+    }
+    
+    if (commentSearchQuery) {
+      const query = commentSearchQuery.toLowerCase();
+      filtered = filtered.filter(comment => 
+        comment.content.toLowerCase().includes(query) ||
+        comment.author.name.toLowerCase().includes(query) ||
+        comment.contentTitle.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [comments, currentTab, commentSearchQuery]);
+  
+  // Paginated comments
+  const paginatedComments = useMemo(() => {
+    const startIndex = (currentCommentsPage - 1) * commentsPerPage;
+    const endIndex = startIndex + commentsPerPage;
+    return filteredComments.slice(startIndex, endIndex);
+  }, [filteredComments, currentCommentsPage, commentsPerPage]);
+  
+  const totalCommentsPages = Math.ceil(filteredComments.length / commentsPerPage);
+  
+  // Filter forum posts based on search query
+  const filteredPosts = useMemo(() => {
+    if (!postsSearchQuery) return posts;
+    
+    const query = postsSearchQuery.toLowerCase();
+    return posts.filter(post => 
+      post.title.toLowerCase().includes(query) ||
+      post.content.toLowerCase().includes(query) ||
+      post.author.name.toLowerCase().includes(query) ||
+      (post.tags && post.tags.some(tag => tag.toLowerCase().includes(query)))
+    );
+  }, [posts, postsSearchQuery]);
+  
+  // Paginated posts
+  const paginatedPosts = useMemo(() => {
+    const startIndex = (currentPostsPage - 1) * postsPerPage;
+    const endIndex = startIndex + postsPerPage;
+    return filteredPosts.slice(startIndex, endIndex);
+  }, [filteredPosts, currentPostsPage, postsPerPage]);
+  
+  const totalPostsPages = Math.ceil(filteredPosts.length / postsPerPage);
+  
+  // Filter chat messages based on search query
+  const filteredMessages = useMemo(() => {
+    if (!messageSearchQuery) return messages;
+    
+    const query = messageSearchQuery.toLowerCase();
+    return messages.filter(message => 
+      message.content.toLowerCase().includes(query) ||
+      message.author.name.toLowerCase().includes(query) ||
+      message.channelName.toLowerCase().includes(query)
+    );
+  }, [messages, messageSearchQuery]);
+  
+  // Paginated messages
+  const paginatedMessages = useMemo(() => {
+    const startIndex = (currentMessagesPage - 1) * messagesPerPage;
+    const endIndex = startIndex + messagesPerPage;
+    return filteredMessages.slice(startIndex, endIndex);
+  }, [filteredMessages, currentMessagesPage, messagesPerPage]);
+  
+  const totalMessagesPages = Math.ceil(filteredMessages.length / messagesPerPage);
+  
+  // Filter users based on search query
+  const filteredUsers = useMemo(() => {
+    if (!userSearchQuery) return users;
+    
+    const query = userSearchQuery.toLowerCase();
+    return users.filter(user => 
+      user.name.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query) ||
+      user.role.toLowerCase().includes(query)
+    );
+  }, [users, userSearchQuery]);
+  
+  // Paginated users
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentUsersPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, currentUsersPage, usersPerPage]);
+  
+  const totalUsersPages = Math.ceil(filteredUsers.length / usersPerPage);
+  
+  // Filter reports based on search query
+  const filteredReports = useMemo(() => {
+    if (!reportsSearchQuery) return reports;
+    
+    const query = reportsSearchQuery.toLowerCase();
+    return reports.filter(report => 
+      report.reason.toLowerCase().includes(query) ||
+      report.targetName.toLowerCase().includes(query) ||
+      report.reporter.name.toLowerCase().includes(query) ||
+      (report.contentTitle && report.contentTitle.toLowerCase().includes(query))
+    );
+  }, [reports, reportsSearchQuery]);
+  
+  // Paginated reports
+  const paginatedReports = useMemo(() => {
+    const startIndex = (currentReportsPage - 1) * reportsPerPage;
+    const endIndex = startIndex + reportsPerPage;
+    return filteredReports.slice(startIndex, endIndex);
+  }, [filteredReports, currentReportsPage, reportsPerPage]);
+  
+  const totalReportsPages = Math.ceil(filteredReports.length / reportsPerPage);
+  
+  // Paginated banned words
+  const paginatedBannedWords = useMemo(() => {
+    const startIndex = (currentBannedWordsPage - 1) * bannedWordsPerPage;
+    const endIndex = startIndex + bannedWordsPerPage;
+    return bannedWords.slice(startIndex, endIndex);
+  }, [bannedWords, currentBannedWordsPage, bannedWordsPerPage]);
+  
+  const totalBannedWordsPages = Math.ceil(bannedWords.length / bannedWordsPerPage);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -669,7 +819,7 @@ const CommentsPage: React.FC = () => {
         
         <TabsContent value="comments" className="space-y-6">
           <CommentsTab 
-            comments={comments}
+            comments={paginatedComments}
             currentTab={currentTab}
             commentSearchQuery={commentSearchQuery}
             selectedComment={selectedComment}
@@ -684,11 +834,67 @@ const CommentsPage: React.FC = () => {
             handleSubmitReply={handleSubmitReply}
             formatDate={formatDate}
           />
+          
+          {/* Pagination Controls for Comments Tab */}
+          {filteredComments.length > 0 && (
+            <div className="p-4 border rounded-md flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select 
+                  value={String(commentsPerPage)} 
+                  onValueChange={(value) => {
+                    setCommentsPerPage(Number(value));
+                    setCurrentCommentsPage(1); // Reset to first page when changing items per page
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-8">
+                    <SelectValue placeholder="10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentCommentsPage(p => Math.max(1, p - 1))}
+                  disabled={currentCommentsPage === 1}
+                  className="text-muted-foreground font-normal"
+                >
+                  ← Previous
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mx-2 h-10 w-10"
+                >
+                  {currentCommentsPage}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentCommentsPage(p => Math.min(totalCommentsPages, p + 1))}
+                  disabled={currentCommentsPage === totalCommentsPages || totalCommentsPages === 0}
+                  className="text-muted-foreground font-normal"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="forum" className="space-y-6">
           <ForumTab 
-            posts={posts}
+            posts={paginatedPosts}
             postsSearchQuery={postsSearchQuery}
             setPostsSearchQuery={setPostsSearchQuery}
             handleDeletePost={handleDeletePost}
@@ -696,11 +902,67 @@ const CommentsPage: React.FC = () => {
             handleChangePostStatus={handleChangePostStatus}
             formatDate={formatDate}
           />
+          
+          {/* Pagination Controls for Forum Tab */}
+          {filteredPosts.length > 0 && (
+            <div className="p-4 border rounded-md flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select 
+                  value={String(postsPerPage)} 
+                  onValueChange={(value) => {
+                    setPostsPerPage(Number(value));
+                    setCurrentPostsPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-8">
+                    <SelectValue placeholder="10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPostsPage(p => Math.max(1, p - 1))}
+                  disabled={currentPostsPage === 1}
+                  className="text-muted-foreground font-normal"
+                >
+                  ← Previous
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mx-2 h-10 w-10"
+                >
+                  {currentPostsPage}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentPostsPage(p => Math.min(totalPostsPages, p + 1))}
+                  disabled={currentPostsPage === totalPostsPages || totalPostsPages === 0}
+                  className="text-muted-foreground font-normal"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="chat" className="space-y-6">
           <ChatTab 
-            messages={messages}
+            messages={paginatedMessages}
             channels={channels}
             messageSearchQuery={messageSearchQuery}
             setMessageSearchQuery={setMessageSearchQuery}
@@ -709,22 +971,134 @@ const CommentsPage: React.FC = () => {
             handleChangeMessageStatus={handleChangeMessageStatus}
             formatDate={formatDate}
           />
+          
+          {/* Pagination Controls for Chat Tab */}
+          {filteredMessages.length > 0 && (
+            <div className="p-4 border rounded-md flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select 
+                  value={String(messagesPerPage)} 
+                  onValueChange={(value) => {
+                    setMessagesPerPage(Number(value));
+                    setCurrentMessagesPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-8">
+                    <SelectValue placeholder="10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentMessagesPage(p => Math.max(1, p - 1))}
+                  disabled={currentMessagesPage === 1}
+                  className="text-muted-foreground font-normal"
+                >
+                  ← Previous
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mx-2 h-10 w-10"
+                >
+                  {currentMessagesPage}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentMessagesPage(p => Math.min(totalMessagesPages, p + 1))}
+                  disabled={currentMessagesPage === totalMessagesPages || totalMessagesPages === 0}
+                  className="text-muted-foreground font-normal"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="users" className="space-y-6">
           <UsersTab 
-            users={users}
+            users={paginatedUsers}
             userSearchQuery={userSearchQuery}
             setUserSearchQuery={setUserSearchQuery}
             handleChangeUserStatus={handleChangeUserStatus}
             handleChangeUserRole={handleChangeUserRole}
             formatDate={formatDate}
           />
+          
+          {/* Pagination Controls for Users Tab */}
+          {filteredUsers.length > 0 && (
+            <div className="p-4 border rounded-md flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select 
+                  value={String(usersPerPage)} 
+                  onValueChange={(value) => {
+                    setUsersPerPage(Number(value));
+                    setCurrentUsersPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-8">
+                    <SelectValue placeholder="10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentUsersPage(p => Math.max(1, p - 1))}
+                  disabled={currentUsersPage === 1}
+                  className="text-muted-foreground font-normal"
+                >
+                  ← Previous
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mx-2 h-10 w-10"
+                >
+                  {currentUsersPage}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentUsersPage(p => Math.min(totalUsersPages, p + 1))}
+                  disabled={currentUsersPage === totalUsersPages || totalUsersPages === 0}
+                  className="text-muted-foreground font-normal"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="reports" className="space-y-6">
           <ReportsTab 
-            reports={reports}
+            reports={paginatedReports}
             comments={comments}
             reportsSearchQuery={reportsSearchQuery}
             selectedReport={selectedReport}
@@ -734,11 +1108,67 @@ const CommentsPage: React.FC = () => {
             handleDismissReport={handleDismissReport}
             formatDate={formatDate}
           />
+          
+          {/* Pagination Controls for Reports Tab */}
+          {filteredReports.length > 0 && (
+            <div className="p-4 border rounded-md flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select 
+                  value={String(reportsPerPage)} 
+                  onValueChange={(value) => {
+                    setReportsPerPage(Number(value));
+                    setCurrentReportsPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-8">
+                    <SelectValue placeholder="10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentReportsPage(p => Math.max(1, p - 1))}
+                  disabled={currentReportsPage === 1}
+                  className="text-muted-foreground font-normal"
+                >
+                  ← Previous
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mx-2 h-10 w-10"
+                >
+                  {currentReportsPage}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentReportsPage(p => Math.min(totalReportsPages, p + 1))}
+                  disabled={currentReportsPage === totalReportsPages || totalReportsPages === 0}
+                  className="text-muted-foreground font-normal"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="moderation" className="space-y-6">
           <ModerationTab 
-            bannedWords={bannedWords}
+            bannedWords={paginatedBannedWords}
             bannedWordText={bannedWordText}
             bannedWordAction={bannedWordAction}
             setBannedWordText={setBannedWordText}
@@ -747,6 +1177,62 @@ const CommentsPage: React.FC = () => {
             handleDeleteBannedWord={handleDeleteBannedWord}
             formatDate={formatDate}
           />
+          
+          {/* Pagination Controls for Moderation Tab */}
+          {bannedWords.length > 0 && (
+            <div className="p-4 border rounded-md flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Items per page:</span>
+                <Select 
+                  value={String(bannedWordsPerPage)} 
+                  onValueChange={(value) => {
+                    setBannedWordsPerPage(Number(value));
+                    setCurrentBannedWordsPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-8">
+                    <SelectValue placeholder="10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentBannedWordsPage(p => Math.max(1, p - 1))}
+                  disabled={currentBannedWordsPage === 1}
+                  className="text-muted-foreground font-normal"
+                >
+                  ← Previous
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mx-2 h-10 w-10"
+                >
+                  {currentBannedWordsPage}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentBannedWordsPage(p => Math.min(totalBannedWordsPages, p + 1))}
+                  disabled={currentBannedWordsPage === totalBannedWordsPages || totalBannedWordsPages === 0}
+                  className="text-muted-foreground font-normal"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

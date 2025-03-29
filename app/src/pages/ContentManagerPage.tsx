@@ -1,14 +1,14 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { mockContentItems, exampleSchemas, ContentItem } from "@/lib/contentSchema";
+import { ContentItem } from "@/lib/contentSchema";
+import { mockContentItems, contentSchemas } from "@/lib/mocks";
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
 import { ContentTable } from "@/components/Content/ContentList/ContentTable";
 import { ContentPagination } from "@/components/Content/ContentList/ContentPagination";
 import { getUniqueAuthors, paginateItems } from "@/components/Content/ContentList/utils";
 
-const ContentEditorPage: React.FC = () => {
+const ContentManagerPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [items, setItems] = useState<ContentItem[]>(mockContentItems);
@@ -55,19 +55,18 @@ const ContentEditorPage: React.FC = () => {
   };
   
   const handleRowClick = (item: ContentItem) => {
-    navigate(`/builder/${item.schemaId}/${item.id}`);
+    navigate(`/manager/editor/${item.schemaId}/${item.id}`);
   };
   
   const handleCreateNew = (schemaId: string) => {
-    navigate(`/builder/${schemaId}/new`);
+    navigate(`/manager/editor/${schemaId}/new`);
   };
-  console.log(currentPage)
   
   return (
     <div className="space-y-6">
       <ContentListHeader 
         handleCreateNew={handleCreateNew}
-        schemas={exampleSchemas} 
+        schemas={contentSchemas} 
       />
       
       <div className="rounded-md border">
@@ -75,22 +74,24 @@ const ContentEditorPage: React.FC = () => {
           <FilterForm
             onSubmitFilters={onSubmitFilters}
             resetFilters={resetFilters}
-            schemas={exampleSchemas}
+            schemas={contentSchemas}
             uniqueAuthors={uniqueAuthors}
           />
         </div>
         
         <ContentTable 
           items={displayedItems}
-          schemas={exampleSchemas}
+          schemas={contentSchemas}
           onRowClick={handleRowClick}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={setItemsPerPage}
         />
       </div>
     </div>
   );
 };
 
-export default ContentEditorPage;
+export default ContentManagerPage;

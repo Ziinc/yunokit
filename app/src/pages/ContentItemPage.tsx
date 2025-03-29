@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
@@ -32,14 +31,23 @@ const ContentItemPage: React.FC = () => {
     contentId ? mockContentItems.find(item => item.id === contentId) : undefined
   );
   
+  // Helper function to get content data (handles both content and data fields)
+  const getContentData = (item?: ContentItem) => {
+    if (!item) return {};
+    return item.data || item.content || {};
+  };
+  
   // Mock previous version for diffing
   const [previousVersion] = useState<ContentItem | undefined>(() => {
     if (!contentItem) return undefined;
+    
+    const contentData = getContentData(contentItem);
+    
     return {
       ...contentItem,
       content: {
-        ...contentItem.content,
-        content: contentItem.content.content?.replace("React is a JavaScript library", "React is a popular JavaScript library")
+        ...contentData,
+        content: contentData.content?.replace("React is a JavaScript library", "React is a popular JavaScript library")
           .replace("helped me understand", "really helped me understand")
       },
       updatedAt: new Date(new Date(contentItem.updatedAt).getTime() - 86400000).toISOString() // 1 day before
@@ -47,7 +55,7 @@ const ContentItemPage: React.FC = () => {
   });
   
   // Set up initial content
-  const initialContent = contentItem?.content || {
+  const initialContent = getContentData(contentItem) || {
     title: "New Content",
     content: "# Add your content here\n\nStart editing to create your content.",
   };

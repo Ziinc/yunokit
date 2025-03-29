@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,11 +69,22 @@ const AssetsLibraryPage: React.FC = () => {
     file: null,
     folder: "general"
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12); // Default to 12 for grid view
 
   const filteredAssets = assets.filter(asset => 
     asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     asset.caption.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  // Get paginated assets
+  const paginatedAssets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAssets.slice(startIndex, endIndex);
+  }, [filteredAssets, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
 
   const handleUpload = () => {
     // This would upload to Supabase in a real app
@@ -222,17 +232,74 @@ const AssetsLibraryPage: React.FC = () => {
           
           <TabsContent value="grid" className="mt-6">
             {filteredAssets.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredAssets.map(asset => (
-                  <AssetCard 
-                    key={asset.id} 
-                    asset={asset} 
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {paginatedAssets.map(asset => (
+                    <AssetCard 
+                      key={asset.id} 
+                      asset={asset} 
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </div>
+                
+                {filteredAssets.length > 0 && (
+                  <div className="p-4 mt-4 border border-t-0 rounded-b-md flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Items per page:</span>
+                      <Select 
+                        value={String(itemsPerPage)} 
+                        onValueChange={(value) => {
+                          setItemsPerPage(Number(value));
+                          setCurrentPage(1); // Reset to first page when changing items per page
+                        }}
+                      >
+                        <SelectTrigger className="w-[80px] h-8">
+                          <SelectValue placeholder="12" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="12">12</SelectItem>
+                          <SelectItem value="24">24</SelectItem>
+                          <SelectItem value="36">36</SelectItem>
+                          <SelectItem value="48">48</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="text-muted-foreground font-normal"
+                      >
+                        ← Previous
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mx-2 h-10 w-10"
+                      >
+                        {currentPage}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className="text-muted-foreground font-normal"
+                      >
+                        Next →
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <FileImage className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
@@ -259,7 +326,7 @@ const AssetsLibraryPage: React.FC = () => {
                 <div>Date</div>
                 <div>Actions</div>
               </div>
-              {filteredAssets.map(asset => (
+              {paginatedAssets.map(asset => (
                 <div key={asset.id} className="grid grid-cols-5 gap-4 p-4 border-t items-center">
                   <div className="col-span-2 flex items-center gap-3">
                     <div className="h-10 w-10 rounded bg-muted overflow-hidden flex-shrink-0">
@@ -285,6 +352,61 @@ const AssetsLibraryPage: React.FC = () => {
                   </div>
                 </div>
               ))}
+              
+              {filteredAssets.length > 0 && (
+                <div className="p-4 border-t flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Items per page:</span>
+                    <Select 
+                      value={String(itemsPerPage)} 
+                      onValueChange={(value) => {
+                        setItemsPerPage(Number(value));
+                        setCurrentPage(1); // Reset to first page when changing items per page
+                      }}
+                    >
+                      <SelectTrigger className="w-[80px] h-8">
+                        <SelectValue placeholder="10" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="30">30</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="text-muted-foreground font-normal"
+                    >
+                      ← Previous
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mx-2 h-10 w-10"
+                    >
+                      {currentPage}
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className="text-muted-foreground font-normal"
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

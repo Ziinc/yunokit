@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,22 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ContentItemStatus } from "@/lib/contentSchema";
+import { ContentItem, ContentItemStatus } from "@/lib/contentSchema";
 import { useSearch } from "@/contexts/SearchContext";
-
-interface ContentItem {
-  id: string;
-  title: string;
-  type: string;
-  schema: string;
-  status: ContentItemStatus;
-  lastUpdated: string;
-  tags: string[];
-  author: {
-    name: string;
-    avatar: string;
-  };
-}
+import { mockContentItems, contentSchemas } from "@/lib/mocks";
 
 const ContentSearchPage: React.FC = () => {
   const { toast } = useToast();
@@ -39,17 +26,12 @@ const ContentSearchPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [sortBy, setSortBy] = useState<string>("relevance");
-  const [contentTypes, setContentTypes] = useState<string[]>([]);
+  const [availableSchemas, setAvailableSchemas] = useState<Array<{id: string, name: string}>>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<ContentItemStatus[]>(["published", "draft"]);
-  
-  const contentSchemas = [
-    { id: "article", name: "Article" },
-    { id: "product", name: "Product" },
-    { id: "page", name: "Page" },
-    { id: "blog", name: "Blog Post" },
-    { id: "tutorial", name: "Tutorial" }
-  ];
+  const [selectedStatuses, setSelectedStatuses] = useState<ContentItemStatus[]>([]);
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   useEffect(() => {
     if (!initialQuery) return;
@@ -57,81 +39,22 @@ const ContentSearchPage: React.FC = () => {
     setIsLoading(true);
     
     setTimeout(() => {
-      const results: ContentItem[] = [
-        {
-          id: "1",
-          title: "Getting Started with SupaContent",
-          type: "article",
-          schema: "tutorial",
-          status: "published" as ContentItemStatus,
-          lastUpdated: "2023-09-15T10:30:00Z",
-          tags: ["tutorial", "beginners", "cms"],
-          author: {
-            name: "John Smith",
-            avatar: "/placeholder.svg"
-          }
-        },
-        {
-          id: "2",
-          title: "Advanced Content Modeling",
-          type: "article",
-          schema: "tutorial",
-          status: "published" as ContentItemStatus,
-          lastUpdated: "2023-09-10T14:15:00Z",
-          tags: ["content-modeling", "advanced", "cms"],
-          author: {
-            name: "Jane Doe",
-            avatar: "/placeholder.svg"
-          }
-        },
-        {
-          id: "3",
-          title: "Summer Collection 2023",
-          type: "collection",
-          schema: "product",
-          status: "published" as ContentItemStatus,
-          lastUpdated: "2023-08-20T09:45:00Z",
-          tags: ["summer", "collection", "fashion"],
-          author: {
-            name: "Mike Wilson",
-            avatar: "/placeholder.svg"
-          }
-        },
-        {
-          id: "4",
-          title: "Privacy Policy Page",
-          type: "page",
-          schema: "page",
-          status: "published" as ContentItemStatus,
-          lastUpdated: "2023-07-05T11:30:00Z",
-          tags: ["legal", "policy"],
-          author: {
-            name: "Legal Team",
-            avatar: "/placeholder.svg"
-          }
-        },
-        {
-          id: "5",
-          title: "New Product Launch Plan",
-          type: "document",
-          schema: "article",
-          status: "draft" as ContentItemStatus,
-          lastUpdated: "2023-09-18T16:20:00Z",
-          tags: ["product-launch", "marketing", "planning"],
-          author: {
-            name: "Marketing Team",
-            avatar: "/placeholder.svg"
-          }
-        }
-      ].filter(item => 
+      // Filter mockContentItems based on search query
+      const results = mockContentItems.filter(item => 
         item.title.toLowerCase().includes(initialQuery.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(initialQuery.toLowerCase()))
+        (item.tags && item.tags.some(tag => tag.toLowerCase().includes(initialQuery.toLowerCase())))
       );
       
       setSearchResults(results);
       
-      const types = [...new Set(results.map(item => item.schema))];
-      setContentTypes(types);
+      // Extract unique schema types from results
+      const schemaIds = [...new Set(results.map(item => item.schemaId))];
+      // Create schema objects with names for display
+      const schemas = schemaIds.map(id => {
+        const schema = contentSchemas.find(s => s.id === id);
+        return schema || { id, name: id.charAt(0).toUpperCase() + id.slice(1) };
+      });
+      setAvailableSchemas(schemas);
       
       setIsLoading(false);
     }, 1000);
@@ -139,11 +62,12 @@ const ContentSearchPage: React.FC = () => {
   
   const applyFilters = () => {
     setIsLoading(true);
+    setFiltersApplied(true);
     
     setTimeout(() => {
       const filtered = searchResults.filter(item => 
-        (selectedTypes.length === 0 || selectedTypes.includes(item.schema)) &&
-        selectedStatuses.includes(item.status)
+        (selectedTypes.length === 0 || selectedTypes.includes(item.schemaId)) &&
+        (selectedStatuses.length === 0 || selectedStatuses.includes(item.status))
       );
       
       setSearchResults(filtered);
@@ -159,7 +83,8 @@ const ContentSearchPage: React.FC = () => {
   const clearFiltersAndSearch = () => {
     // Reset filters
     setSelectedTypes([]);
-    setSelectedStatuses(["published", "draft"]);
+    setSelectedStatuses([]);
+    setFiltersApplied(false);
     
     // Clear search query in header
     setSearchQuery("");
@@ -198,6 +123,34 @@ const ContentSearchPage: React.FC = () => {
     });
   };
 
+  // Helper function to get content fields (supporting both data and content)
+  const getContentField = (item: ContentItem, field: string) => {
+    if (item.data && item.data[field] !== undefined) {
+      return item.data[field];
+    }
+    if (item.content && item.content[field] !== undefined) {
+      return item.content[field];
+    }
+    return undefined;
+  };
+
+  // Helper to get the last updated date, regardless of source
+  const getLastUpdated = (item: ContentItem) => {
+    return item.lastUpdated || item.updatedAt;
+  };
+
+  // Get paginated results
+  const paginatedResults = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return searchResults.slice(startIndex, endIndex);
+  }, [searchResults, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    // Reset to first page when search results change
+    setCurrentPage(1);
+  }, [searchResults.length]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -213,17 +166,29 @@ const ContentSearchPage: React.FC = () => {
         <div className="space-y-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Filter size={18} />
-                <span>Filters</span>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter size={18} />
+                  <span>Filters</span>
+                </div>
+                {filtersApplied && (selectedTypes.length > 0 || selectedStatuses.length > 0) && (
+                  <Button 
+                    onClick={clearFiltersAndSearch} 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs h-auto py-1 px-2"
+                  >
+                    Clear
+                  </Button>
+                )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
                 <h3 className="text-sm font-medium">Content Type</h3>
                 
-                <div className="space-y-2">
-                  {contentSchemas.map(schema => (
+                <div className="space-y-1.5">
+                  {availableSchemas.map(schema => (
                     <div key={schema.id} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`type-${schema.id}`} 
@@ -236,12 +201,12 @@ const ContentSearchPage: React.FC = () => {
                 </div>
               </div>
               
-              <Separator />
+              <Separator className="my-2" />
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h3 className="text-sm font-medium">Status</h3>
                 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {(['published', 'draft', 'pending_review'] as ContentItemStatus[]).map(status => (
                     <div key={status} className="flex items-center space-x-2">
                       <Checkbox 
@@ -249,19 +214,18 @@ const ContentSearchPage: React.FC = () => {
                         checked={selectedStatuses.includes(status)}
                         onCheckedChange={() => handleStatusChange(status)}
                       />
-                      <Label htmlFor={`status-${status}`} className="capitalize">{status}</Label>
+                      <Label htmlFor={`status-${status}`} className="capitalize">
+                        {status === 'pending_review' ? 'Pending Review' : status.charAt(0).toUpperCase() + status.slice(1)}
+                      </Label>
                     </div>
                   ))}
                 </div>
               </div>
               
-              <Separator />
+              <Separator className="my-2" />
               
-              <div className="flex gap-2">
-                <Button onClick={applyFilters} className="flex-1">Apply Filters</Button>
-                <Button onClick={clearFiltersAndSearch} variant="outline" size="icon">
-                  <ArrowUpDown size={16} className="rotate-90" />
-                </Button>
+              <div className="space-y-2">
+                <Button onClick={applyFilters} className="w-full">Apply Filters</Button>
               </div>
             </CardContent>
           </Card>
@@ -282,18 +246,21 @@ const ContentSearchPage: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="relevance">Relevance</SelectItem>
-                    <SelectItem value="date-desc">Newest First</SelectItem>
-                    <SelectItem value="date-asc">Oldest First</SelectItem>
-                    <SelectItem value="title-asc">Title (A-Z)</SelectItem>
-                    <SelectItem value="title-desc">Title (Z-A)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="sort-by" className="text-sm whitespace-nowrap">Sort by:</Label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger id="sort-by" className="w-[150px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="relevance">Relevance</SelectItem>
+                      <SelectItem value="date-desc">Newest First</SelectItem>
+                      <SelectItem value="date-asc">Oldest First</SelectItem>
+                      <SelectItem value="title-asc">Title (A-Z)</SelectItem>
+                      <SelectItem value="title-desc">Title (Z-A)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
                 <div className="border rounded-md flex">
                   <Button
@@ -325,20 +292,19 @@ const ContentSearchPage: React.FC = () => {
                 </div>
               ) : (
                 <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "space-y-4"}>
-                  {searchResults.map((item) => (
+                  {paginatedResults.map((item) => (
                     <div 
                       key={item.id}
                       className={`border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
                         viewMode === "list" ? "flex items-start space-x-4" : ""
                       }`}
-                      onClick={() => navigate(`/content/${item.schema}/${item.id}`)}
+                      onClick={() => navigate(`/manager/${item.schemaId}/${item.id}`)}
                     >
                       {viewMode === "list" && (
                         <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-md bg-primary/10">
-                          {item.schema === "article" && <Search size={20} className="text-primary" />}
-                          {item.schema === "product" && <Tag size={20} className="text-primary" />}
-                          {item.schema === "page" && <List size={20} className="text-primary" />}
-                          {item.schema === "tutorial" && <Calendar size={20} className="text-primary" />}
+                          {item.schemaId === "blog-post" && <Search size={20} className="text-primary" />}
+                          {item.schemaId === "product-catalog" && <Tag size={20} className="text-primary" />}
+                          {item.schemaId === "page-builder" && <List size={20} className="text-primary" />}
                         </div>
                       )}
                       
@@ -346,7 +312,7 @@ const ContentSearchPage: React.FC = () => {
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className={`font-medium ${viewMode === "grid" ? "mt-2" : ""}`}>{item.title}</h3>
-                            <p className="text-sm text-muted-foreground mt-1 capitalize">{item.schema}</p>
+                            <p className="text-sm text-muted-foreground mt-1 capitalize">{item.schemaId}</p>
                           </div>
                           <Badge 
                             variant={
@@ -360,25 +326,39 @@ const ContentSearchPage: React.FC = () => {
                         </div>
                         
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {item.tags.map(tag => (
+                          {item.tags && item.tags.map(tag => (
                             <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
                           ))}
+                          {!item.tags && getContentField(item, 'tags') && 
+                            getContentField(item, 'tags').map((tag: string) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))
+                          }
                         </div>
                         
                         <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
-                            <img 
-                              src={item.author.avatar} 
-                              alt={item.author.name}
-                              className="w-5 h-5 rounded-full"
-                            />
-                            <span>{item.author.name}</span>
+                            {item.author && (
+                              <>
+                                <img 
+                                  src={item.author.avatar} 
+                                  alt={item.author.name}
+                                  className="w-5 h-5 rounded-full"
+                                />
+                                <span>{item.author.name}</span>
+                              </>
+                            )}
+                            {!item.author && item.updatedBy && (
+                              <span>{item.updatedBy}</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock size={14} />
-                            <span>{formatDate(item.lastUpdated)}</span>
+                            <span>{formatDate(getLastUpdated(item))}</span>
                           </div>
                         </div>
                       </div>
@@ -387,6 +367,54 @@ const ContentSearchPage: React.FC = () => {
                 </div>
               )}
             </CardContent>
+            {searchResults.length > 0 && (
+              <div className="px-4 py-2 flex items-center justify-between border-t">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Items per page:</span>
+                  <Select value={String(itemsPerPage)} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-[80px] h-8">
+                      <SelectValue placeholder="10" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="text-muted-foreground font-normal"
+                  >
+                    ← Previous
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mx-2 h-10 w-10"
+                  >
+                    {currentPage}
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(searchResults.length / itemsPerPage), p + 1))}
+                    disabled={currentPage === Math.ceil(searchResults.length / itemsPerPage)}
+                    className="text-muted-foreground font-normal"
+                  >
+                    Next →
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       </div>
