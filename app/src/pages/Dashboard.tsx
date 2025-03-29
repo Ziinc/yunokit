@@ -163,142 +163,146 @@ const Dashboard: React.FC = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="w-full">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-5 w-5 text-primary" />
-                Last Edited
-              </CardTitle>
-              <CardDescription>
-                Recently updated content
-              </CardDescription>
-            </div>
-            <Link 
-              to="/manager?sort=updatedAt" 
-              className="text-sm text-primary font-medium flex items-center hover:underline"
-            >
-              View more
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </CardHeader>
-          <CardContent className="px-6">
-            <div className="divide-y">
-              {recentlyEditedContent.length > 0 ? (
-                recentlyEditedContent.map(item => renderContentItem(item))
-              ) : (
-                <p className="py-3 text-center text-sm text-muted-foreground">
-                  No recently edited content
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-rows-3 gap-6">
+          <Card className="w-full">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock className="h-5 w-5 text-primary" />
+                  Last Edited
+                </CardTitle>
+                <CardDescription>
+                  Recently updated content
+                </CardDescription>
+              </div>
+              <Link 
+                to="/manager?sort=updatedAt" 
+                className="text-sm text-primary font-medium flex items-center hover:underline"
+              >
+                View more
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </CardHeader>
+            <CardContent className="px-6">
+              <div className="divide-y">
+                {recentlyEditedContent.length > 0 ? (
+                  recentlyEditedContent.map(item => renderContentItem(item))
+                ) : (
+                  <p className="py-3 text-center text-sm text-muted-foreground">
+                    No recently edited content
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="w-full">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertCircle className="h-5 w-5 text-red-500" />
-                Approval Requests
-              </CardTitle>
-              <CardDescription>
-                Content waiting for your review
-              </CardDescription>
-            </div>
-            <Link 
-              to="/manager?status=pending_review" 
-              className="text-sm text-primary font-medium flex items-center hover:underline"
-            >
-              View more
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </CardHeader>
-          <CardContent className="px-6">
-            <div className="divide-y">
-              {pendingReviewContent.length > 0 ? (
-                pendingReviewContent.map(item => (
-                  renderContentItem(item, (
-                    <div className="flex gap-2">
-                      <Link to={`/content/${item.schemaId}/${item.id}`}>
-                        <Button variant="outline" size="sm">View Changes</Button>
-                      </Link>
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">Approve</Button>
-                    </div>
+          <Card className="w-full">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                  Draft Content
+                </CardTitle>
+                <CardDescription>
+                  Content in draft stage
+                </CardDescription>
+              </div>
+              <Link 
+                to="/manager?status=draft" 
+                className="text-sm text-primary font-medium flex items-center hover:underline"
+              >
+                View more
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </CardHeader>
+            <CardContent className="px-6">
+              <div className="divide-y">
+                {draftContent.length > 0 ? (
+                  draftContent.map(item => renderContentItem(item))
+                ) : (
+                  <p className="py-3 text-center text-sm text-muted-foreground">
+                    No draft content
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="w-full">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Published Content
+                </CardTitle>
+                <CardDescription>
+                  Recently published content
+                </CardDescription>
+              </div>
+              <Link 
+                to="/manager?status=published" 
+                className="text-sm text-primary font-medium flex items-center hover:underline"
+              >
+                View more
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </CardHeader>
+            <CardContent className="px-6">
+              <div className="divide-y">
+                {publishedContent.length > 0 ? (
+                  publishedContent.map(item => renderContentItem(item))
+                ) : (
+                  <p className="py-3 text-center text-sm text-muted-foreground">
+                    No published content
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-rows-1 gap-6">
+          <Card className="w-full">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  Approval Requests
+                </CardTitle>
+                <CardDescription>
+                  Content waiting for your review
+                </CardDescription>
+              </div>
+              <Link 
+                to="/manager?status=pending_review" 
+                className="text-sm text-primary font-medium flex items-center hover:underline"
+              >
+                View more
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </CardHeader>
+            <CardContent className="px-6">
+              <div className="divide-y">
+                {pendingReviewContent.length > 0 ? (
+                  pendingReviewContent.map(item => (
+                    renderContentItem(item, (
+                      <div className="flex gap-2">
+                        <Link to={`/manager/editor/${item.schemaId}/${item.id}`}>
+                          <Button variant="outline" size="sm">View Changes</Button>
+                        </Link>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700">Approve</Button>
+                      </div>
+                    ))
                   ))
-                ))
-              ) : (
-                <p className="py-3 text-center text-sm text-muted-foreground">
-                  No content waiting for review
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="w-full">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Published Content
-              </CardTitle>
-              <CardDescription>
-                Recently published content
-              </CardDescription>
-            </div>
-            <Link 
-              to="/manager?status=published" 
-              className="text-sm text-primary font-medium flex items-center hover:underline"
-            >
-              View more
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </CardHeader>
-          <CardContent className="px-6">
-            <div className="divide-y">
-              {publishedContent.length > 0 ? (
-                publishedContent.map(item => renderContentItem(item))
-              ) : (
-                <p className="py-3 text-center text-sm text-muted-foreground">
-                  No published content
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="w-full">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertCircle className="h-5 w-5 text-amber-500" />
-                Draft Content
-              </CardTitle>
-              <CardDescription>
-                Content in draft stage
-              </CardDescription>
-            </div>
-            <Link 
-              to="/manager?status=draft" 
-              className="text-sm text-primary font-medium flex items-center hover:underline"
-            >
-              View more
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </CardHeader>
-          <CardContent className="px-6">
-            <div className="divide-y">
-              {draftContent.length > 0 ? (
-                draftContent.map(item => renderContentItem(item))
-              ) : (
-                <p className="py-3 text-center text-sm text-muted-foreground">
-                  No draft content
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ) : (
+                  <p className="py-3 text-center text-sm text-muted-foreground">
+                    No content waiting for review
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Quickstart Template Dialog */}

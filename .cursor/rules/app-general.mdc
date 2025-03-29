@@ -1,0 +1,9 @@
+---
+description: To help with determining navigation paths
+globs: 
+alwaysApply: false
+---
+# Dev rules for working on /app
+
+## Routing
+Use the [App.tsx](mdc:app/src/App.tsx) router logic to determine the correct paths for links and general navigation
