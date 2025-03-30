@@ -8,6 +8,10 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  // For development - bypass authentication check
+  return <>{children}</>;
+  
+  /* Commented out for development
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
@@ -28,6 +32,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   return <>{children}</>;
+  */
 };
 
 export default ProtectedRoute; 

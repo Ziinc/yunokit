@@ -78,6 +78,18 @@ const SignInPage: React.FC = () => {
     try {
       setIsDemoLoggingIn(true);
       
+      // For development - bypass actual auth and directly navigate to dashboard
+      toast({
+        title: "Development mode",
+        description: "Bypassing authentication and navigating to dashboard",
+      });
+      
+      // Short delay to simulate auth process
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      
+      /* Commented out for development
       // Initialize storage to ensure mock users exist
       await AuthApi.initializeStorage();
       
@@ -91,6 +103,7 @@ const SignInPage: React.FC = () => {
       
       // Navigate to the intended destination or home
       navigate(from);
+      */
     } catch (error) {
       console.error("Demo login error:", error);
       toast({
@@ -107,6 +120,18 @@ const SignInPage: React.FC = () => {
     try {
       setOauthLoading(provider);
       
+      // For development - bypass actual auth and directly navigate to dashboard
+      toast({
+        title: "Development mode",
+        description: "Bypassing authentication and navigating to dashboard",
+      });
+      
+      // Short delay to simulate auth process
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      
+      /* Commented out for development
       let result;
       switch (provider) {
         case 'google':
@@ -131,6 +156,7 @@ const SignInPage: React.FC = () => {
         title: "Sign in initiated",
         description: "Redirecting to authentication provider...",
       });
+      */
     } catch (error) {
       console.error("Sign in error:", error);
       toast({
@@ -142,38 +168,52 @@ const SignInPage: React.FC = () => {
     }
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !password) {
-      toast({
-        title: "Missing fields",
-        description: "Please enter both email and password",
-        variant: "destructive"
-      });
-      return;
-    }
     
     try {
       setIsSigningIn(true);
+      
+      // For development - bypass actual auth and directly navigate to dashboard
+      toast({
+        title: "Development mode",
+        description: "Bypassing authentication and navigating to dashboard",
+      });
+      
+      // Short delay to simulate auth process
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      
+      /* Commented out for development
+      // Validate inputs
+      if (!email || !password) {
+        throw new Error('Please provide both email and password');
+      }
+      
+      // Sign in with Supabase
       const { data, error } = await signInWithEmail(email, password);
       
       if (error) {
         throw error;
       }
       
-      toast({
-        title: "Sign in successful",
-        description: "Welcome back to SupaContent!",
-      });
-      
-      // Navigate to the intended destination or home
-      navigate(from);
+      // Check if user exists and signin was successful
+      if (data?.user) {
+        toast({
+          title: "Sign in successful",
+          description: `Welcome back, ${data.user.email}!`,
+        });
+        
+        // Navigate to the intended destination or home
+        navigate(from);
+      }
+      */
     } catch (error) {
       console.error("Sign in error:", error);
       toast({
         title: "Sign in failed",
-        description: error instanceof Error ? error.message : "Please check your credentials and try again",
+        description: error instanceof Error ? error.message : "Invalid email or password",
         variant: "destructive"
       });
     } finally {
@@ -508,7 +548,7 @@ const SignInPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <form onSubmit={handleSignIn}>
+                <form onSubmit={handleEmailSignIn}>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
