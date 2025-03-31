@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ContentItem, ContentSchema } from "@/lib/contentSchema";
+import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSchema";
 import { ContentApi } from "@/lib/api";
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
@@ -9,11 +9,50 @@ import { ContentPagination } from "@/components/Content/ContentList/ContentPagin
 import { getUniqueAuthors, paginateItems } from "@/components/Content/ContentList/utils";
 import { SortSelect, SortOption } from "@/components/Content/ContentList/SortSelect";
 import { ResultsBar } from "@/components/Content/ContentList/ResultsBar";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download, Trash2, EyeOff, Users } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const ContentManagerPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [allItems, setAllItems] = useState<ContentItem[]>([]);
   const [items, setItems] = useState<ContentItem[]>([]);
@@ -21,6 +60,11 @@ const ContentManagerPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("title");
+  const [selectedItems, setSelectedItems] = useState<ContentItem[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAuthorDialog, setShowAuthorDialog] = useState(false);
+  const [newAuthor, setNewAuthor] = useState("");
+  
   const [filterValues, setFilterValues] = useState<FilterValues>({
     status: "",
     schemaId: "",
@@ -215,6 +259,180 @@ const ContentManagerPage: React.FC = () => {
     });
   };
   
+  const handleSelectionChange = (items: ContentItem[]) => {
+    setSelectedItems(items);
+  };
+  
+  const handleDownload = async (format: 'json' | 'csv' | 'jsonl' | 'zip') => {
+    try {
+      const ids = selectedItems.map(item => item.id);
+      // Get auth token from localStorage or your auth provider
+      const token = localStorage.getItem('supabase.auth.token') || '';
+      
+      // Create a loading toast
+      toast({
+        title: "Preparing download",
+        description: "We're preparing your download, please wait...",
+      });
+      
+      // Call Supabase Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/download-content?format=${format}&ids=${ids.join(',')}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to download content');
+      }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create download link and trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = response.headers.get('Content-Disposition')?.split('filename=')[1].replace(/"/g, '') || 
+                   `content-export.${format}`;
+      a.click();
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download complete",
+        description: `Your ${format.toUpperCase()} download is ready.`,
+      });
+    } catch (error) {
+      console.error("Error downloading content:", error);
+      toast({
+        title: "Download failed",
+        description: error.message || "There was an error downloading your content. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleDelete = async () => {
+    try {
+      const ids = selectedItems.map(item => item.id);
+      
+      // Delete each item
+      for (const id of ids) {
+        await ContentApi.deleteContentItem(id);
+      }
+      
+      // Update the items list
+      setAllItems(prev => prev.filter(item => !ids.includes(item.id)));
+      setItems(prev => prev.filter(item => !ids.includes(item.id)));
+      setSelectedItems([]);
+      setShowDeleteDialog(false);
+      
+      toast({
+        title: "Items deleted",
+        description: `Successfully deleted ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      console.error("Error deleting items:", error);
+      toast({
+        title: "Delete failed",
+        description: "There was an error deleting the selected items. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleUnpublish = async () => {
+    try {
+      const ids = selectedItems.map(item => item.id);
+      const updatedItems = [...allItems];
+      
+      for (const id of ids) {
+        const itemIndex = updatedItems.findIndex(item => item.id === id);
+        if (itemIndex !== -1) {
+          updatedItems[itemIndex] = {
+            ...updatedItems[itemIndex],
+            status: 'draft' as ContentItemStatus,
+            updatedAt: new Date().toISOString(),
+          };
+          
+          // Save to API
+          await ContentApi.saveContentItem(updatedItems[itemIndex]);
+        }
+      }
+      
+      // Update the items list
+      setAllItems(updatedItems);
+      applyFilters(filterValues, sortField);
+      setSelectedItems([]);
+      
+      toast({
+        title: "Items unpublished",
+        description: `Successfully unpublished ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      console.error("Error unpublishing items:", error);
+      toast({
+        title: "Unpublish failed",
+        description: "There was an error unpublishing the selected items. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleChangeAuthor = async () => {
+    try {
+      if (!newAuthor) {
+        toast({
+          title: "No author selected",
+          description: "Please select an author to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const ids = selectedItems.map(item => item.id);
+      const updatedItems = [...allItems];
+      
+      for (const id of ids) {
+        const itemIndex = updatedItems.findIndex(item => item.id === id);
+        if (itemIndex !== -1) {
+          updatedItems[itemIndex] = {
+            ...updatedItems[itemIndex],
+            updatedBy: newAuthor,
+            updatedAt: new Date().toISOString(),
+          };
+          
+          // Save to API
+          await ContentApi.saveContentItem(updatedItems[itemIndex]);
+        }
+      }
+      
+      // Update the items list
+      setAllItems(updatedItems);
+      applyFilters(filterValues, sortField);
+      setSelectedItems([]);
+      setShowAuthorDialog(false);
+      setNewAuthor("");
+      
+      toast({
+        title: "Author updated",
+        description: `Successfully updated author for ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      console.error("Error changing author:", error);
+      toast({
+        title: "Author update failed",
+        description: "There was an error updating the author for the selected items. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const sortOptions: SortOption[] = [
     { value: "title", label: "Title (A-Z)" },
     { value: "updatedAt", label: "Last Updated" },
@@ -246,13 +464,44 @@ const ContentManagerPage: React.FC = () => {
           sortOptions={sortOptions}
         />
         
+        {selectedItems.length > 0 && (
+          <SelectionActionsBar
+            selectedCount={selectedItems.length}
+            actions={[
+              {
+                label: "Change Author",
+                icon: <Users size={16} />,
+                onClick: () => setShowAuthorDialog(true),
+              },
+              {
+                label: "Unpublish",
+                icon: <EyeOff size={16} />,
+                onClick: handleUnpublish,
+              },
+              {
+                label: "Delete",
+                icon: <Trash2 size={16} />,
+                onClick: () => setShowDeleteDialog(true),
+              },
+              {
+                label: "Download",
+                icon: <Download size={16} />,
+                onClick: () => {
+                  // Keep existing dropdown menu functionality
+                  // This is just a placeholder - you'll need to implement the dropdown separately
+                },
+              },
+            ]}
+          />
+        )}
+        
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
             <p className="text-lg">Loading content...</p>
           </div>
         ) : (
-          <ContentTable 
+          <ContentTable
             items={displayedItems}
             schemas={schemas}
             onRowClick={handleRowClick}
@@ -261,9 +510,63 @@ const ContentManagerPage: React.FC = () => {
             onPageChange={setCurrentPage}
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
+            onSelectionChange={setSelectedItems}
           />
         )}
       </div>
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {selectedItems.length} selected {selectedItems.length === 1 ? 'item' : 'items'}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Change author dialog */}
+      <Dialog open={showAuthorDialog} onOpenChange={setShowAuthorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Author</DialogTitle>
+            <DialogDescription>
+              Select a new author for the {selectedItems.length} selected {selectedItems.length === 1 ? 'item' : 'items'}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Select value={newAuthor} onValueChange={setNewAuthor}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an author" />
+              </SelectTrigger>
+              <SelectContent>
+                {uniqueAuthors.map(author => (
+                  <SelectItem key={author} value={author}>
+                    {author.split('@')[0]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAuthorDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleChangeAuthor}>
+              Apply Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

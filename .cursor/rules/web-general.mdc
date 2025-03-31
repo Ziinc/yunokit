@@ -3,7 +3,10 @@ description: To help with docs writing
 globs: 
 alwaysApply: false
 ---
-# Dev rules for working on /web
+# Dev rules for documentation
+For each feature written, always write documentation under `web/docs` directory in the docusaurus-compatible mdx file.
+
+## When working on /web
 
 Always use Docusuarus v3 conventions.
 

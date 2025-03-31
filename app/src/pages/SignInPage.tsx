@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,8 +46,10 @@ const SignInPage: React.FC = () => {
     }
   ];
   
-  // Get a random testimonial
-  const randomTestimonial = testimonials[Math.floor(Math.random() * testimonials.length)];
+  // Memoize the random testimonial selection
+  const randomTestimonial = useMemo(() => {
+    return testimonials[Math.floor(Math.random() * testimonials.length)];
+  }, []); // Empty dependency array means this will only run once when component mounts
   
   // State for email/password auth
   const [email, setEmail] = useState("");

@@ -9,3 +9,5 @@ _site/
 node_modules/
 
 comp/
+.branches
+.temp

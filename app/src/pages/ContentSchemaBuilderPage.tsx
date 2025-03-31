@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, FileText, Search, Files, File, Layers, Loader2 } from "lucide-react";
+import { Plus, Settings, FileText, Search, Files, File, Layers, Loader2, Archive, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import { ContentSchema, ContentItem } from "@/lib/contentSchema";
@@ -9,10 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs,  TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 import { DocsButton } from "@/components/ui/DocsButton";
+import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { ContentTable } from "@/components/Content/ContentList/ContentTable";
 
 // Simple query parser for search filtering
 const parseQuery = (query: string) => {
@@ -97,11 +100,13 @@ const ContentSchemaBuilderPage: React.FC = () => {
   const [editingSchema, setEditingSchema] = useState<ContentSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [schemaTypeFilter, setSchemaTypeFilter] = useState<"all" | "collection" | "single">("all");
+  const [schemaTypeFilter, setSchemaTypeFilter] = useState<"all" | "collection" | "single" | "archived">("all");
   const [schemasPerPage, setSchemasPerPage] = useState(10);
   const [currentSchemasPage, setCurrentSchemasPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [selectedSchemas, setSelectedSchemas] = useState<ContentSchema[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Load schemas from API
   useEffect(() => {
@@ -127,15 +132,15 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
-    // First filter by type
+    // First filter by type and archived status
     const filtered = schemas.filter(schema => {
-      if (schemaTypeFilter === "all") return true;
-      if (schemaTypeFilter === "collection") return schema.isCollection;
-      if (schemaTypeFilter === "single") return !schema.isCollection;
-      return true;
+      if (schemaTypeFilter === "archived") return schema.isArchived;
+      if (schemaTypeFilter === "collection") return schema.isCollection && !schema.isArchived;
+      if (schemaTypeFilter === "single") return !schema.isCollection && !schema.isArchived;
+      return true; // "all" shows everything
     });
     
-    // Then apply search filter (across name and description)
+    // Then apply search filter
     if (!searchQuery.trim()) return filtered;
     
     const searchLower = searchQuery.toLowerCase();
@@ -154,6 +159,23 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   // Total pages for schemas
   const totalSchemaPages = Math.ceil(filteredSchemas.length / schemasPerPage);
+
+  // Convert schemas to ContentItem format for ContentTable
+  const schemaItems = useMemo(() => {
+    return paginatedSchemas.map(schema => ({
+      id: schema.id,
+      schemaId: schema.id,
+      title: schema.name,
+      status: schema.isArchived ? 'archived' : 'published',
+      createdAt: schema.createdAt || new Date().toISOString(),
+      updatedAt: schema.updatedAt || new Date().toISOString(),
+      data: {
+        type: schema.isCollection ? 'Collection' : 'Single',
+        fields: `${schema.fields.length} field${schema.fields.length !== 1 ? 's' : ''}`,
+        description: schema.description || 'No description'
+      }
+    } as ContentItem));
+  }, [paginatedSchemas]);
 
   const handleCreateSchema = async (schema: ContentSchema) => {
     try {
@@ -213,9 +235,67 @@ const ContentSchemaBuilderPage: React.FC = () => {
     }
   };
 
+  const handleArchiveSchemas = async () => {
+    try {
+      const updatedSchemas = await Promise.all(
+        selectedSchemas.map(async (schema) => {
+          const updated = { ...schema, isArchived: true };
+          return await SchemaApi.saveSchema(updated);
+        })
+      );
+      
+      setSchemas(schemas.map(schema => 
+        selectedSchemas.find(s => s.id === schema.id) 
+          ? updatedSchemas.find(u => u.id === schema.id)! 
+          : schema
+      ));
+      setSelectedSchemas([]);
+      
+      toast({
+        title: "Schemas archived",
+        description: `Successfully archived ${selectedSchemas.length} schema${selectedSchemas.length !== 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      console.error("Error archiving schemas:", error);
+      toast({
+        title: "Error archiving schemas",
+        description: "There was a problem archiving the selected schemas.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteSchemas = async () => {
+    try {
+      await Promise.all(selectedSchemas.map(schema => SchemaApi.deleteSchema(schema.id)));
+      setSchemas(schemas.filter(schema => !selectedSchemas.find(s => s.id === schema.id)));
+      setSelectedSchemas([]);
+      setShowDeleteDialog(false);
+      
+      toast({
+        title: "Schemas deleted",
+        description: `Successfully deleted ${selectedSchemas.length} schema${selectedSchemas.length !== 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      console.error("Error deleting schemas:", error);
+      toast({
+        title: "Error deleting schemas",
+        description: "There was a problem deleting the selected schemas.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Navigate to Content Manager with schema filter
   const handleViewContent = (schemaId: string) => {
     navigate(`/manager?schema=${schemaId}`);
+  };
+
+  const handleRowClick = (item: ContentItem) => {
+    const schema = schemas.find(s => s.id === item.id);
+    if (schema) {
+      setEditingSchema(schema);
+    }
   };
 
   return (
@@ -258,7 +338,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
         
         <Tabs 
           value={schemaTypeFilter} 
-          onValueChange={(v) => setSchemaTypeFilter(v as "all" | "collection" | "single")}
+          onValueChange={(v) => setSchemaTypeFilter(v as "all" | "collection" | "single" | "archived")}
         >
           <TabsList>
             <TabsTrigger value="all" className="flex items-center gap-2">
@@ -272,6 +352,10 @@ const ContentSchemaBuilderPage: React.FC = () => {
             <TabsTrigger value="single" className="flex items-center gap-2">
               <File size={16} />
               Singles
+            </TabsTrigger>
+            <TabsTrigger value="archived" className="flex items-center gap-2">
+              <Archive size={16} />
+              Archived
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -289,65 +373,39 @@ const ContentSchemaBuilderPage: React.FC = () => {
             {searchQuery ? 'No schemas match your search criteria' : 'No schemas found. Click "Create Schema" to get started.'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Fields</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedSchemas.map((schema) => (
-                  <TableRow key={schema.id}>
-                    <TableCell className="font-medium">{schema.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={schema.isCollection ? "default" : "outline"}>
-                        {schema.isCollection ? "Collection" : "Single"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{schema.fields.length} field{schema.fields.length !== 1 && "s"}</TableCell>
-                    <TableCell className="max-w-xs truncate">{schema.description || "No description"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewContent(schema.id)}
-                        >
-                          <FileText size={16} className="mr-2" />
-                          View Content
-                        </Button>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingSchema(schema)}
-                            >
-                              <Settings size={16} className="mr-2" />
-                              Edit Schema
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                            {editingSchema && (
-                              <ContentSchemaEditor 
-                                initialSchema={editingSchema} 
-                                onSave={handleUpdateSchema}
-                              />
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <>
+            {selectedSchemas.length > 0 && (
+              <SelectionActionsBar
+                selectedCount={selectedSchemas.length}
+                actions={[
+                  {
+                    label: "Archive",
+                    icon: <Archive size={16} />,
+                    onClick: handleArchiveSchemas,
+                  },
+                  {
+                    label: "Delete",
+                    icon: <Trash2 size={16} />,
+                    onClick: () => setShowDeleteDialog(true),
+                    variant: "destructive",
+                  },
+                ]}
+              />
+            )}
+            <ContentTable
+              items={schemaItems}
+              schemas={[]} // Empty since we're displaying schemas themselves
+              onRowClick={handleRowClick}
+              currentPage={currentSchemasPage}
+              totalPages={totalSchemaPages}
+              onPageChange={setCurrentSchemasPage}
+              itemsPerPage={schemasPerPage}
+              onItemsPerPageChange={setSchemasPerPage}
+              onSelectionChange={(items) => setSelectedSchemas(
+                items.map(item => schemas.find(s => s.id === item.id)!).filter(Boolean)
+              )}
+            />
+          </>
         )}
       </div>
       
@@ -369,6 +427,25 @@ const ContentSchemaBuilderPage: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Add delete confirmation dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {selectedSchemas.length} selected {selectedSchemas.length === 1 ? 'schema' : 'schemas'}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSchemas} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

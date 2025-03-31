@@ -38,7 +38,10 @@ export interface ContentSchema {
   description?: string;
   fields: ContentField[];
   isCollection: boolean;
-  schemaType?: 'collection' | 'single'; // Added for filtering
+  isArchived?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  schemaType?: 'collection' | 'single';
 }
 
 // Add content item status type

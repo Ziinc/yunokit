@@ -1,4 +1,4 @@
-import { ContentItem, ContentItemStatus, ContentSchema, exampleSchemas } from "./contentSchema";
+import { ContentItem, ContentItemStatus, ContentSchema } from "./contentSchema";
 
 // Mock content items to be used across search and editor pages
 export const mockContentItems: ContentItem[] = [
@@ -332,5 +332,57 @@ export const mockContentItems: ContentItem[] = [
   }
 ];
 
-// Re-export exampleSchemas for use throughout the app
+// Define all schemas including archived ones
+export const exampleSchemas: ContentSchema[] = [
+  {
+    id: "archived-blog",
+    name: "Archived Blog Posts",
+    description: "Legacy blog post format (archived)",
+    isCollection: true,
+    isArchived: true,
+    fields: [
+      {
+        id: "title",
+        name: "Title",
+        type: "markdown",
+        required: true,
+      },
+      {
+        id: "content",
+        name: "Content",
+        type: "markdown",
+        required: true,
+      },
+      {
+        id: "author",
+        name: "Author",
+        type: "markdown",
+        required: false,
+      }
+    ]
+  },
+  {
+    id: "archived-homepage",
+    name: "Old Homepage",
+    description: "Previous homepage layout (archived)",
+    isCollection: false,
+    isArchived: true,
+    fields: [
+      {
+        id: "hero",
+        name: "Hero Section",
+        type: "block",
+        required: true,
+      },
+      {
+        id: "features",
+        name: "Features",
+        type: "json",
+        required: true,
+      }
+    ]
+  }
+];
+
+// Export schemas for use throughout the app
 export { exampleSchemas as contentSchemas }; 

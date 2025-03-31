@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, FileText, Edit, Search, Files, File, Layers } from "lucide-react";
+import { Plus, Settings, FileText, Edit, Search, Files, File, Layers, Archive, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import { ContentSchema, exampleSchemas, mockContentItems, ContentItem, ContentItemStatus } from "@/lib/contentSchema";
@@ -15,6 +15,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 import { DocsButton } from "@/components/ui/DocsButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
 
 // Simple query parser for search filtering
 const parseQuery = (query: string) => {
@@ -106,6 +109,8 @@ const ContentSchemasPage: React.FC = () => {
   const [currentContentPage, setCurrentContentPage] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [selectedSchemas, setSelectedSchemas] = useState<ContentSchema[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Filter schemas based on type filter
   const filteredSchemas = useMemo(() => {
@@ -189,6 +194,23 @@ const ContentSchemasPage: React.FC = () => {
     }
   };
 
+  const handleArchiveSchemas = () => {
+    const updatedSchemas = schemas.map(schema => {
+      if (selectedSchemas.includes(schema)) {
+        return { ...schema, isArchived: true };
+      }
+      return schema;
+    });
+    
+    setSchemas(updatedSchemas);
+    setSelectedSchemas([]);
+    
+    toast({
+      title: "Schemas archived",
+      description: `Successfully archived ${selectedSchemas.length} schema${selectedSchemas.length !== 1 ? 's' : ''}.`,
+    });
+  };
+
   return (
     <div className="space-y-6 max-w-full">
       <div className="flex items-center justify-between">
@@ -264,6 +286,18 @@ const ContentSchemasPage: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[30px]">
+                      <Checkbox
+                        checked={selectedSchemas.length === paginatedSchemas.length}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedSchemas(paginatedSchemas);
+                          } else {
+                            setSelectedSchemas([]);
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Fields</TableHead>
@@ -271,9 +305,45 @@ const ContentSchemasPage: React.FC = () => {
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
+                {selectedSchemas.length > 0 && (
+                  <SelectionActionsBar
+                    selectedCount={selectedSchemas.length}
+                    actions={[
+                      {
+                        label: "Archive",
+                        icon: <Archive size={16} />,
+                        onClick: handleArchiveSchemas,
+                      },
+                      {
+                        label: "Delete",
+                        icon: <Trash2 size={16} />,
+                        onClick: () => setShowDeleteDialog(true),
+                        variant: "destructive",
+                      },
+                    ]}
+                  />
+                )}
                 <TableBody>
                   {paginatedSchemas.map((schema) => (
-                    <TableRow key={schema.id}>
+                    <TableRow 
+                      key={schema.id}
+                      className={cn(
+                        schema.isArchived && "opacity-60",
+                        selectedSchemas.includes(schema) && "bg-muted/50"
+                      )}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedSchemas.includes(schema)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedSchemas([...selectedSchemas, schema]);
+                            } else {
+                              setSelectedSchemas(selectedSchemas.filter(s => s.id !== schema.id));
+                            }
+                          }}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{schema.name}</TableCell>
                       <TableCell>
                         <Badge variant={schema.isCollection ? "default" : "outline"}>
