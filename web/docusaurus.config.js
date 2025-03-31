@@ -34,7 +34,7 @@ const config = {
         blog: false, // Optional: disable the docs plugin
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
-          routeBasePath: "/", // Serve the blog at the site's root
+          routeBasePath: "/docs", // Serve the blog at the site's root
         },
         gtag: {
           trackingID: "G-B3P5HGLDR1",
@@ -59,6 +59,11 @@ const config = {
             label: "Docs",
           },
           {
+            to: "/pricing",
+            position: "left",
+            label: "Pricing",
+          },
+          {
             href: "https://github.com/Ziinc/supacontent",
             label: "GitHub",
             position: "right",
@@ -74,6 +79,10 @@ const config = {
               {
                 label: "Documentation",
                 to: "/",
+              },
+              {
+                label: "Pricing",
+                to: "/pricing",
               },
               {
                 label: "Github",

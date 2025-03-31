@@ -335,6 +335,120 @@ export const mockContentItems: ContentItem[] = [
 // Define all schemas including archived ones
 export const exampleSchemas: ContentSchema[] = [
   {
+    id: "blog-post",
+    name: "Blog Post",
+    description: "Standard blog post format",
+    isCollection: true,
+    fields: [
+      {
+        id: "title",
+        name: "Title",
+        type: "markdown",
+        required: true,
+      },
+      {
+        id: "content",
+        name: "Content",
+        type: "markdown",
+        required: true,
+      },
+      {
+        id: "featured",
+        name: "Featured",
+        type: "boolean",
+        required: false,
+      },
+      {
+        id: "category",
+        name: "Category",
+        type: "enum",
+        options: ["Technology", "Design", "Marketing", "Business"],
+        required: true,
+      },
+      {
+        id: "tags",
+        name: "Tags",
+        type: "multiselect",
+        options: ["React", "JavaScript", "CSS", "TypeScript", "UI/UX"],
+        required: false,
+      }
+    ]
+  },
+  {
+    id: "product-catalog",
+    name: "Product",
+    description: "Product catalog entry",
+    isCollection: true,
+    fields: [
+      {
+        id: "name",
+        name: "Product Name",
+        type: "markdown",
+        required: true,
+      },
+      {
+        id: "details",
+        name: "Product Details",
+        type: "json",
+        required: true,
+      },
+      {
+        id: "inStock",
+        name: "In Stock",
+        type: "boolean",
+        required: true,
+      },
+      {
+        id: "productType",
+        name: "Product Type",
+        type: "enum",
+        options: ["Physical", "Digital", "Subscription"],
+        required: true,
+      },
+      {
+        id: "features",
+        name: "Features",
+        type: "multiselect",
+        options: ["Premium", "Limited Edition", "New Arrival"],
+        required: false,
+      }
+    ]
+  },
+  {
+    id: "page-builder",
+    name: "Page",
+    description: "Custom page builder",
+    isCollection: false,
+    fields: [
+      {
+        id: "title",
+        name: "Page Title",
+        type: "markdown",
+        required: true,
+      },
+      {
+        id: "content",
+        name: "Content",
+        type: "block",
+        required: true,
+      },
+      {
+        id: "layout",
+        name: "Layout",
+        type: "enum",
+        options: ["Full Width", "Sidebar Left", "Sidebar Right"],
+        required: true,
+      },
+      {
+        id: "components",
+        name: "Components",
+        type: "multiselect",
+        options: ["Header", "Footer", "Hero", "Contact Form"],
+        required: true,
+      }
+    ]
+  },
+  {
     id: "archived-blog",
     name: "Archived Blog Posts",
     description: "Legacy blog post format (archived)",
@@ -381,8 +495,60 @@ export const exampleSchemas: ContentSchema[] = [
         required: true,
       }
     ]
+  },
+  {
+    id: "archived-newsletter",
+    name: "Newsletter Template (Legacy)",
+    description: "Old newsletter format (archived)",
+    isCollection: true,
+    isArchived: true,
+    fields: [
+      {
+        id: "subject",
+        name: "Email Subject",
+        type: "markdown",
+        required: true,
+      },
+      {
+        id: "template",
+        name: "Content",
+        type: "block",
+        required: true,
+      },
+      {
+        id: "segment",
+        name: "Audience Segment",
+        type: "enum",
+        options: ["All Users", "Premium", "Trial"],
+        required: true,
+      }
+    ]
   }
 ];
 
 // Export schemas for use throughout the app
-export { exampleSchemas as contentSchemas }; 
+export { exampleSchemas as contentSchemas };
+
+export const mockSystemAuthors = [
+  { 
+    id: "author1", 
+    name: "Legal Team", 
+    description: "Legal department publishing team",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
+  { 
+    id: "author2", 
+    name: "Marketing Team", 
+    description: "Marketing department content creators",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
+  { 
+    id: "author3", 
+    name: "Engineering Blog", 
+    description: "Technical content from the engineering team",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  }
+]; 

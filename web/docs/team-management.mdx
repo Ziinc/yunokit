@@ -1,0 +1,81 @@
+---
+title: Team Management
+description: Guide for managing teams and system authors in Supacontent
+sidebar_position: 4
+---
+
+# Team Management
+
+## Role-Based Access Control
+
+Supacontent implements a role-based access control (RBAC) system with four primary roles:
+
+### Role Hierarchy
+
+1. **Admin**
+   - Full system access
+   - Manage team members and roles
+   - Configure system settings
+   - Access all content operations
+
+2. **Developer**
+   - API and integration access
+   - Content type management
+   - Workflow configuration
+   - Technical implementation
+
+3. **Editor**
+   - Content review and approval
+   - Workflow management
+   - Content organization
+   - Asset management
+
+4. **Writer**
+   - Content creation
+   - Basic content operations
+   - Asset usage
+   - Draft management
+
+### Team Management Features
+
+- Invite team members via email
+- Assign and modify roles
+- Manage workspace access
+- Monitor team activity
+- Set workspace defaults
+
+## System Authors
+
+### Content Types
+
+Content types define the structure of content within Supacontent. Each content type:
+
+- Has a unique identifier
+- Contains a schema definition
+- Supports validation rules
+- Can have custom workflows
+
+### Workflows
+
+Workflows control the content lifecycle:
+
+- Draft → Review → Published states
+- Configurable approval steps
+- Automated validation checks
+- Custom state transitions
+
+## Best Practices
+
+1. Define clear content models
+2. Implement proper validation
+3. Use workflow hooks for automation
+4. Follow API rate limits
+5. Cache responses appropriately
+
+## Security Considerations
+
+- Use environment variables for sensitive data
+- Implement proper authentication
+- Follow least privilege principle
+- Validate all inputs
+- Rate limit API requests 

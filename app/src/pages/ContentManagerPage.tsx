@@ -48,6 +48,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { downloadContent } from "@/lib/download";
 
 const ContentManagerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -64,6 +65,7 @@ const ContentManagerPage: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAuthorDialog, setShowAuthorDialog] = useState(false);
   const [newAuthor, setNewAuthor] = useState("");
+  const [isChangingAuthor, setIsChangingAuthor] = useState(false);
   
   const [filterValues, setFilterValues] = useState<FilterValues>({
     status: "",
@@ -263,45 +265,15 @@ const ContentManagerPage: React.FC = () => {
     setSelectedItems(items);
   };
   
-  const handleDownload = async (format: 'json' | 'csv' | 'jsonl' | 'zip') => {
+  const handleDownload = async (format: 'csv' | 'json' | 'jsonl') => {
     try {
-      const ids = selectedItems.map(item => item.id);
-      // Get auth token from localStorage or your auth provider
-      const token = localStorage.getItem('supabase.auth.token') || '';
-      
-      // Create a loading toast
+      // Create loading toast
       toast({
         title: "Preparing download",
         description: "We're preparing your download, please wait...",
       });
       
-      // Call Supabase Edge Function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/download-content?format=${format}&ids=${ids.join(',')}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to download content');
-      }
-      
-      // Get the blob from the response
-      const blob = await response.blob();
-      
-      // Create download link and trigger download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = response.headers.get('Content-Disposition')?.split('filename=')[1].replace(/"/g, '') || 
-                   `content-export.${format}`;
-      a.click();
-      
-      // Clean up
-      URL.revokeObjectURL(url);
+      await downloadContent(selectedItems, format);
       
       toast({
         title: "Download complete",
@@ -395,6 +367,7 @@ const ContentManagerPage: React.FC = () => {
         return;
       }
       
+      setIsChangingAuthor(true);
       const ids = selectedItems.map(item => item.id);
       const updatedItems = [...allItems];
       
@@ -412,10 +385,9 @@ const ContentManagerPage: React.FC = () => {
         }
       }
       
-      // Update the items list
+      // Update the items list and keep selection
       setAllItems(updatedItems);
       applyFilters(filterValues, sortField);
-      setSelectedItems([]);
       setShowAuthorDialog(false);
       setNewAuthor("");
       
@@ -430,6 +402,8 @@ const ContentManagerPage: React.FC = () => {
         description: "There was an error updating the author for the selected items. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsChangingAuthor(false);
     }
   };
   
@@ -457,14 +431,14 @@ const ContentManagerPage: React.FC = () => {
           />
         </div>
         
-        <ResultsBar
-          totalItems={totalItems}
-          sortField={sortField}
-          onSortChange={handleSortChange}
-          sortOptions={sortOptions}
-        />
-        
-        {selectedItems.length > 0 && (
+        {selectedItems.length === 0 ? (
+          <ResultsBar
+            totalItems={totalItems}
+            sortField={sortField}
+            onSortChange={handleSortChange}
+            sortOptions={sortOptions}
+          />
+        ) : (
           <SelectionActionsBar
             selectedCount={selectedItems.length}
             actions={[
@@ -486,10 +460,28 @@ const ContentManagerPage: React.FC = () => {
               {
                 label: "Download",
                 icon: <Download size={16} />,
-                onClick: () => {
-                  // Keep existing dropdown menu functionality
-                  // This is just a placeholder - you'll need to implement the dropdown separately
-                },
+                onClick: () => {},
+                customButton: (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8">
+                        <Download size={16} className="mr-2" />
+                        Download
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-white">
+                      <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                        CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload('json')}>
+                        JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload('jsonl')}>
+                        JSONL
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ),
               },
             ]}
           />
@@ -561,8 +553,15 @@ const ContentManagerPage: React.FC = () => {
             <Button variant="outline" onClick={() => setShowAuthorDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleChangeAuthor}>
-              Apply Changes
+            <Button onClick={handleChangeAuthor} disabled={isChangingAuthor}>
+              {isChangingAuthor ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Applying...
+                </>
+              ) : (
+                'Apply Changes'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

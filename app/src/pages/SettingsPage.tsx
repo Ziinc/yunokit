@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getProjects, getUserProfile, updateUsername, updateEmail, updatePassword, signOut, supabase } from "@/lib/supabase";
+import { AuthorsSection } from "@/components/Settings/AuthorsSection";
+import { SystemAuthorApi, SystemAuthor } from "@/lib/api/SystemAuthorApi";
 import { 
   AlertCircle, 
   Database, 
@@ -35,11 +37,14 @@ import {
   Github,
   MailIcon,
   Save,
-  Loader2
+  Loader2,
+  Rocket
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
+
+interface SystemAuthorType extends SystemAuthor {}
 
 // Mock workspaces for demonstration
 const mockWorkspaces = [
@@ -59,22 +64,17 @@ const mockTeamMembers = [
 // Mock billing data for demonstration
 const mockBillingData = {
   currentPlan: "free",
-  seats: { used: 4, total: 5 },
+  seats: { used: 1, total: 1 },
   workspaces: { used: 1, total: 1 },
-  addOns: [
-    { name: "Additional Storage", quantity: 0, price: 10 },
-    { name: "API Rate Limit Increase", quantity: 0, price: 20 }
-  ],
+  features: {
+    communityFeatures: false,
+    systemAuthors: false,
+    contentApprovalFlow: false
+  },
   invoices: [
     { id: "INV-001", date: "2023-09-01", amount: 0, status: "paid", items: "Free Plan" },
     { id: "INV-002", date: "2023-08-01", amount: 0, status: "paid", items: "Free Plan" },
     { id: "INV-003", date: "2023-07-01", amount: 0, status: "paid", items: "Free Plan" },
-    { id: "INV-004", date: "2023-06-01", amount: 0, status: "paid", items: "Free Plan" },
-    { id: "INV-005", date: "2023-05-01", amount: 0, status: "paid", items: "Free Plan" },
-    { id: "INV-006", date: "2023-04-01", amount: 0, status: "paid", items: "Free Plan" },
-    { id: "INV-007", date: "2023-03-01", amount: 0, status: "paid", items: "Free Plan" },
-    { id: "INV-008", date: "2023-02-01", amount: 0, status: "paid", items: "Free Plan" },
-    { id: "INV-009", date: "2023-01-01", amount: 0, status: "paid", items: "Free Plan" },
   ],
   monthlyCharges: [
     { month: "Jan", amount: 0 },
@@ -115,12 +115,22 @@ const SettingsPage: React.FC = () => {
   // Account update states
   const [usernameInput, setUsernameInput] = useState("");
   const [emailInput, setEmailInput] = useState("");
+  const [pseudonymInput, setPseudonymInput] = useState("");
+  const [firstNameInput, setFirstNameInput] = useState("");
+  const [lastNameInput, setLastNameInput] = useState("");
+  const [linkedinInput, setLinkedinInput] = useState("");
+  const [githubInput, setGithubInput] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  const [isUpdatingPseudonym, setIsUpdatingPseudonym] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Mock system authors data
+  const [systemAuthors, setSystemAuthors] = useState<SystemAuthorType[]>([]);
+  const [isLoadingAuthors, setIsLoadingAuthors] = useState(true);
 
   // Pagination for invoices
   const paginatedInvoices = useMemo(() => {
@@ -173,6 +183,11 @@ const SettingsPage: React.FC = () => {
         if (profile) {
           setUsernameInput(profile.username || "");
           setEmailInput(profile.email || "");
+          setFirstNameInput(profile.first_name || "");
+          setLastNameInput(profile.last_name || "");
+          setLinkedinInput(profile.linkedin_url || "");
+          setGithubInput(profile.github_url || "");
+          setPseudonymInput(profile.pseudonym || "");
         }
       } catch (error) {
         console.error("Failed to fetch user profile:", error);
@@ -188,6 +203,28 @@ const SettingsPage: React.FC = () => {
     
     fetchUserProfile();
   }, [toast]);
+
+  // Load system authors
+  useEffect(() => {
+    const loadSystemAuthors = async () => {
+      try {
+        await SystemAuthorApi.initializeStorage();
+        const authors = await SystemAuthorApi.getSystemAuthors();
+        setSystemAuthors(authors);
+      } catch (error) {
+        console.error("Failed to load system authors:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load system authors",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingAuthors(false);
+      }
+    };
+
+    loadSystemAuthors();
+  }, []);
 
   const handleConnectProject = (projectId: string) => {
     setSelectedProject(projectId);
@@ -342,22 +379,6 @@ const SettingsPage: React.FC = () => {
     });
     
     // This would redirect to Stripe or other payment processor in a real implementation
-  };
-
-  const handleUpdateAddOn = (name: string, quantity: number) => {
-    const updatedAddOns = billingData.addOns.map(addOn => 
-      addOn.name === name ? { ...addOn, quantity } : addOn
-    );
-    
-    setBillingData({
-      ...billingData,
-      addOns: updatedAddOns
-    });
-    
-    toast({
-      title: "Add-on updated",
-      description: `${name} quantity updated to ${quantity}.`,
-    });
   };
 
   const ProjectCard = ({ project }: { project: any }) => {
@@ -633,6 +654,88 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingPseudonym(true);
+    
+    try {
+      // Update profile in the database
+      const { error } = await supabase.from('user_profiles').update({
+        first_name: firstNameInput || null,
+        last_name: lastNameInput || null,
+        linkedin_url: linkedinInput || null,
+        github_url: githubInput || null,
+        pseudonym: pseudonymInput || null
+      }).eq('id', userProfile.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUserProfile({
+        ...userProfile,
+        first_name: firstNameInput,
+        last_name: lastNameInput,
+        linkedin_url: linkedinInput,
+        github_url: githubInput,
+        pseudonym: pseudonymInput
+      });
+      
+      toast({
+        title: "Success",
+        description: "Your profile has been updated.",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingPseudonym(false);
+    }
+  };
+
+  const handleAddSystemAuthor = async (author: Omit<SystemAuthorType, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const newAuthor = await SystemAuthorApi.saveSystemAuthor(author);
+      setSystemAuthors(prev => [...prev, newAuthor]);
+      
+      toast({
+        title: "Success",
+        description: "System author added successfully"
+      });
+    } catch (error) {
+      console.error("Error adding system author:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add system author",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const handleDeleteSystemAuthor = async (id: string) => {
+    try {
+      await SystemAuthorApi.deleteSystemAuthor(id);
+      setSystemAuthors(prev => prev.filter(author => author.id !== id));
+      
+      toast({
+        title: "Success",
+        description: "System author deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting system author:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete system author",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -640,11 +743,11 @@ const SettingsPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="account" className="w-full">
-        <TabsList className="grid grid-cols-5 max-w-2xl">
+        <TabsList className="grid grid-cols-5 max-w-[800px]">
           <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="projects">Supabase Projects</TabsTrigger>
+          <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
-          <TabsTrigger value="team">Team Members</TabsTrigger>
+          <TabsTrigger value="team">Team & Authors</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         
@@ -680,29 +783,110 @@ const SettingsPage: React.FC = () => {
                         )}
                       </div>
                       <div>
-                        <h3 className="text-lg font-medium">{userProfile?.username || 'User'}</h3>
+                        <h3 className="text-lg font-medium">
+                          {userProfile?.first_name && userProfile?.last_name 
+                            ? `${userProfile.first_name} ${userProfile.last_name}`
+                            : userProfile?.username || 'User'}
+                        </h3>
                         <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
-                        
-                        {/* Display OAuth providers if any */}
-                        {userProfile?.providers && userProfile.providers.length > 0 && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <span className="text-sm text-muted-foreground">Connected with: </span>
-                            <div className="flex gap-1">
-                              {userProfile.providers.map((provider: any) => (
-                                <Badge 
-                                  key={provider.id} 
-                                  variant="outline" 
-                                  className="flex items-center gap-1"
-                                >
-                                  {getProviderIcon(provider.provider)}
-                                  <span className="capitalize">{provider.provider}</span>
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
+                        {userProfile?.pseudonym && (
+                          <p className="text-sm text-muted-foreground">Writing as: {userProfile.pseudonym}</p>
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Profile Details */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-medium mb-4">Profile Details</h3>
+                    <form onSubmit={handleUpdateProfile} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName">First Name</Label>
+                          <Input
+                            id="firstName"
+                            placeholder="Enter your first name"
+                            value={firstNameInput}
+                            onChange={(e) => setFirstNameInput(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            placeholder="Enter your last name"
+                            value={lastNameInput}
+                            onChange={(e) => setLastNameInput(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={emailInput}
+                          onChange={(e) => setEmailInput(e.target.value)}
+                          disabled
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Email can be changed in the account security section below.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="pseudonym">Pseudonym</Label>
+                        <Input
+                          id="pseudonym"
+                          placeholder="Enter your writing pseudonym"
+                          value={pseudonymInput}
+                          onChange={(e) => setPseudonymInput(e.target.value)}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          This name will be used for your published content. Leave empty to use your real name.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="linkedin">LinkedIn Profile</Label>
+                        <div className="relative">
+                          <Input
+                            id="linkedin"
+                            placeholder="https://linkedin.com/in/username"
+                            value={linkedinInput}
+                            onChange={(e) => setLinkedinInput(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="github">GitHub Profile</Label>
+                        <div className="relative">
+                          <Input
+                            id="github"
+                            placeholder="https://github.com/username"
+                            value={githubInput}
+                            onChange={(e) => setGithubInput(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <Button type="submit" className="gap-2">
+                        {isUpdatingPseudonym ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            Save Profile
+                          </>
+                        )}
+                      </Button>
+                    </form>
                   </div>
 
                   {/* Username Update */}
@@ -1079,237 +1263,169 @@ const SettingsPage: React.FC = () => {
         <TabsContent value="team" className="space-y-4 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Team Management</CardTitle>
+              <CardTitle className="text-xl">Team & Author Management</CardTitle>
               <CardDescription>
-                Invite team members and manage access permissions
+                Manage team members, access permissions, and system authors
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Team Members</h3>
-                
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2">
-                      <UserPlus size={16} />
-                      Invite Member
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Invite team member</DialogTitle>
-                      <DialogDescription>
-                        Send an invitation to join your workspace.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-4">
-                      <div>
-                        <Label htmlFor="member-email" className="mb-2 block">Email Address</Label>
-                        <Input 
-                          id="member-email" 
-                          type="email"
-                          value={newMemberEmail} 
-                          onChange={(e) => setNewMemberEmail(e.target.value)} 
-                          placeholder="colleague@example.com"
-                        />
+              {/* Team Members Section */}
+              <div>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Team Members</h3>
+                  
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2">
+                        <UserPlus size={16} />
+                        Invite Member
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Invite team member</DialogTitle>
+                        <DialogDescription>
+                          Send an invitation to join your workspace.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4">
+                        <div>
+                          <Label htmlFor="member-email" className="mb-2 block">Email Address</Label>
+                          <Input 
+                            id="member-email" 
+                            type="email"
+                            value={newMemberEmail} 
+                            onChange={(e) => setNewMemberEmail(e.target.value)} 
+                            placeholder="colleague@example.com"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="member-role" className="mb-2 block">Role</Label>
+                          <Select defaultValue={newMemberRole} onValueChange={setNewMemberRole}>
+                            <SelectTrigger id="member-role">
+                              <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin" className="flex items-center gap-2">
+                                <Lock size={16} className="inline mr-2" />
+                                Admin
+                              </SelectItem>
+                              <SelectItem value="developer" className="flex items-center gap-2">
+                                <Code size={16} className="inline mr-2" />
+                                Developer
+                              </SelectItem>
+                              <SelectItem value="editor" className="flex items-center gap-2">
+                                <FileText size={16} className="inline mr-2" />
+                                Editor
+                              </SelectItem>
+                              <SelectItem value="writer" className="flex items-center gap-2">
+                                <User size={16} className="inline mr-2" />
+                                Writer
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      
-                      <div>
-                        <Label htmlFor="member-role" className="mb-2 block">Role</Label>
-                        <Select defaultValue={newMemberRole} onValueChange={setNewMemberRole}>
-                          <SelectTrigger id="member-role">
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin" className="flex items-center gap-2">
-                              <Lock size={16} className="inline mr-2" />
-                              Admin
-                            </SelectItem>
-                            <SelectItem value="developer" className="flex items-center gap-2">
-                              <Code size={16} className="inline mr-2" />
-                              Developer
-                            </SelectItem>
-                            <SelectItem value="editor" className="flex items-center gap-2">
-                              <FileText size={16} className="inline mr-2" />
-                              Editor
-                            </SelectItem>
-                            <SelectItem value="writer" className="flex items-center gap-2">
-                              <User size={16} className="inline mr-2" />
-                              Writer
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setNewMemberEmail("")}>Cancel</Button>
-                      <Button onClick={handleInviteTeamMember}>Send Invitation</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              
-              <div className="border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedTeamMembers.map(member => (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full overflow-hidden">
-                              <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{member.name}</p>
-                              <p className="text-sm text-muted-foreground">{member.email}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getRoleIcon(member.role)}
-                            {getRoleBadge(member.role)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Select 
-                              defaultValue={member.role} 
-                              onValueChange={(value) => handleUpdateRole(member.id, value)}
-                            >
-                              <SelectTrigger className="w-[140px] h-8">
-                                <SelectValue placeholder="Change role" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="developer">Developer</SelectItem>
-                                <SelectItem value="editor">Editor</SelectItem>
-                                <SelectItem value="writer">Writer</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-destructive hover:text-destructive" 
-                              onClick={() => handleRemoveTeamMember(member.id)}
-                            >
-                              <Trash2 size={16} />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                
-                {teamMembers.length > 0 && (
-                  <div className="p-4 border-t">
-                    <PaginationControls
-                      currentPage={currentMembersPage}
-                      totalPages={totalMembersPages}
-                      onPageChange={setCurrentMembersPage}
-                      itemsPerPage={membersPerPage}
-                      onItemsPerPageChange={(value) => {
-                        setMembersPerPage(value);
-                        setCurrentMembersPage(1); // Reset to first page when changing items per page
-                      }}
-                      pageSizeOptions={[5, 10, 20, 50]}
-                    />
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-4">
-                <h3 className="text-lg font-medium mb-2">Roles & Permissions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border rounded-md p-4">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Lock size={16} />
-                      Admin
-                    </h4>
-                    <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Manage team members and roles
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Create and modify content types
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Edit and publish content
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Manage workspace settings
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="border rounded-md p-4">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Code size={16} />
-                      Developer
-                    </h4>
-                    <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Create and modify content types
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Edit and publish content
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Access API and developer features
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="border rounded-md p-4">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <FileText size={16} />
-                      Editor
-                    </h4>
-                    <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Edit and publish content
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Approve content from writers
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="border rounded-md p-4">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <User size={16} />
-                      Writer
-                    </h4>
-                    <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Create and edit content
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check size={12} className="text-green-500" />
-                        Submit content for approval
-                      </li>
-                    </ul>
-                  </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setNewMemberEmail("")}>Cancel</Button>
+                        <Button onClick={handleInviteTeamMember}>Send Invitation</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
+                
+                <div className="border rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedTeamMembers.map(member => (
+                        <TableRow key={member.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full overflow-hidden">
+                                <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{member.name}</p>
+                                <p className="text-sm text-muted-foreground">{member.email}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getRoleIcon(member.role)}
+                              {getRoleBadge(member.role)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Select 
+                                defaultValue={member.role} 
+                                onValueChange={(value) => handleUpdateRole(member.id, value)}
+                              >
+                                <SelectTrigger className="w-[140px] h-8">
+                                  <SelectValue placeholder="Change role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                  <SelectItem value="developer">Developer</SelectItem>
+                                  <SelectItem value="editor">Editor</SelectItem>
+                                  <SelectItem value="writer">Writer</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-destructive hover:text-destructive" 
+                                onClick={() => handleRemoveTeamMember(member.id)}
+                              >
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  
+                  {teamMembers.length > 0 && (
+                    <div className="p-4 border-t">
+                      <PaginationControls
+                        currentPage={currentMembersPage}
+                        totalPages={totalMembersPages}
+                        onPageChange={setCurrentMembersPage}
+                        itemsPerPage={membersPerPage}
+                        onItemsPerPageChange={(value) => {
+                          setMembersPerPage(value);
+                          setCurrentMembersPage(1); // Reset to first page when changing items per page
+                        }}
+                        pageSizeOptions={[5, 10, 20, 50]}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Authors Section */}
+              <div className="border-t pt-6">
+                <AuthorsSection
+                  teamMembers={teamMembers.map(member => ({
+                    ...member,
+                    pseudonym: null, // This would come from the user_profiles table
+                  }))}
+                  systemAuthors={systemAuthors}
+                  isLoadingAuthors={isLoadingAuthors}
+                  onAddSystemAuthor={handleAddSystemAuthor}
+                  onDeleteSystemAuthor={handleDeleteSystemAuthor}
+                />
               </div>
             </CardContent>
           </Card>
@@ -1319,102 +1435,101 @@ const SettingsPage: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-xl">Billing & Subscription</CardTitle>
-              <CardDescription>
+              <CardDescription className="flex items-center gap-2">
                 Manage your plan, invoices, and payment methods
+                <Button variant="link" className="h-auto p-0" asChild>
+                  <a href="/pricing" className="text-primary">View full pricing details →</a>
+                </Button>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Current Plan</h3>
-                  
-                  <Card className="bg-muted/50">
+              <div>
+                <h3 className="text-lg font-medium mb-4">Current Plan</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className={`bg-muted/50 relative ${billingData.currentPlan === "free" ? "border-2 border-primary" : ""}`}>
                     <CardContent className="p-6">
-                      <div className="flex justify-between items-center mb-4">
+                      <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h4 className="text-xl font-medium">
-                            {billingData.currentPlan === "free" ? "Free Plan" : "Team Plan"}
-                          </h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {billingData.currentPlan === "free" 
-                              ? "Limited features for individuals" 
-                              : "Enhanced features for teams"}
-                          </p>
+                          <h4 className="text-xl font-medium">Free Plan</h4>
+                          <p className="text-2xl font-bold mt-2">$0<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+                          <p className="text-sm text-muted-foreground mt-1">Basic features for individuals</p>
                         </div>
-                        <div>
-                          <Badge className={billingData.currentPlan === "free" ? "bg-secondary" : "bg-primary"}>
-                            {billingData.currentPlan === "free" ? "Free" : "Paid"}
-                          </Badge>
+                        {billingData.currentPlan === "free" && (
+                          <Badge className="bg-primary">Current</Badge>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Check size={16} className="text-primary" />
+                          <span className="text-sm">1 user</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={16} className="text-primary" />
+                          <span className="text-sm">1 workspace</span>
                         </div>
                       </div>
                       
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Team members</span>
-                          <span className="text-sm font-medium">
-                            {billingData.seats.used}/{billingData.seats.total}
-                          </span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Workspaces</span>
-                          <span className="text-sm font-medium">
-                            {billingData.workspaces.used}/{billingData.workspaces.total}
-                          </span>
-                        </div>
-                        
-                        {billingData.currentPlan === "free" && (
-                          <Button 
-                            className="w-full mt-4 gap-2" 
-                            onClick={handleUpgradePlan}
-                          >
-                            <DollarSign size={16} />
-                            Upgrade to Team Plan
-                          </Button>
-                        )}
-                      </div>
+                      {billingData.currentPlan !== "free" && (
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-6" 
+                          onClick={handleUpgradePlan}
+                        >
+                          Downgrade to Free
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Add-ons</h3>
-                  
-                  <div className="space-y-4">
-                    {billingData.addOns.map((addOn) => (
-                      <Card key={addOn.name} className="bg-muted/50">
-                        <CardContent className="p-6">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{addOn.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                ${addOn.price}/month per unit
-                              </p>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleUpdateAddOn(addOn.name, Math.max(0, addOn.quantity - 1))}
-                                disabled={addOn.quantity === 0}
-                              >
-                                -
-                              </Button>
-                              <span className="w-8 text-center">{addOn.quantity}</span>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleUpdateAddOn(addOn.name, addOn.quantity + 1)}
-                              >
-                                +
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+
+                  <Card className={`bg-muted/50 relative ${billingData.currentPlan === "pro" ? "border-2 border-primary" : ""}`}>
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h4 className="text-xl font-medium">Pro Plan</h4>
+                          <p className="text-2xl font-bold mt-2">$5<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+                          <p className="text-sm text-muted-foreground mt-1">Enhanced features for teams</p>
+                        </div>
+                        {billingData.currentPlan === "pro" && (
+                          <Badge className="bg-primary">Current</Badge>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Check size={16} className="text-primary" />
+                          <span className="text-sm">3 users included ($1/additional user)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={16} className="text-primary" />
+                          <span className="text-sm">1 workspace ($5/additional)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={16} className="text-primary" />
+                          <span className="text-sm">Community features</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={16} className="text-primary" />
+                          <span className="text-sm">System authors</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Check size={16} className="text-primary" />
+                          <span className="text-sm">Content approval flow</span>
+                        </div>
+                      </div>
+                      
+                      {billingData.currentPlan !== "pro" && (
+                        <Button 
+                          className="w-full mt-6" 
+                          onClick={handleUpgradePlan}
+                        >
+                          <Rocket size={16} className="mr-2" />
+                          Upgrade to Pro
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
               

@@ -35,3 +35,38 @@ const { data, error } = await client
   .select()
   .eq("id", "eq", 1);
 ```
+
+## Publishing and Unpublishing Content
+
+Content items can be managed through their publication status. This allows you to control when content becomes publicly accessible.
+
+### Publishing Content
+Content items start in an unpublished state. To make content publicly accessible:
+
+1. Navigate to the content item in the Content Manager
+2. Click the "Publish" button in the top right
+3. The item's status will update to "Published"
+
+### Unpublishing Content
+To remove content from public access while preserving it for future use:
+
+1. Select the published content item
+2. Click "Unpublish" in the top right
+3. The item will return to draft status
+
+## Downloading Content
+
+You can export your content for backup or migration purposes:
+
+### Bulk Download
+1. Navigate to the Content Manager
+2. Select the items you want to export
+3. Click the "Download" button
+4. Choose your preferred format (JSON/CSV)
+
+### Single Item Download
+1. Open the specific content item
+2. Click the "Download" button in the top right
+3. The item will be exported in JSON format
+
+The downloaded content includes all fields and metadata, making it suitable for backup or migration purposes.

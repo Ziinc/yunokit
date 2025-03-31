@@ -5,6 +5,7 @@ export * from './CommentsApi';
 export * from './TemplateService';
 export * from './TemplateGenerators'; 
 export * from './AuthApi';
+export * from './SystemAuthorApi';
 
 // Initialize all API storage when the app starts
 export const initializeApiStorage = async () => {

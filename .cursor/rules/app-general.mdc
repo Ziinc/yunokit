@@ -5,5 +5,12 @@ alwaysApply: false
 ---
 # Dev rules for working on /app
 
+- never suggest performing an `npm install`, only recommend the packages that is used in the generated code.
+
 ## Routing
 Use the [App.tsx](mdc:app/src/App.tsx) router logic to determine the correct paths for links and general navigation
+
+## Testing
+
+- Tests should always be written under the `app/tests` directory. 
+- When working on files under `app/src/lib/**`, always ensure that there are appropriate tests written.

@@ -1,11 +1,67 @@
 import { createClient } from '@supabase/supabase-js';
 
+export interface Database {
+  public: {
+    Tables: {
+      user_profiles: {
+        Row: {
+          id: string;
+          username: string;
+          email: string;
+          pseudonym: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          username: string;
+          email: string;
+          pseudonym?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          username?: string;
+          email?: string;
+          pseudonym?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      system_authors: {
+        Row: {
+          id: string;
+          name: string;
+          description: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+    };
+  };
+}
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Create a dummy client if credentials are missing
 export const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey)
   : {
       auth: {
         signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('Supabase credentials missing') }),
@@ -24,11 +80,21 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
             single: () => Promise.resolve({ data: null, error: null })
           })
         }),
-        // Add separate method for upsert operations
         upsert: () => ({
           select: () => ({
             single: () => Promise.resolve({ data: null, error: null })
           })
+        }),
+        update: () => ({
+          eq: () => Promise.resolve({ data: null, error: null })
+        }),
+        insert: () => ({
+          select: () => ({
+            single: () => Promise.resolve({ data: null, error: null })
+          })
+        }),
+        delete: () => ({
+          eq: () => Promise.resolve({ data: null, error: null })
         })
       })
     };

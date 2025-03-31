@@ -5,6 +5,8 @@ import { MemoryRouter, Route, Routes, createMemoryRouter, RouterProvider } from 
 import ContentManagerPage from '../ContentManagerPage';
 import { mockContentItems, contentSchemas } from '@/lib/mocks';
 import { act } from 'react-dom/test-utils';
+import { ContentApi } from '@/lib/api';
+import { BrowserRouter } from 'react-router-dom';
 
 // Mock the router hooks
 vi.mock('react-router-dom', async () => {
@@ -52,6 +54,48 @@ vi.mock('@/lib/mocks', () => ({
   ],
 }));
 
+// Mock the ContentApi
+vi.mock('@/lib/api', () => ({
+  ContentApi: {
+    getContentItems: vi.fn(),
+    getSchemas: vi.fn(),
+    saveContentItem: vi.fn(),
+  },
+}));
+
+// Mock data
+const mockContentItems = [
+  {
+    id: '1',
+    title: 'Test Item 1',
+    schemaId: 'blog-post',
+    status: 'published',
+    createdAt: '2024-01-01',
+    updatedAt: '2024-01-01',
+    createdBy: 'user1@example.com',
+    updatedBy: 'user1@example.com',
+  },
+  {
+    id: '2',
+    title: 'Test Item 2',
+    schemaId: 'blog-post',
+    status: 'published',
+    createdAt: '2024-01-01',
+    updatedAt: '2024-01-01',
+    createdBy: 'user1@example.com',
+    updatedBy: 'user1@example.com',
+  },
+];
+
+const mockSchemas = [
+  {
+    id: 'blog-post',
+    name: 'Blog Post',
+    fields: [],
+    isCollection: true,
+  },
+];
+
 describe('ContentManagerPage', () => {
   // Helper function to render the component with specific query parameters
   const renderWithRouter = (queryParams: string = '') => {
@@ -82,6 +126,11 @@ describe('ContentManagerPage', () => {
       state: null,
       key: 'default',
     }));
+
+    // Setup mock responses
+    ContentApi.getContentItems.mockResolvedValue(mockContentItems);
+    ContentApi.getSchemas.mockResolvedValue(mockSchemas);
+    ContentApi.saveContentItem.mockResolvedValue({});
   });
 
   it('loads with default filter values when no query parameters are provided', async () => {
@@ -212,6 +261,133 @@ describe('ContentManagerPage', () => {
     await waitFor(() => {
       // Check that the sort dropdown shows the correct value
       expect(screen.getByText('Last Updated')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('ContentManagerPage - Selection Actions', () => {
+  beforeEach(() => {
+    // Reset mocks
+    vi.clearAllMocks();
+    
+    // Setup mock responses
+    ContentApi.getContentItems.mockResolvedValue(mockContentItems);
+    ContentApi.getSchemas.mockResolvedValue(mockSchemas);
+    ContentApi.saveContentItem.mockResolvedValue({});
+  });
+  
+  test('selection bar remains visible after changing author', async () => {
+    render(
+      <BrowserRouter>
+        <ContentManagerPage />
+      </BrowserRouter>
+    );
+    
+    // Wait for content to load
+    await waitFor(() => {
+      expect(screen.queryByText('Loading content...')).not.toBeInTheDocument();
+    });
+    
+    // Select items
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]); // Select first item checkbox (index 0 is header)
+    fireEvent.click(checkboxes[2]); // Select second item checkbox
+    
+    // Verify selection bar appears
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    
+    // Click change author button
+    const changeAuthorButton = screen.getByText('Change Author');
+    fireEvent.click(changeAuthorButton);
+    
+    // Select new author in dialog
+    const authorSelect = screen.getByRole('combobox');
+    fireEvent.click(authorSelect);
+    const newAuthorOption = screen.getByText('user2@example.com');
+    fireEvent.click(newAuthorOption);
+    
+    // Click apply changes
+    const applyButton = screen.getByText('Apply Changes');
+    fireEvent.click(applyButton);
+    
+    // Verify selection bar is still visible after author change
+    await waitFor(() => {
+      expect(screen.getByText('2 selected')).toBeInTheDocument();
+    });
+    
+    // Verify selection actions are still available
+    expect(screen.getByText('Download')).toBeInTheDocument();
+    expect(screen.getByText('Delete')).toBeInTheDocument();
+    expect(screen.getByText('Change Author')).toBeInTheDocument();
+  });
+  
+  test('selection bar shows correct count after changing author', async () => {
+    render(
+      <BrowserRouter>
+        <ContentManagerPage />
+      </BrowserRouter>
+    );
+    
+    // Wait for content to load
+    await waitFor(() => {
+      expect(screen.queryByText('Loading content...')).not.toBeInTheDocument();
+    });
+    
+    // Select one item
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]); // Select first item
+    
+    // Verify initial selection count
+    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    
+    // Change author
+    const changeAuthorButton = screen.getByText('Change Author');
+    fireEvent.click(changeAuthorButton);
+    
+    // Select new author and apply
+    const authorSelect = screen.getByRole('combobox');
+    fireEvent.click(authorSelect);
+    const newAuthorOption = screen.getByText('user2@example.com');
+    fireEvent.click(newAuthorOption);
+    const applyButton = screen.getByText('Apply Changes');
+    fireEvent.click(applyButton);
+    
+    // Verify selection count remains the same
+    await waitFor(() => {
+      expect(screen.getByText('1 selected')).toBeInTheDocument();
+    });
+  });
+  
+  test('selection persists in table after changing author', async () => {
+    render(
+      <BrowserRouter>
+        <ContentManagerPage />
+      </BrowserRouter>
+    );
+    
+    // Wait for content to load
+    await waitFor(() => {
+      expect(screen.queryByText('Loading content...')).not.toBeInTheDocument();
+    });
+    
+    // Select items
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]); // Select first item
+    
+    // Change author
+    const changeAuthorButton = screen.getByText('Change Author');
+    fireEvent.click(changeAuthorButton);
+    const authorSelect = screen.getByRole('combobox');
+    fireEvent.click(authorSelect);
+    const newAuthorOption = screen.getByText('user2@example.com');
+    fireEvent.click(newAuthorOption);
+    const applyButton = screen.getByText('Apply Changes');
+    fireEvent.click(applyButton);
+    
+    // Verify checkbox remains checked
+    await waitFor(() => {
+      const updatedCheckboxes = screen.getAllByRole('checkbox');
+      expect(updatedCheckboxes[1]).toBeChecked();
     });
   });
 }); 

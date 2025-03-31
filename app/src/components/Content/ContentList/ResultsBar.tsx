@@ -16,7 +16,7 @@ export const ResultsBar: React.FC<ResultsBarProps> = ({
   sortOptions
 }) => {
   return (
-    <div className="flex justify-between items-center px-4 py-3 border-b border-border/40 bg-background">
+    <div className="flex w-full h-[3.75rem] items-center justify-between px-4 border-b">
       <div className="flex items-center gap-1 text-sm text-muted-foreground">
         <Info size={14} />
         <span>

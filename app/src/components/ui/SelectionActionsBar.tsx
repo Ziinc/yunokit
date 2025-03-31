@@ -7,6 +7,7 @@ export interface SelectionAction {
   icon?: React.ReactNode;
   onClick: () => void;
   variant?: "default" | "outline" | "destructive";
+  customButton?: React.ReactNode;
 }
 
 interface SelectionActionsBarProps {
@@ -23,10 +24,10 @@ export const SelectionActionsBar: React.FC<SelectionActionsBarProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-between py-2 px-4 border-b",
+        "flex w-full h-[3.75rem] items-center justify-between px-4 border-b bg-accent/5",
         "transition-all duration-200 ease-in-out",
-        "animate-in slide-in-from-top fade-in",
-        "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top data-[state=closed]:fade-out",
+        "animate-in fade-in",
+        "data-[state=closed]:animate-out data-[state=closed]:fade-out",
         className
       )}
     >
@@ -35,19 +36,22 @@ export const SelectionActionsBar: React.FC<SelectionActionsBarProps> = ({
       </div>
       <div className="flex items-center gap-2">
         {actions.map((action, index) => (
-          <Button
-            key={index}
-            variant={action.variant || "ghost"}
-            size="sm"
-            onClick={action.onClick}
-            className={cn(
-              "h-8",
-              action.variant === "destructive" && "text-destructive"
+          <React.Fragment key={index}>
+            {action.customButton || (
+              <Button
+                variant={action.variant || "ghost"}
+                size="sm"
+                onClick={action.onClick}
+                className={cn(
+                  "h-8",
+                  action.variant === "destructive" && "text-destructive"
+                )}
+              >
+                {action.icon && <span className="mr-2">{action.icon}</span>}
+                {action.label}
+              </Button>
             )}
-          >
-            {action.icon && <span className="mr-2">{action.icon}</span>}
-            {action.label}
-          </Button>
+          </React.Fragment>
         ))}
       </div>
     </div>
