@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, User, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 
 interface SystemAuthor {
   id: string;
@@ -120,96 +121,98 @@ export const AuthorsSection: React.FC<AuthorsSectionProps> = ({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* System Authors */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">System Authors</h3>
-            
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus size={16} />
-                  Add System Author
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add System Author</DialogTitle>
-                  <DialogDescription>
-                    Create a new system author for automated content publishing.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleAddSystemAuthor}>
-                  <div className="py-4 space-y-4">
-                    <div>
-                      <Label htmlFor="author-name" className="mb-2 block">
-                        Name <span className="text-destructive">*</span>
-                      </Label>
-                      <Input 
-                        id="author-name" 
-                        value={newAuthorName} 
-                        onChange={(e) => setNewAuthorName(e.target.value)} 
-                        placeholder="e.g. Legal Team"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="author-description" className="mb-2 block">
-                        Description
-                      </Label>
-                      <Input 
-                        id="author-description" 
-                        value={newAuthorDescription} 
-                        onChange={(e) => setNewAuthorDescription(e.target.value)} 
-                        placeholder="e.g. Legal department publishing team"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" type="button" onClick={() => setShowAddDialog(false)}>Cancel</Button>
-                    <Button type="submit" disabled={!newAuthorName.trim()}>Add Author</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          
-          {isLoadingAuthors ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {systemAuthors.map(author => (
-                <Card key={author.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-center">
+        {isFeatureEnabled(FeatureFlags.SYSTEM_AUTHORS) && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">System Authors</h3>
+              
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus size={16} />
+                    Add System Author
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add System Author</DialogTitle>
+                    <DialogDescription>
+                      Create a new system author for automated content publishing.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleAddSystemAuthor}>
+                    <div className="py-4 space-y-4">
                       <div>
-                        <h4 className="font-medium">{author.name}</h4>
-                        {author.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {author.description}
-                          </p>
-                        )}
+                        <Label htmlFor="author-name" className="mb-2 block">
+                          Name <span className="text-destructive">*</span>
+                        </Label>
+                        <Input 
+                          id="author-name" 
+                          value={newAuthorName} 
+                          onChange={(e) => setNewAuthorName(e.target.value)} 
+                          placeholder="e.g. Legal Team"
+                        />
                       </div>
                       
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-destructive hover:text-destructive" 
-                        onClick={() => handleDeleteSystemAuthor(author.id)}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+                      <div>
+                        <Label htmlFor="author-description" className="mb-2 block">
+                          Description
+                        </Label>
+                        <Input 
+                          id="author-description" 
+                          value={newAuthorDescription} 
+                          onChange={(e) => setNewAuthorDescription(e.target.value)} 
+                          placeholder="e.g. Legal department publishing team"
+                        />
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <DialogFooter>
+                      <Button variant="outline" type="button" onClick={() => setShowAddDialog(false)}>Cancel</Button>
+                      <Button type="submit" disabled={!newAuthorName.trim()}>Add Author</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
-          )}
-        </div>
+            
+            {isLoadingAuthors ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {systemAuthors.map(author => (
+                  <Card key={author.id}>
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium">{author.name}</h4>
+                          {author.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {author.description}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive" 
+                          onClick={() => handleDeleteSystemAuthor(author.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Team Members */}
-        <div className="border-t pt-6">
+        <div className={isFeatureEnabled(FeatureFlags.SYSTEM_AUTHORS) ? "border-t pt-6" : ""}>
           <h3 className="text-lg font-medium mb-4">Team Member Authors</h3>
           
           <div className="space-y-4">

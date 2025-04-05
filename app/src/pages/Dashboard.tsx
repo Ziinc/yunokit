@@ -9,6 +9,7 @@ import { ContentApi } from "@/lib/api";
 import { ContentItem } from "@/lib/contentSchema";
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
 import { toast } from "@/hooks/use-toast";
+import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
@@ -134,7 +135,7 @@ const Dashboard: React.FC = () => {
 
   // Render content list item
   const renderContentItem = (item: ContentItem) => (
-    <div className="flex items-center justify-between py-3 group border-b last:border-0">
+    <div className="flex items-center justify-between py-3 group">
       <div className="flex items-center gap-3">
         <FileText className="h-5 w-5 text-primary" />
         <div>
@@ -160,7 +161,7 @@ const Dashboard: React.FC = () => {
 
   // Special render function for approval requests without status badge
   const renderApprovalItem = (item: ContentItem) => (
-    <div className="flex items-center justify-between py-3 group border-b last:border-0">
+    <div className="flex items-center justify-between py-3 group">
       <div className="flex items-center gap-3">
         <FileText className="h-5 w-5 text-primary" />
         <div>
@@ -311,7 +312,7 @@ const Dashboard: React.FC = () => {
               </Link>
             </CardHeader>
             <CardContent className="px-6">
-              <div className="divide-y">
+              <div className="divide-border divide-y">
                 {isLoading ? (
                   renderLoadingPlaceholder()
                 ) : recentlyEditedContent.length > 0 ? (
@@ -343,7 +344,7 @@ const Dashboard: React.FC = () => {
               </Link>
             </CardHeader>
             <CardContent className="px-6">
-              <div className="divide-y">
+              <div className="divide-border divide-y">
                 {isLoading ? (
                   renderLoadingPlaceholder()
                 ) : draftContent.length > 0 ? (
@@ -375,7 +376,7 @@ const Dashboard: React.FC = () => {
               </Link>
             </CardHeader>
             <CardContent className="px-6">
-              <div className="divide-y">
+              <div className="divide-border divide-y">
                 {isLoading ? (
                   renderLoadingPlaceholder()
                 ) : publishedContent.length > 0 ? (
@@ -388,39 +389,41 @@ const Dashboard: React.FC = () => {
           </Card>
         </div>
 
-        <div className="grid grid-rows-1 gap-6">
-          <Card className="w-full">
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <AlertCircle className="h-5 w-5 text-red-500" />
-                  Approval Requests
-                </CardTitle>
-                <CardDescription>
-                  Content waiting for your review
-                </CardDescription>
-              </div>
-              <Link 
-                to="/manager?status=pending_review" 
-                className="text-sm text-primary font-medium flex items-center hover:underline"
-              >
-                View more
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </CardHeader>
-            <CardContent className="px-6">
-              <div className="divide-y">
-                {isLoading ? (
-                  renderLoadingPlaceholder()
-                ) : pendingReviewContent.length > 0 ? (
-                  pendingReviewContent.map(item => renderApprovalItem(item))
-                ) : (
-                  renderEmptyState("No content waiting for review")
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {isFeatureEnabled(FeatureFlags.APPROVAL_FLOWS) && (
+          <div className="grid grid-rows-1 gap-6">
+            <Card className="w-full">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    Approval Requests
+                  </CardTitle>
+                  <CardDescription>
+                    Content waiting for your review
+                  </CardDescription>
+                </div>
+                <Link 
+                  to="/manager?status=pending_review" 
+                  className="text-sm text-primary font-medium flex items-center hover:underline"
+                >
+                  View more
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Link>
+              </CardHeader>
+              <CardContent className="px-6">
+                <div className="divide-border divide-y">
+                  {isLoading ? (
+                    renderLoadingPlaceholder()
+                  ) : pendingReviewContent.length > 0 ? (
+                    pendingReviewContent.map(item => renderApprovalItem(item))
+                  ) : (
+                    renderEmptyState("No content waiting for review")
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Quickstart Template Dialog */}

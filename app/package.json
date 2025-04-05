@@ -3,6 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "featureFlags": {
+    "approvalFlows": true,
+    "community": true,
+    "crossProjectDataMigrations": true,
+    "systemAuthors": true,
+    "search": true,
+    "assetLibrary": true
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -15,6 +23,7 @@
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "^1.2.0",

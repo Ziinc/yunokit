@@ -84,7 +84,6 @@ export const ContentTable: React.FC<ContentTableProps> = ({
             />
           </TableHead>
           <TableHead className="w-[300px]">Title</TableHead>
-          <TableHead>Schema</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>
             <span className="flex items-center gap-2">
@@ -92,24 +91,12 @@ export const ContentTable: React.FC<ContentTableProps> = ({
               Last Updated
             </span>
           </TableHead>
-          <TableHead>
-            <span className="flex items-center gap-2">
-              <User size={14} />
-              Author
-            </span>
-          </TableHead>
-          <TableHead>
-            <span className="flex items-center gap-2">
-              <MessageSquare size={14} />
-              Comments
-            </span>
-          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {items.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="h-24 text-center">
+            <TableCell colSpan={4} className="h-24 text-center">
               No content items found.
             </TableCell>
           </TableRow>
@@ -136,16 +123,8 @@ export const ContentTable: React.FC<ContentTableProps> = ({
                     {item.title}
                   </div>
                 </TableCell>
-                <TableCell onClick={() => onRowClick(item)}>{schema?.name || 'Unknown'}</TableCell>
                 <TableCell onClick={() => onRowClick(item)}><ContentStatusBadge status={item.status} /></TableCell>
                 <TableCell onClick={() => onRowClick(item)}>{formatDate(item.updatedAt)}</TableCell>
-                <TableCell onClick={() => onRowClick(item)}>{item.updatedBy?.split('@')[0] || 'Unknown'}</TableCell>
-                <TableCell onClick={() => onRowClick(item)}>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare size={14} className="text-muted-foreground" />
-                    {item.comments?.length || 0}
-                  </div>
-                </TableCell>
               </TableRow>
             );
           })

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, X } from "lucide-react";
@@ -11,7 +10,7 @@ import { mockContentItems } from "@/lib/contentSchema";
 interface RelationFieldProps {
   id: string;
   name: string;
-  schemaId: string;
+  relationSchemaId: string;
   value: string[];
   onChange: (value: string[]) => void;
   description?: string;
@@ -21,7 +20,7 @@ interface RelationFieldProps {
 export const RelationField: React.FC<RelationFieldProps> = ({
   id,
   name,
-  schemaId,
+  relationSchemaId,
   value = [],
   onChange,
   description,
@@ -31,7 +30,7 @@ export const RelationField: React.FC<RelationFieldProps> = ({
   
   // Filter content items by schema
   const availableItems = mockContentItems.filter(item => 
-    item.schemaId === schemaId && 
+    item.schemaId === relationSchemaId && 
     item.status === 'published' && 
     !value.includes(item.id)
   );

@@ -1,0 +1,58 @@
+# Supabase Integration
+
+Supacontent integrates seamlessly with [Supabase](https://supabase.com) to provide a robust backend for your content management needs. This integration enables authentication, database storage, and real-time features.
+
+## Connecting to Supabase
+
+To use Supacontent, you'll need to connect it to a Supabase project. Here's how:
+
+1. Navigate to the **Settings > Supabase** section in your Supacontent workspace
+2. Click the "Connect Supabase Project" button
+3. You'll be redirected to Supabase to authorize the connection
+4. Select the project you want to connect to
+5. Confirm the authorization
+
+Once connected, Supacontent will automatically:
+- Set up necessary database tables and schemas
+- Configure row-level security policies
+- Enable real-time subscriptions
+- Set up storage buckets for media
+
+## Managing Your Connection
+
+You can manage your Supabase connection from the Settings page:
+
+- View your current connection status
+- Disconnect from a project if needed
+- Monitor connection health
+
+### Disconnecting a Project
+
+When you disconnect a project:
+- Your Supabase project remains intact
+- No data is deleted from your Supabase database
+- The Supacontent workspace becomes unusable until you connect a new project
+- You'll need to reconnect a project to resume using Supacontent
+
+## Security
+
+The Supabase integration uses OAuth2 for secure authorization:
+- No sensitive credentials are stored in your browser
+- Connection tokens are securely managed
+- Row-level security ensures data access control
+- All communication is encrypted
+
+## Troubleshooting
+
+If you encounter issues with your Supabase connection:
+
+1. Check your project's status in the Supabase dashboard
+2. Ensure your project's region is accessible
+3. Try disconnecting and reconnecting
+4. Contact support if issues persist
+
+## Next Steps
+
+- [Setting up authentication](/docs/features/authentication)
+- [Managing content schemas](/docs/features/content-schemas)
+- [Working with media](/docs/features/media-management) 

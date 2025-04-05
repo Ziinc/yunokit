@@ -35,7 +35,7 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
       </div>
       <div className="flex gap-2">
         <Select onValueChange={(value) => handleCreateNew(value)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-primary text-primary-foreground hover:bg-primary/90">
             <SelectValue placeholder="Create new content" />
           </SelectTrigger>
           <SelectContent>
@@ -46,9 +46,6 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={() => navigate('/schemas')}>
-          Manage Schemas
-        </Button>
       </div>
     </div>
   );

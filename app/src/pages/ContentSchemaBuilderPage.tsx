@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, FileText, Search, Files, File, Layers, Loader2, Archive, Trash2 } from "lucide-react";
+import { Plus, Search, Files, File, Layers, Loader2, Archive, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import { ContentSchema, ContentItem } from "@/lib/contentSchema";
 import { SchemaApi } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,6 @@ import { PaginationControls } from "@/components/Content/ContentList/PaginationC
 import { DocsButton } from "@/components/ui/DocsButton";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 import { ContentTable } from "@/components/Content/ContentList/ContentTable";
 
 // Simple query parser for search filtering
@@ -294,7 +292,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
   const handleRowClick = (item: ContentItem) => {
     const schema = schemas.find(s => s.id === item.id);
     if (schema) {
-      setEditingSchema(schema);
+      navigate(`/builder/${schema.id}/edit`);
     }
   };
 
@@ -324,109 +322,120 @@ const ContentSchemaBuilderPage: React.FC = () => {
         </Dialog>
       </div>
       
-      {/* Search and filter in the same row */}
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input 
-            placeholder="Search schemas by name or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      {/* Search, filters and schema list with white background */}
+      <div className="bg-white border rounded-lg">
+        {/* Search and filter in the same row */}
+        <div className="p-6 pb-0 space-y-6">
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input 
+                placeholder="Search schemas by name or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Tabs 
+              value={schemaTypeFilter} 
+              onValueChange={(v) => setSchemaTypeFilter(v as "all" | "collection" | "single" | "archived")}
+            >
+              <TabsList>
+                <TabsTrigger value="all" className="flex items-center gap-2">
+                  <Layers size={16} />
+                  All
+                </TabsTrigger>
+                <TabsTrigger value="collection" className="flex items-center gap-2">
+                  <Files size={16} />
+                  Collections
+                </TabsTrigger>
+                <TabsTrigger value="single" className="flex items-center gap-2">
+                  <File size={16} />
+                  Singles
+                </TabsTrigger>
+                <TabsTrigger value="archived" className="flex items-center gap-2">
+                  <Archive size={16} />
+                  Archived
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Schema list */}
+        <div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+              <p className="text-lg">Loading schemas...</p>
+            </div>
+          ) : paginatedSchemas.length === 0 ? (
+            <div className="py-10 text-center text-muted-foreground">
+              {searchQuery ? 'No schemas match your search criteria' : 'No schemas found. Click "Create Schema" to get started.'}
+            </div>
+          ) : (
+            <>
+              {selectedSchemas.length > 0 && (
+                <SelectionActionsBar
+                  selectedCount={selectedSchemas.length}
+                  actions={[
+                    {
+                      label: "Archive",
+                      icon: <Archive size={16} />,
+                      onClick: handleArchiveSchemas,
+                    },
+                    {
+                      label: "Delete",
+                      icon: <Trash2 size={16} />,
+                      onClick: () => setShowDeleteDialog(true),
+                      variant: "destructive",
+                    },
+                  ]}
+                />
+              )}
+              <ContentTable
+                items={schemaItems.map(item => ({
+                  ...item,
+                  data: {
+                    ...item.data,
+                    fields: `${schemas.find(s => s.id === item.id)?.fields.length || 0} fields`,
+                  }
+                }))}
+                schemas={[]} // Empty since we're displaying schemas themselves
+                onRowClick={handleRowClick}
+                currentPage={currentSchemasPage}
+                totalPages={totalSchemaPages}
+                onPageChange={setCurrentSchemasPage}
+                itemsPerPage={schemasPerPage}
+                onItemsPerPageChange={setSchemasPerPage}
+                onSelectionChange={(items) => setSelectedSchemas(
+                  items.map(item => schemas.find(s => s.id === item.id)!).filter(Boolean)
+                )}
+              />
+            </>
+          )}
         </div>
         
-        <Tabs 
-          value={schemaTypeFilter} 
-          onValueChange={(v) => setSchemaTypeFilter(v as "all" | "collection" | "single" | "archived")}
-        >
-          <TabsList>
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <Layers size={16} />
-              All
-            </TabsTrigger>
-            <TabsTrigger value="collection" className="flex items-center gap-2">
-              <Files size={16} />
-              Collections
-            </TabsTrigger>
-            <TabsTrigger value="single" className="flex items-center gap-2">
-              <File size={16} />
-              Singles
-            </TabsTrigger>
-            <TabsTrigger value="archived" className="flex items-center gap-2">
-              <Archive size={16} />
-              Archived
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      
-      {/* Schema list with white background */}
-      <div className="overflow-hidden border rounded-md bg-white">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
-            <p className="text-lg">Loading schemas...</p>
-          </div>
-        ) : paginatedSchemas.length === 0 ? (
-          <div className="py-10 text-center text-muted-foreground">
-            {searchQuery ? 'No schemas match your search criteria' : 'No schemas found. Click "Create Schema" to get started.'}
-          </div>
-        ) : (
-          <>
-            {selectedSchemas.length > 0 && (
-              <SelectionActionsBar
-                selectedCount={selectedSchemas.length}
-                actions={[
-                  {
-                    label: "Archive",
-                    icon: <Archive size={16} />,
-                    onClick: handleArchiveSchemas,
-                  },
-                  {
-                    label: "Delete",
-                    icon: <Trash2 size={16} />,
-                    onClick: () => setShowDeleteDialog(true),
-                    variant: "destructive",
-                  },
-                ]}
-              />
-            )}
-            <ContentTable
-              items={schemaItems}
-              schemas={[]} // Empty since we're displaying schemas themselves
-              onRowClick={handleRowClick}
+        {/* Pagination */}
+        {totalSchemaPages > 1 && (
+          <div className="flex justify-between items-center p-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Showing {((currentSchemasPage - 1) * schemasPerPage) + 1} to {
+                Math.min(currentSchemasPage * schemasPerPage, filteredSchemas.length)
+              } of {filteredSchemas.length} schemas
+            </div>
+            <PaginationControls
               currentPage={currentSchemasPage}
               totalPages={totalSchemaPages}
               onPageChange={setCurrentSchemasPage}
               itemsPerPage={schemasPerPage}
               onItemsPerPageChange={setSchemasPerPage}
-              onSelectionChange={(items) => setSelectedSchemas(
-                items.map(item => schemas.find(s => s.id === item.id)!).filter(Boolean)
-              )}
+              pageSizeOptions={[5, 10, 20, 50]}
             />
-          </>
+          </div>
         )}
       </div>
-      
-      {/* Pagination */}
-      {totalSchemaPages > 1 && (
-        <div className="flex justify-between items-center mt-4 px-2">
-          <div className="text-sm text-muted-foreground">
-            Showing {((currentSchemasPage - 1) * schemasPerPage) + 1} to {
-              Math.min(currentSchemasPage * schemasPerPage, filteredSchemas.length)
-            } of {filteredSchemas.length} schemas
-          </div>
-          <PaginationControls
-            currentPage={currentSchemasPage}
-            totalPages={totalSchemaPages}
-            onPageChange={setCurrentSchemasPage}
-            itemsPerPage={schemasPerPage}
-            onItemsPerPageChange={setSchemasPerPage}
-            pageSizeOptions={[5, 10, 20, 50]}
-          />
-        </div>
-      )}
 
       {/* Add delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

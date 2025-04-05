@@ -3,6 +3,8 @@
 
 const {themes} = require('prism-react-renderer');
 const autoprefixer = require("autoprefixer")
+const tailwindConfig = require("../app/tailwind.config");
+const tailwind = require("tailwindcss");
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
 
@@ -38,6 +40,10 @@ const config = {
         },
         gtag: {
           trackingID: "G-B3P5HGLDR1",
+        },
+        
+        theme: {
+          customCss: ['./src/css/custom.css', '../app/src/index.css'],
         },
       }),
     ],
@@ -104,9 +110,10 @@ const config = {
       return {
         name: "docusaurus-postcss",
         configurePostCss(postcssOptions) {
-          // Appends AutoPrefixer.
-          console.log("running plugin");
-          postcssOptions.plugins.push(autoprefixer);
+          postcssOptions.plugins.push(
+            tailwind(tailwindConfig),
+            autoprefixer
+          );
           return postcssOptions;
         },
       };

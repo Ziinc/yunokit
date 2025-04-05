@@ -115,6 +115,157 @@ const ContentSchemasPage: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [schemaToDelete, setSchemaToDelete] = useState<ContentSchema | null>(null);
 
+  // Define table columns
+  const schemaColumns = [
+    {
+      header: "",
+      cell: (schema: ContentSchema) => (
+        <Checkbox
+          checked={selectedSchemas.includes(schema)}
+          onCheckedChange={(checked) => {
+            if (checked) {
+              setSelectedSchemas([...selectedSchemas, schema]);
+            } else {
+              setSelectedSchemas(selectedSchemas.filter(s => s.id !== schema.id));
+            }
+          }}
+        />
+      ),
+      className: "w-[30px]"
+    },
+    {
+      header: "Title",
+      cell: (schema: ContentSchema) => (
+        <div className="font-medium">{schema.name}</div>
+      )
+    },
+    {
+      header: "Schema",
+      cell: (schema: ContentSchema) => (
+        <Badge variant={schema.isCollection ? "default" : "outline"}>
+          {schema.isCollection ? "Collection" : "Single"}
+        </Badge>
+      )
+    },
+    {
+      header: "Fields",
+      cell: (schema: ContentSchema) => (
+        <div>{schema.fields.length} field{schema.fields.length !== 1 && "s"}</div>
+      )
+    },
+    {
+      header: "Description",
+      cell: (schema: ContentSchema) => (
+        <div className="max-w-xs truncate">{schema.description || "No description"}</div>
+      )
+    },
+    {
+      header: "",
+      cell: (schema: ContentSchema) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleEditContent(schema.id)}
+          >
+            <Edit size={16} className="mr-2" />
+            Edit Content
+          </Button>
+          {selectedSchemas.length === 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-muted-foreground"
+                >
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setEditingSchema(schema)}>
+                  <Settings size={16} className="mr-2" />
+                  Manage Schema
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => handleArchiveSchema(schema)}
+                  className={schema.isArchived ? "text-primary" : "text-muted-foreground"}
+                >
+                  <Archive size={16} className="mr-2" />
+                  {schema.isArchived ? "Unarchive" : "Archive"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleDeleteSchema(schema)}
+                  className="text-destructive"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      ),
+      className: "text-right"
+    }
+  ];
+
+  const contentColumns = [
+    {
+      header: "Title",
+      cell: (item: ContentItem) => (
+        <div className="font-medium">{item.title}</div>
+      )
+    },
+    {
+      header: "Status",
+      cell: (item: ContentItem) => renderStatusBadge(item.status)
+    },
+    {
+      header: "Last Updated",
+      cell: (item: ContentItem) => (
+        <div>{new Date(item.updatedAt).toLocaleDateString()}</div>
+      )
+    },
+    {
+      header: "",
+      cell: (item: ContentItem) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleEditContent(item.schemaId, item.id)}
+          >
+            <Edit size={16} className="mr-2" />
+            Edit
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-muted-foreground"
+              >
+                <MoreVertical size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => handleDeleteContent(item)}
+                className="text-destructive"
+              >
+                <Trash2 size={16} className="mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+      className: "text-right"
+    }
+  ];
+
   // Filter schemas based on type filter
   const filteredSchemas = useMemo(() => {
     const filtered = schemas.filter(schema => {
@@ -373,8 +524,8 @@ const ContentSchemasPage: React.FC = () => {
                           }}
                         />
                       </TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Type</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Schema</TableHead>
                       <TableHead>Fields</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -501,63 +652,23 @@ const ContentSchemasPage: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Updated</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {contentColumns.map((column, index) => (
+                      <TableHead key={index} className={column.className}>
+                        {column.header}
+                      </TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedContentItems.map((item) => {
-                    const schema = schemas.find(s => s.id === item.schemaId);
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.title}</TableCell>
-                        <TableCell>{schema?.name || item.schemaId}</TableCell>
-                        <TableCell>{renderStatusBadge(item.status)}</TableCell>
-                        <TableCell>
-                          {new Date(item.updatedAt).toLocaleDateString()}
+                  {paginatedContentItems.map((item) => (
+                    <TableRow key={item.id}>
+                      {contentColumns.map((column, index) => (
+                        <TableCell key={index} className={column.className}>
+                          {column.cell(item)}
                         </TableCell>
-                        <TableCell>
-                          {item.author?.name || item.createdBy?.split('@')[0] || 'Unknown'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditContent(item.schemaId, item.id)}
-                            >
-                              <Edit size={16} className="mr-2" />
-                              Edit
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-muted-foreground"
-                                >
-                                  <MoreVertical size={16} />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteContent(item)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 size={16} className="mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                      ))}
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
               

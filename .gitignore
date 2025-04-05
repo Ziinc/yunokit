@@ -11,3 +11,7 @@ node_modules/
 comp/
 .branches
 .temp
+dist
+
+supabase/.env.prod
+supabase/.env.dev

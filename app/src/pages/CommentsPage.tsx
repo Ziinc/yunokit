@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Flag, Shield, MessageSquare, Users, FileText, Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Comment, Report, BannedWord, ForumPost, ChatMessage, ChatChannel, User } from "@/types/comments";
 import CommentsTab from "@/components/Comments/CommentsTab";
 import ReportsTab from "@/components/Comments/ReportsTab";

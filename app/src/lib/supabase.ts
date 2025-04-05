@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { generateState } from '@/utils/auth';
 
 export interface Database {
   public: {
@@ -264,4 +265,162 @@ export const updateEmail = async (newEmail: string) => {
     email: newEmail
   });
   return { data, error };
+};
+
+const SUPABASE_API_URL = 'https://api.supabase.com/api/v1';
+
+// Types
+export interface SupabaseTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token: string;
+  project: {
+    id: string;
+    name: string;
+    region: string;
+    organization_id: string;
+  };
+}
+
+export interface SupabaseProject {
+  id: string;
+  name: string;
+  region: string;
+  organization_id: string;
+  created_at: string;
+  last_synced_at?: string;
+}
+
+// OAuth configuration
+const config = {
+  clientId: import.meta.env.VITE_SUPABASE_CLIENT_ID,
+  redirectUri: `${window.location.origin}/settings/supabase/callback`,
+  scope: 'all',
+  authorizationEndpoint: 'https://api.supabase.com/oauth/authorize',
+  tokenEndpoint: 'https://api.supabase.com/oauth/token',
+};
+
+// OAuth utilities
+export const initiateOAuthFlow = () => {
+  const state = generateState();
+  localStorage.setItem('supabase_oauth_state', state);
+
+  const params = new URLSearchParams({
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
+    response_type: 'code',
+    scope: config.scope,
+    state,
+  });
+
+  window.location.href = `${config.authorizationEndpoint}?${params.toString()}`;
+};
+
+export const exchangeCodeForToken = async (code: string, state: string): Promise<SupabaseTokenResponse> => {
+  const savedState = localStorage.getItem('supabase_oauth_state');
+  if (!savedState || savedState !== state) {
+    throw new Error('Invalid state parameter');
+  }
+
+  const response = await fetch(config.tokenEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      grant_type: 'authorization_code',
+      code,
+      client_id: config.clientId,
+      redirect_uri: config.redirectUri,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to exchange code for token');
+  }
+
+  const data = await response.json();
+  return data;
+};
+
+// API utilities
+export const getProjectDetails = async (accessToken: string): Promise<SupabaseProject> => {
+  const response = await fetch(`${SUPABASE_API_URL}/projects`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch project details');
+  }
+
+  const projects = await response.json();
+  return projects[0]; // Get the first project
+};
+
+// Token management
+export const storeTokens = (tokens: SupabaseTokenResponse) => {
+  localStorage.setItem('supabase_access_token', tokens.access_token);
+  localStorage.setItem('supabase_refresh_token', tokens.refresh_token);
+  localStorage.setItem('supabase_token_expiry', (Date.now() + tokens.expires_in * 1000).toString());
+  localStorage.setItem('supabase_project_id', tokens.project.id);
+  localStorage.setItem('supabase_project_name', tokens.project.name);
+  localStorage.setItem('supabase_project_region', tokens.project.region);
+  localStorage.setItem('supabase_connected', 'true');
+};
+
+export const clearTokens = () => {
+  localStorage.removeItem('supabase_access_token');
+  localStorage.removeItem('supabase_refresh_token');
+  localStorage.removeItem('supabase_token_expiry');
+  localStorage.removeItem('supabase_project_id');
+  localStorage.removeItem('supabase_project_name');
+  localStorage.removeItem('supabase_project_region');
+  localStorage.removeItem('supabase_connected');
+  localStorage.removeItem('supabase_oauth_state');
+};
+
+export const refreshTokens = async (): Promise<SupabaseTokenResponse> => {
+  const refreshToken = localStorage.getItem('supabase_refresh_token');
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+
+  const response = await fetch(config.tokenEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: config.clientId,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to refresh token');
+  }
+
+  const tokens = await response.json();
+  storeTokens(tokens);
+  return tokens;
+};
+
+export const getValidAccessToken = async (): Promise<string> => {
+  const accessToken = localStorage.getItem('supabase_access_token');
+  const tokenExpiry = localStorage.getItem('supabase_token_expiry');
+
+  if (!accessToken || !tokenExpiry) {
+    throw new Error('No access token available');
+  }
+
+  if (Date.now() > parseInt(tokenExpiry)) {
+    const newTokens = await refreshTokens();
+    return newTokens.access_token;
+  }
+
+  return accessToken;
 };

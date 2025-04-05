@@ -10,7 +10,7 @@ export const AppLayout: React.FC = () => {
       <Sidebar />
       <div className="flex flex-col flex-grow overflow-hidden">
         <Header />
-        <main className="flex-grow overflow-auto p-6">
+        <main className="flex-grow overflow-auto p-4">
           <Outlet />
         </main>
       </div>

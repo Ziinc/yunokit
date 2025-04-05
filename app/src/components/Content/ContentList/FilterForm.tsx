@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Search, Filter } from "lucide-react";
 import {
@@ -58,6 +58,31 @@ export const FilterForm: React.FC<FilterFormProps> = ({
     },
   });
 
+  // Watch all form fields for changes
+  const formValues = useWatch({
+    control: form.control
+  });
+
+  // Check if current form values are different from initial/active filters
+  const hasChanges = useMemo(() => {
+    // Convert empty strings to "all" for comparison
+    const normalizeValue = (value: string | undefined) => value || "all";
+    
+    // Get the current active filters
+    const activeStatus = normalizeValue(initialValues?.status);
+    const activeSchemaId = normalizeValue(initialValues?.schemaId);
+    const activeAuthor = normalizeValue(initialValues?.author);
+    const activeSearch = initialValues?.search || "";
+
+    // Compare current values with active filters
+    return (
+      formValues.search !== activeSearch ||
+      normalizeValue(formValues.status) !== activeStatus ||
+      normalizeValue(formValues.schemaId) !== activeSchemaId ||
+      normalizeValue(formValues.author) !== activeAuthor
+    );
+  }, [formValues, initialValues]);
+
   // Calculate if any filters are active
   const hasActiveFilters = useMemo(() => {
     if (!initialValues) return false;
@@ -93,6 +118,18 @@ export const FilterForm: React.FC<FilterFormProps> = ({
   }, [initialValues, form]);
 
   const handleSubmit = (values: FilterValues) => {
+    // Check if all values are in default state
+    const isDefaultState = 
+      !values.search && 
+      values.status === "all" && 
+      values.schemaId === "all" && 
+      values.author === "all";
+
+    if (isDefaultState) {
+      resetFilters();
+      return;
+    }
+
     const normalizedValues = {
       ...values,
       status: values.status === "all" ? "" : values.status,
@@ -212,20 +249,26 @@ export const FilterForm: React.FC<FilterFormProps> = ({
           }}
         />
         
-        <div className="flex gap-2 items-center ml-auto">
-          <Button type="submit" size="sm" className="h-9">
-            <Filter size={14} className="mr-1" />
-            Apply
-          </Button>
+        <div className="flex gap-2 ml-auto">
+          {hasActiveFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-9"
+              onClick={resetFilters}
+            >
+              Clear
+            </Button>
+          )}
           <Button 
-            type="button" 
+            type="submit" 
             size="sm" 
-            variant="ghost" 
-            onClick={resetFilters} 
-            className="h-9"
-            disabled={!hasActiveFilters}
+            className="h-9" 
+            disabled={!hasChanges}
           >
-            Reset
+            <Filter className="mr-2 h-4 w-4" />
+            Apply
           </Button>
         </div>
       </form>

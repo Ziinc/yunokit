@@ -1,17 +1,13 @@
 export type ContentFieldType = 
-  | 'markdown'
-  | 'json'
-  | 'block'
+  | 'text'
+  | 'number'
+  | 'date'
   | 'boolean'
   | 'enum'
-  | 'multiselect'
   | 'relation'
-  | 'datetime'  // New type
-  | 'email'     // New type
-  | 'password'  // New type
-  | 'map'       // New type for geo location
-  | 'uuid'      // New type
-  | 'asset';    // New type for asset library integration
+  | 'image'
+  | 'markdown'
+  | 'json';
 
 export interface ContentField {
   id: string;
@@ -20,16 +16,8 @@ export interface ContentField {
   required?: boolean;
   description?: string;
   defaultValue?: any;
-  options?: string[]; // For enum and multiselect fields
-  relationTarget?: string; // For relation fields - the schema ID this field relates to
-  isMultiple?: boolean; // For relation fields - if multiple related items can be selected
-  generateOnCreate?: boolean; // For UUID fields - automatically generate on creation
-  isSecret?: boolean; // For password fields - whether to mask in the UI
-  mapConfig?: {
-    defaultZoom?: number;
-    defaultCenter?: [number, number]; // [latitude, longitude]
-  }; // For map fields
-  assetTypes?: string[]; // For asset fields - limit to specific file types
+  options?: string[]; // For enum fields
+  relationSchemaId?: string; // For relation fields
 }
 
 export interface ContentSchema {
@@ -94,16 +82,16 @@ export interface ContentItemComment {
 // Example schemas
 export const exampleSchemas: ContentSchema[] = [
   {
-    id: 'blog-post',
+    id: 'blog',
     name: 'Blog Post',
-    description: 'A single blog post with markdown content',
+    description: 'A blog post with markdown content',
     isCollection: true,
     schemaType: 'collection',
     fields: [
       {
         id: 'title',
         name: 'Title',
-        type: 'markdown',
+        type: 'text',
         required: true,
       },
       {
@@ -113,8 +101,8 @@ export const exampleSchemas: ContentSchema[] = [
         required: true,
       },
       {
-        id: 'featured',
-        name: 'Featured',
+        id: 'published',
+        name: 'Published',
         type: 'boolean',
         defaultValue: false,
       },
@@ -122,37 +110,42 @@ export const exampleSchemas: ContentSchema[] = [
         id: 'category',
         name: 'Category',
         type: 'enum',
-        options: ['Technology', 'Design', 'Marketing', 'Business'],
+        options: ['Technology', 'Design', 'Business'],
       },
       {
-        id: 'tags',
-        name: 'Tags',
-        type: 'multiselect',
-        options: ['React', 'JavaScript', 'CSS', 'TypeScript', 'UI/UX', 'Performance', 'Accessibility'],
+        id: 'thumbnail',
+        name: 'Thumbnail',
+        type: 'image',
+      }
+    ]
+  },
+  {
+    id: 'author',
+    name: 'Author',
+    description: 'Author profile information',
+    isCollection: true,
+    schemaType: 'collection',
+    fields: [
+      {
+        id: 'name',
+        name: 'Name',
+        type: 'text',
+        required: true,
       },
       {
-        id: 'related_posts',
-        name: 'Related Posts',
-        type: 'relation',
-        relationTarget: 'blog-post',
-        isMultiple: true,
+        id: 'bio',
+        name: 'Biography',
+        type: 'markdown',
       },
       {
-        id: 'publishDate',
-        name: 'Publish Date',
-        type: 'datetime',
-        defaultValue: new Date().toISOString(),
+        id: 'avatar',
+        name: 'Avatar',
+        type: 'image',
       },
       {
-        id: 'author_email',
-        name: 'Author Email',
-        type: 'email',
-      },
-      {
-        id: 'featuredImage',
-        name: 'Featured Image',
-        type: 'asset',
-        assetTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        id: 'social',
+        name: 'Social Links',
+        type: 'json',
       }
     ]
   },
@@ -166,7 +159,7 @@ export const exampleSchemas: ContentSchema[] = [
       {
         id: 'name',
         name: 'Product Name',
-        type: 'markdown',
+        type: 'text',
         required: true,
       },
       {
@@ -186,27 +179,6 @@ export const exampleSchemas: ContentSchema[] = [
         name: 'Product Type',
         type: 'enum',
         options: ['Physical', 'Digital', 'Subscription'],
-      },
-      {
-        id: 'features',
-        name: 'Features',
-        type: 'multiselect',
-        options: ['Premium', 'Discounted', 'Limited Edition', 'Bestseller', 'New Arrival'],
-      },
-      {
-        id: 'productId',
-        name: 'Product ID',
-        type: 'uuid',
-        generateOnCreate: true,
-      },
-      {
-        id: 'storeLocation',
-        name: 'Store Location',
-        type: 'map',
-        mapConfig: {
-          defaultZoom: 13,
-          defaultCenter: [40.7128, -74.0060], // New York
-        }
       }
     ]
   },
@@ -220,13 +192,13 @@ export const exampleSchemas: ContentSchema[] = [
       {
         id: 'title',
         name: 'Page Title',
-        type: 'markdown',
+        type: 'text',
         required: true,
       },
       {
         id: 'content',
         name: 'Page Content',
-        type: 'block',
+        type: 'markdown',
         required: true,
       },
       {
@@ -242,21 +214,9 @@ export const exampleSchemas: ContentSchema[] = [
         options: ['Full Width', 'Sidebar Left', 'Sidebar Right', 'Two Column'],
       },
       {
-        id: 'components',
-        name: 'Components',
-        type: 'multiselect',
-        options: ['Header', 'Footer', 'Hero', 'Gallery', 'Contact Form', 'Testimonials'],
-      },
-      {
-        id: 'background',
-        name: 'Background Image',
-        type: 'asset',
-        assetTypes: ['image/*'],
-      },
-      {
-        id: 'lastModified',
-        name: 'Last Modified',
-        type: 'datetime',
+        id: 'thumbnail',
+        name: 'Thumbnail',
+        type: 'image',
       }
     ]
   }
