@@ -96,13 +96,6 @@ const ContentTable: React.FC<{
       cell: (item) => <ContentStatusBadge status={item.status} />,
     },
     {
-      header: "Description",
-      accessorKey: "description",
-      width: "200px",
-      className: "text-muted-foreground truncate",
-      cell: (item) => item.data?.description || 'No description',
-    },
-    {
       header: (
         <span className="flex items-center gap-2">
           <Calendar size={14} />
@@ -111,6 +104,29 @@ const ContentTable: React.FC<{
       ),
       accessorKey: "updatedAt",
       cell: (item) => formatDate(item.updatedAt),
+    },
+    {
+      header: (
+        <span className="flex items-center gap-2">
+          <Calendar size={14} />
+          Published
+        </span>
+      ),
+      accessorKey: "publishedAt",
+      cell: (item) => formatDate(item.publishedAt) || '-',
+    },
+    {
+      header: (
+        <span className="flex items-center gap-2">
+          <Users size={14} />
+          Authors
+        </span>
+      ),
+      accessorKey: "authors",
+      cell: (item) => {
+        const authors = new Set([item.createdBy, item.updatedBy].filter(Boolean));
+        return authors.size > 0 ? Array.from(authors).map(author => author.split('@')[0]).join(', ') : '-';
+      },
     },
   ];
 
