@@ -4,12 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "featureFlags": {
-    "approvalFlows": true,
-    "community": true,
-    "crossProjectDataMigrations": true,
-    "systemAuthors": true,
-    "search": true,
-    "assetLibrary": true
+    "approvalFlows": false,
+    "community": false,
+    "crossProjectDataMigrations": false,
+    "systemAuthors": false,
+    "search": false,
+    "assetLibrary": false
   },
   "scripts": {
     "dev": "vite",
