@@ -38,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
   };
 
   return (
-    <aside className="sidebar bg-sidebar h-screen border-r border-border w-56 flex flex-col">
+    <aside className="sidebar bg-sidebar h-screen border-r border-border w-64 flex flex-col">
       <div className="p-4 flex items-center justify-center h-14">
         <div className="w-32 h-8">
           <img src="/supacontent-logo.png" alt="SupaContent - Content Management System" className="w-full h-full object-contain" />

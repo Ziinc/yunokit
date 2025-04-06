@@ -8,7 +8,7 @@ export const AppLayout: React.FC = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
-      <div className="flex flex-col flex-grow overflow-hidden">
+      <div className="flex flex-col w-full overflow-hidden">
         <Header />
         <main className="flex-grow overflow-auto p-4">
           <Outlet />
