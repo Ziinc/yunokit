@@ -10,6 +10,7 @@ import { getUniqueAuthors, paginateItems } from "@/components/Content/ContentLis
 import { SortSelect, SortOption } from "@/components/Content/ContentList/SortSelect";
 import { ResultsBar } from "@/components/Content/ContentList/ResultsBar";
 import { Loader2, Download, Trash2, EyeOff, Users, FileText, Calendar } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -124,7 +125,11 @@ const ContentTable: React.FC<{
       ),
       accessorKey: "authors",
       cell: (item) => {
-        const authors = new Set([item.createdBy, item.updatedBy].filter(Boolean));
+        const authors = new Set([
+          item.createdBy,
+          item.updatedBy,
+          ...(item.coAuthors || [])
+        ].filter(Boolean));
         return authors.size > 0 ? Array.from(authors).map(author => author.split('@')[0]).join(', ') : '-';
       },
     },
@@ -138,6 +143,11 @@ const ContentTable: React.FC<{
       emptyMessage="No content items found."
     />
   );
+};
+
+type Author = {
+  value: string;
+  label: string;
 };
 
 const ContentManagerPage: React.FC = () => {
@@ -154,7 +164,7 @@ const ContentManagerPage: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<ContentItem[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAuthorDialog, setShowAuthorDialog] = useState(false);
-  const [newAuthor, setNewAuthor] = useState("");
+  const [newAuthors, setNewAuthors] = useState<Author[]>([]);
   const [isChangingAuthor, setIsChangingAuthor] = useState(false);
   
   const [filterValues, setFilterValues] = useState<FilterValues>({
@@ -444,10 +454,10 @@ const ContentManagerPage: React.FC = () => {
   
   const handleChangeAuthor = async () => {
     try {
-      if (!newAuthor) {
+      if (newAuthors.length === 0) {
         toast({
-          title: "No author selected",
-          description: "Please select an author to continue.",
+          title: "No authors selected",
+          description: "Please select at least one author to continue.",
           variant: "destructive",
         });
         return;
@@ -460,14 +470,16 @@ const ContentManagerPage: React.FC = () => {
       for (const id of ids) {
         const itemIndex = updatedItems.findIndex(item => item.id === id);
         if (itemIndex !== -1) {
-          updatedItems[itemIndex] = {
+          const updatedItem = {
             ...updatedItems[itemIndex],
-            updatedBy: newAuthor,
+            updatedBy: newAuthors[0].value, // Keep the first author as the main updater
+            coAuthors: newAuthors.slice(1).map(author => author.value), // Store additional authors
             updatedAt: new Date().toISOString(),
           };
+          updatedItems[itemIndex] = updatedItem;
           
           // Save to API
-          await ContentApi.saveContentItem(updatedItems[itemIndex]);
+          await ContentApi.saveContentItem(updatedItem);
         }
       }
       
@@ -475,17 +487,17 @@ const ContentManagerPage: React.FC = () => {
       setAllItems(updatedItems);
       applyFilters(filterValues, sortField);
       setShowAuthorDialog(false);
-      setNewAuthor("");
+      setNewAuthors([]);
       
       toast({
-        title: "Author updated",
-        description: `Successfully updated author for ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
+        title: "Authors updated",
+        description: `Successfully updated authors for ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
       });
     } catch (error) {
-      console.error("Error changing author:", error);
+      console.error("Error changing authors:", error);
       toast({
-        title: "Author update failed",
-        description: "There was an error updating the author for the selected items. Please try again.",
+        title: "Authors update failed",
+        description: "There was an error updating the authors for the selected items. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -529,7 +541,7 @@ const ContentManagerPage: React.FC = () => {
             selectedCount={selectedItems.length}
             actions={[
               {
-                label: "Change Author",
+                label: "Change Authors",
                 icon: <Users size={16} />,
                 onClick: () => setShowAuthorDialog(true),
               },
@@ -614,26 +626,26 @@ const ContentManagerPage: React.FC = () => {
       
       {/* Change author dialog */}
       <Dialog open={showAuthorDialog} onOpenChange={setShowAuthorDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Change Author</DialogTitle>
+            <DialogTitle>Change Authors</DialogTitle>
             <DialogDescription>
-              Select a new author for the {selectedItems.length} selected {selectedItems.length === 1 ? 'item' : 'items'}.
+              Select new authors for the {selectedItems.length} selected {selectedItems.length === 1 ? 'item' : 'items'}.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Select value={newAuthor} onValueChange={setNewAuthor}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select an author" />
-              </SelectTrigger>
-              <SelectContent>
-                {uniqueAuthors.map(author => (
-                  <SelectItem key={author} value={author}>
-                    {author.split('@')[0]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelect
+              value={newAuthors}
+              onChange={(selected) => setNewAuthors(selected as Author[])}
+              options={uniqueAuthors.map(author => ({
+                value: author,
+                label: author.split('@')[0]
+              }))}
+              isMulti
+              className="w-full"
+              placeholder="Select authors..."
+              noOptionsMessage={() => "No authors found"}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAuthorDialog(false)}>
