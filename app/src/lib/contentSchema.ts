@@ -1,3 +1,5 @@
+import React from 'react';
+
 export type ContentFieldType = 
   | 'text'
   | 'number'
@@ -65,6 +67,7 @@ export interface ContentItem {
     name: string;
     avatar: string;
   };
+  icon?: React.ReactNode;
 }
 
 // Comment interface for review process

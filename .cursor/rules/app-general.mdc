@@ -1,6 +1,6 @@
 ---
-description: To help with determining navigation paths
-globs: 
+description: 
+globs: app/**
 alwaysApply: false
 ---
 # Dev rules for working on /app
@@ -9,6 +9,12 @@ alwaysApply: false
 
 ## Routing
 Use the [App.tsx](mdc:app/src/App.tsx) router logic to determine the correct paths for links and general navigation
+
+## Page Layout
+- always ensure that pages within the app are standardized.
+- Pages with tabs should use the correct [tabs.tsx](mdc:app/src/components/ui/tabs.tsx) component instead of buttons.
+- Any use of tabs should result in nested routes so that each tab has its own path.
+
 
 ## Testing
 

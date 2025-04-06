@@ -17,7 +17,8 @@ import {
   GripVertical,
   AlertCircle,
   Table,
-  X
+  X,
+  Pencil
 } from "lucide-react";
 import { ContentSchema, ContentField, ContentFieldType } from "@/lib/contentSchema";
 import { SchemaApi } from "@/lib/api";
@@ -60,6 +61,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { StrictModeDroppable } from "@/components/StrictModeDroppable";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ContentApi } from "@/lib/api";
+import { ContentItem } from "@/lib/contentSchema";
 
 // Field type definitions with their icons and labels
 const FIELD_TYPES = {
@@ -96,6 +104,8 @@ const SchemaEditorPage: React.FC = () => {
   const [showAddField, setShowAddField] = useState(false);
   const [showDeleteField, setShowDeleteField] = useState(false);
   const [selectedField, setSelectedField] = useState<ContentField | null>(null);
+  const [showRenameField, setShowRenameField] = useState(false);
+  const [newFieldName, setNewFieldName] = useState("");
   const [migrationOptions, setMigrationOptions] = useState<FieldMigrationOptions>({
     action: "delete"
   });
@@ -107,6 +117,8 @@ const SchemaEditorPage: React.FC = () => {
   });
   const [newOption, setNewOption] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<ContentSchema[]>([]);
+  const [contentCount, setContentCount] = useState<number>(0);
+  const [singleContentItem, setSingleContentItem] = useState<ContentItem | null>(null);
 
   // Load schemas for relation fields
   useEffect(() => {
@@ -148,19 +160,51 @@ const SchemaEditorPage: React.FC = () => {
     loadSchema();
   }, [schemaId, toast]);
 
+  // Load content count or single content item
+  useEffect(() => {
+    const loadContentData = async () => {
+      if (!schema) return;
+      
+      try {
+        const items = await ContentApi.getContentItemsBySchema(schema.id);
+        if (schema.isCollection) {
+          setContentCount(items.length);
+        } else {
+          setSingleContentItem(items[0] || null);
+        }
+      } catch (error) {
+        console.error("Error loading content data:", error);
+      }
+    };
+
+    loadContentData();
+  }, [schema]);
+
   const handleDragEnd = async (result: DropResult) => {
     if (!schema || !result.destination) return;
 
-    const fields = Array.from(schema.fields);
-    const [reorderedField] = fields.splice(result.source.index, 1);
-    fields.splice(result.destination.index, 0, reorderedField);
-
     try {
-      const updatedSchema = { ...schema, fields };
-      await SchemaApi.saveSchema(updatedSchema);
+      // Get the new order of field IDs after drag and drop
+      const fieldIds = Array.from(schema.fields.map(f => f.id));
+      const [movedId] = fieldIds.splice(result.source.index, 1);
+      fieldIds.splice(result.destination.index, 0, movedId);
+
+      // Create new fields array in the new order
+      const reorderedFields = fieldIds.map(id => schema.fields.find(f => f.id === id)!);
+      
+      // Update UI optimistically
+      setSchema({
+        ...schema,
+        fields: reorderedFields
+      });
+
+      // Call the API to reorder fields
+      const updatedSchema = await SchemaApi.reorderFields(schema.id, fieldIds);
       setSchema(updatedSchema);
     } catch (error) {
       console.error("Error reordering fields:", error);
+      // Revert to original order on error
+      setSchema(schema);
       toast({
         title: "Error reordering fields",
         description: "There was a problem saving the new field order.",
@@ -234,6 +278,30 @@ const SchemaEditorPage: React.FC = () => {
       toast({
         title: "Error deleting field",
         description: "There was a problem deleting the field.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRenameField = async () => {
+    if (!schema || !selectedField || !newFieldName.trim()) return;
+
+    try {
+      const updatedSchema = await SchemaApi.renameField(schema.id, selectedField.id, newFieldName.trim());
+      setSchema(updatedSchema);
+      setShowRenameField(false);
+      setSelectedField(null);
+      setNewFieldName("");
+      
+      toast({
+        title: "Field renamed",
+        description: `Field has been renamed to "${newFieldName}" successfully.`
+      });
+    } catch (error) {
+      console.error("Error renaming field:", error);
+      toast({
+        title: "Error renaming field",
+        description: "There was a problem renaming the field.",
         variant: "destructive"
       });
     }
@@ -331,6 +399,37 @@ const SchemaEditorPage: React.FC = () => {
     }
   };
 
+  const handleCreateSingleContent = async () => {
+    if (!schema) return;
+    
+    try {
+      const newItem: ContentItem = {
+        id: crypto.randomUUID(),
+        schemaId: schema.id,
+        title: schema.name,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        data: {}
+      };
+      
+      await ContentApi.saveContentItem(newItem);
+      setSingleContentItem(newItem);
+      
+      toast({
+        title: "Content created",
+        description: "Single content item has been created successfully."
+      });
+    } catch (error) {
+      console.error("Error creating content:", error);
+      toast({
+        title: "Error creating content",
+        description: "There was a problem creating the content item.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -372,6 +471,32 @@ const SchemaEditorPage: React.FC = () => {
               <Table className="h-4 w-4 mr-1" />
               {schema.fields.length} Fields
             </Badge>
+            {schema.isCollection ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-2 -mr-2 h-auto px-0 font-normal"
+                onClick={() => navigate(`/manager?schema-id=${schema.id}`)}
+              >
+                <Badge variant="secondary" className="hover:bg-secondary/80">
+                  <Pencil className="h-3 w-3 mr-1" />
+                  {contentCount} Items
+                </Badge>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-2"
+                onClick={singleContentItem ? () => navigate(`/content/${singleContentItem.id}`) : handleCreateSingleContent}
+              >
+                {singleContentItem ? (
+                  <Badge variant="secondary">View Content</Badge>
+                ) : (
+                  <Badge variant="outline">Create Content</Badge>
+                )}
+              </Button>
+            )}
           </div>
           {schema.description && (
             <p className="text-muted-foreground">{schema.description}</p>
@@ -525,7 +650,7 @@ const SchemaEditorPage: React.FC = () => {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="fields">
+        <StrictModeDroppable droppableId="fields">
           {(provided) => (
             <div
               {...provided.droppableProps}
@@ -544,40 +669,74 @@ const SchemaEditorPage: React.FC = () => {
                         {...provided.draggableProps}
                         className="border-b last:border-b-0 rounded-md"
                       >
-                        <CardContent className="flex items-center p-3">
-                          <div className="flex-1 flex items-center gap-4">
-                            <div
-                              className="flex items-center gap-2 cursor-move"
-                              {...provided.dragHandleProps}
-                            >
-                              <GripVertical className="h-5 w-5 text-muted-foreground" />
-                              <Icon size={20} className="text-muted-foreground" />
-                            </div>
+                        <CardContent className="flex items-center justify-between p-3">
+                          <div className="flex items-center gap-4">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="flex items-center gap-2 cursor-move"
+                                  {...provided.dragHandleProps}
+                                >
+                                  <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                  <Icon size={20} className="text-muted-foreground" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Drag to reorder</p>
+                              </TooltipContent>
+                            </Tooltip>
                             <div>
                               <div className="font-medium">{field.name}</div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-sm text-muted-foreground flex items-center gap-2">
                                 {fieldType?.label || field.type}
                                 {field.required && (
-                                  <Badge variant="secondary" className="ml-2">Required</Badge>
+                                  <Badge variant="secondary">Required</Badge>
                                 )}
                                 {field.type === "relation" && field.relationSchemaId && (
-                                  <Badge variant="outline" className="ml-2">
+                                  <Badge variant="outline">
                                     {availableSchemas.find(s => s.id === field.relationSchemaId)?.name}
                                   </Badge>
                                 )}
                               </div>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedField(field);
-                              setShowDeleteField(true);
-                            }}
-                          >
-                            <Trash2 size={16} className="text-red-500" />
-                          </Button>
+                          <div className="flex gap-2 ml-4">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedField(field);
+                                    setNewFieldName(field.name);
+                                    setShowRenameField(true);
+                                  }}
+                                >
+                                  <Type size={16} className="text-muted-foreground" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Rename field</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedField(field);
+                                    setShowDeleteField(true);
+                                  }}
+                                >
+                                  <Trash2 size={16} className="text-red-500" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Delete field</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
                         </CardContent>
                       </Card>
                     )}
@@ -587,7 +746,7 @@ const SchemaEditorPage: React.FC = () => {
               {provided.placeholder}
             </div>
           )}
-        </Droppable>
+        </StrictModeDroppable>
       </DragDropContext>
 
       <AlertDialog open={showDeleteField} onOpenChange={setShowDeleteField}>
@@ -640,6 +799,31 @@ const SchemaEditorPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showRenameField} onOpenChange={setShowRenameField}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Field</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="newName">New Field Name</Label>
+              <Input
+                id="newName"
+                value={newFieldName}
+                onChange={(e) => setNewFieldName(e.target.value)}
+                placeholder="Enter new field name..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRenameField(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRenameField}>Rename Field</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

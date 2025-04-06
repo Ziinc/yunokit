@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -10,15 +10,44 @@ import {
   Code,
   MessageCircle,
   Plus,
+  Loader2
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
+import { CreateWorkspaceModal } from "@/components/Workspace/CreateWorkspaceModal";
+import { WorkspaceApi } from "@/lib/api/WorkspaceApi";
+import { Workspace } from "@/lib/workspaceSchema";
 
 interface SidebarProps {}
 
 export const Sidebar: React.FC<SidebarProps> = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [currentWorkspace, setCurrentWorkspace] = useState<string>("primary");
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const loadWorkspaces = async () => {
+      try {
+        await WorkspaceApi.initializeStorage();
+        const loadedWorkspaces = await WorkspaceApi.getWorkspaces();
+        setWorkspaces(loadedWorkspaces);
+        
+        // Set initial workspace if none selected
+        if (!currentWorkspace && loadedWorkspaces.length > 0) {
+          setCurrentWorkspace(loadedWorkspaces[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to load workspaces:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadWorkspaces();
+  }, [currentWorkspace]);
   
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <Home size={20} /> },
@@ -31,30 +60,42 @@ export const Sidebar: React.FC<SidebarProps> = () => {
 
   const handleWorkspaceChange = (value: string) => {
     if (value === 'add_workspace') {
-      navigate('/settings/workspaces');
+      setIsCreateModalOpen(true);
       return;
     }
+    setCurrentWorkspace(value);
     // Handle other workspace changes here
   };
 
   return (
     <aside className="sidebar bg-sidebar h-screen border-r border-border w-64 flex flex-col">
-      <div className="p-4 flex items-center justify-center h-14">
-        <div className="w-32 h-8">
-          <img src="/supacontent-logo.png" alt="SupaContent - Content Management System" className="w-full h-full object-contain" />
-        </div>
+      <div className="p-3 flex items-center justify-center h-12">
+        <Link to="/">
+          <div className="w-32 h-8">
+            <img src="/supacontent-logo.png" alt="SupaContent - Content Management System" className="w-full h-full object-contain" />
+          </div>
+        </Link>
       </div>
 
       {/* Workspace selector */}
-      <div className="px-4 py-3 border-b border-border">
-        <Select defaultValue="primary" onValueChange={handleWorkspaceChange}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select workspace" />
+      <div className="px-4 py-2 border-b border-border">
+        <Select value={currentWorkspace} onValueChange={handleWorkspaceChange}>
+          <SelectTrigger className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading workspaces...</span>
+              </div>
+            ) : (
+              <SelectValue placeholder="Select workspace" />
+            )}
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="primary">Primary Workspace</SelectItem>
-            <SelectItem value="marketing">Marketing Team</SelectItem>
-            <SelectItem value="development">Development Team</SelectItem>
+            {workspaces.map(workspace => (
+              <SelectItem key={workspace.id} value={workspace.id}>
+                {workspace.name}
+              </SelectItem>
+            ))}
             <SelectSeparator />
             <SelectItem value="add_workspace" className="cursor-pointer">
               <span className="flex items-center gap-2">
@@ -94,6 +135,11 @@ export const Sidebar: React.FC<SidebarProps> = () => {
           <span>Settings</span>
         </Link>
       </div>
+
+      <CreateWorkspaceModal 
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+      />
     </aside>
   );
 };

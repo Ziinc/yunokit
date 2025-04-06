@@ -94,7 +94,9 @@ const App = () => {
                         <Route path="team" element={<SettingsTeamPage />} />
                         <Route path="billing" element={<SettingsBillingPage />} />
                       </Route>
-                      <Route path="/developer/*" element={<DeveloperPage />} />
+                      <Route path="/developer" element={<Navigate to="/developer/api-docs" replace />} />
+                      <Route path="/developer/api-docs" element={<DeveloperPage />} />
+                      <Route path="/developer/migrations" element={<DeveloperPage />} />
                       <Route path="/search" element={<ContentSearchPage />} />
                       <Route path="/comments" element={<CommentsPage />} />
                     </Route>

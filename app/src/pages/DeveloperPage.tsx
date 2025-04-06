@@ -1,54 +1,44 @@
 import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link, useLocation } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Database, Code } from "lucide-react";
 import { ApiDocumentation } from "@/components/Documentation/ApiDocumentation";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Settings, Database, Code } from "lucide-react";
 import DatabaseMigrationPage from "./DatabaseMigrationPage";
 
 const DeveloperPage: React.FC = () => {
-  return (
-    <div className="container mx-auto py-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Developer Tools</CardTitle>
-          <CardDescription>
-            Manage your API integrations, database migrations, and developer settings
-          </CardDescription>
-        </CardHeader>
-      </Card>
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const currentTab = currentPath.includes("migrations") ? "migrations" : "api-docs";
 
-      <Tabs defaultValue="api" className="space-y-4">
+  return (
+    <div className="space-y-6 max-w-full">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Developer Tools</h1>
+        <p className="text-muted-foreground mt-1">
+          Manage your API integrations and database migrations
+        </p>
+      </div>
+
+      <Tabs value={currentTab} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="api" className="flex items-center gap-2">
-            <Code className="h-4 w-4" />
-            API Documentation
+          <TabsTrigger value="api-docs" asChild>
+            <Link to="/developer/api-docs" className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              API Documentation
+            </Link>
           </TabsTrigger>
-          <TabsTrigger value="migrations" className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            Migrations
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
+          <TabsTrigger value="migrations" asChild>
+            <Link to="/developer/migrations" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Migrations
+            </Link>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="api" className="space-y-4">
-          <ApiDocumentation />
-        </TabsContent>
-
-        <TabsContent value="migrations" className="space-y-4">
-          <DatabaseMigrationPage />
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Developer Settings</CardTitle>
-              <CardDescription>Configure your development environment</CardDescription>
-            </CardHeader>
-          </Card>
-        </TabsContent>
+        <div className="space-y-4">
+          {currentPath === "/developer/api-docs" && <ApiDocumentation />}
+          {currentPath === "/developer/migrations" && <DatabaseMigrationPage />}
+        </div>
       </Tabs>
     </div>
   );

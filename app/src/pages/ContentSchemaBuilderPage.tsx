@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Files, File, Layers, Loader2, Archive, Trash2 } from "lucide-react";
+import { Plus, Search, Files, File, Layers, Loader2, Archive, Trash2, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import { ContentSchema, ContentItem } from "@/lib/contentSchema";
@@ -13,7 +13,74 @@ import { PaginationControls } from "@/components/Content/ContentList/PaginationC
 import { DocsButton } from "@/components/ui/DocsButton";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { ContentTable } from "@/components/Content/ContentList/ContentTable";
+import { DataTable, TableColumn } from "@/components/DataTable";
+import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/utils/formatDate";
+
+// Schema Table Configuration
+const ContentTable: React.FC<{
+  items: ContentItem[];
+  schemas: ContentSchema[];
+  onRowClick: (item: ContentItem) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  itemsPerPage: number;
+  onItemsPerPageChange: (value: number) => void;
+  onSelectionChange?: (selectedItems: ContentItem[]) => void;
+}> = (props) => {
+  const columns: TableColumn<ContentItem>[] = [
+    {
+      header: "Name",
+      accessorKey: "title",
+      width: "300px",
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          {item.icon}
+          {item.title}
+        </div>
+      ),
+    },
+    {
+      header: "Type",
+      accessorKey: "data.type",
+      width: "120px",
+      cell: (item) => item.data?.type || "Unknown",
+    },
+    {
+      header: "Fields",
+      accessorKey: "data.fields",
+      width: "120px",
+      cell: (item) => item.data?.fields || "0 fields",
+    },
+    {
+      header: "Description",
+      accessorKey: "data.description",
+      width: "200px",
+      className: "text-muted-foreground truncate",
+      cell: (item) => item.data?.description || 'No description',
+    },
+    {
+      header: (
+        <span className="flex items-center gap-2">
+          <Calendar size={14} />
+          Last Updated
+        </span>
+      ),
+      accessorKey: "updatedAt",
+      cell: (item) => formatDate(item.updatedAt),
+    },
+  ];
+
+  return (
+    <DataTable
+      {...props}
+      columns={columns}
+      getItemId={(item) => item.id}
+      emptyMessage="No schemas found."
+    />
+  );
+};
 
 // Simple query parser for search filtering
 const parseQuery = (query: string) => {
@@ -167,10 +234,11 @@ const ContentSchemaBuilderPage: React.FC = () => {
       status: schema.isArchived ? 'archived' : 'published',
       createdAt: schema.createdAt || new Date().toISOString(),
       updatedAt: schema.updatedAt || new Date().toISOString(),
+      icon: schema.isCollection ? <Files className="h-4 w-4" /> : <File className="h-4 w-4" />,
       data: {
-        type: schema.isCollection ? 'Collection' : 'Single',
+        type: schema.isCollection ? "Collection" : "Single",
         fields: `${schema.fields.length} field${schema.fields.length !== 1 ? 's' : ''}`,
-        description: schema.description || 'No description'
+        description: schema.description
       }
     } as ContentItem));
   }, [paginatedSchemas]);
@@ -286,7 +354,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   // Navigate to Content Manager with schema filter
   const handleViewContent = (schemaId: string) => {
-    navigate(`/manager?schema=${schemaId}`);
+    navigate(`/manager?schema-id=${schemaId}`);
   };
 
   const handleRowClick = (item: ContentItem) => {
@@ -305,7 +373,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
             <DocsButton href="https://docs.supacontent.tznc.net/schema-builder" />
           </div>
           <p className="text-muted-foreground mt-1">
-            Manage your content schemas for your content items.
+            Manage your content schemas for your content items
           </p>
         </div>
         

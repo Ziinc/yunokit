@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- be as succinct as possible.
+- always remove unused imports.
+- Don't explain the effect your actions, only list out what you have done.
+- always verify that the change has been correctly applied.

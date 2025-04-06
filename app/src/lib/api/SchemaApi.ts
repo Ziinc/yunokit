@@ -1,4 +1,4 @@
-import { ContentSchema } from "../contentSchema";
+import { ContentSchema, ContentField } from "../contentSchema";
 import { contentSchemas as exampleSchemas } from "../mocks";
 
 // Storage keys
@@ -62,5 +62,91 @@ export class SchemaApi {
     const schemas = await this.getSchemas();
     const filteredSchemas = schemas.filter(schema => schema.id !== id);
     localStorage.setItem(SCHEMA_STORAGE_KEY, JSON.stringify(filteredSchemas));
+  }
+
+  static async renameField(schemaId: string, fieldId: string, newName: string): Promise<ContentSchema> {
+    await simulateNetworkDelay();
+    const schemas = await this.getSchemas();
+    const schemaIndex = schemas.findIndex(s => s.id === schemaId);
+    
+    if (schemaIndex === -1) {
+      throw new Error(`Schema with id ${schemaId} not found`);
+    }
+
+    const schema = schemas[schemaIndex];
+    const fieldIndex = schema.fields.findIndex(f => f.id === fieldId);
+    
+    if (fieldIndex === -1) {
+      throw new Error(`Field with id ${fieldId} not found in schema ${schemaId}`);
+    }
+
+    // Create updated field and schema
+    const updatedField = { ...schema.fields[fieldIndex], name: newName };
+    const updatedFields = [...schema.fields];
+    updatedFields[fieldIndex] = updatedField;
+    const updatedSchema = { ...schema, fields: updatedFields };
+
+    // Save the updated schema
+    schemas[schemaIndex] = updatedSchema;
+    await this.saveSchemas(schemas);
+    return updatedSchema;
+  }
+
+  static async reorderFields(schemaId: string, fieldIds: string[]): Promise<ContentSchema> {
+    await simulateNetworkDelay();
+    const schemas = await this.getSchemas();
+    const schemaIndex = schemas.findIndex(s => s.id === schemaId);
+    
+    if (schemaIndex === -1) {
+      throw new Error(`Schema with id ${schemaId} not found`);
+    }
+
+    const schema = schemas[schemaIndex];
+    
+    // Create a map of fields by ID for quick lookup
+    const fieldsMap = new Map(schema.fields.map(field => [field.id, field]));
+    
+    // Reorder fields based on the provided field IDs
+    const reorderedFields = fieldIds.map(id => {
+      const field = fieldsMap.get(id);
+      if (!field) {
+        throw new Error(`Field with id ${id} not found in schema ${schemaId}`);
+      }
+      return field;
+    });
+
+    // Update and save the schema
+    const updatedSchema = { ...schema, fields: reorderedFields };
+    schemas[schemaIndex] = updatedSchema;
+    await this.saveSchemas(schemas);
+    return updatedSchema;
+  }
+
+  static async updateField(schemaId: string, fieldId: string, updates: Partial<ContentField>): Promise<ContentSchema> {
+    await simulateNetworkDelay();
+    const schemas = await this.getSchemas();
+    const schemaIndex = schemas.findIndex(s => s.id === schemaId);
+    
+    if (schemaIndex === -1) {
+      throw new Error(`Schema with id ${schemaId} not found`);
+    }
+
+    const schema = schemas[schemaIndex];
+    const fieldIndex = schema.fields.findIndex(f => f.id === fieldId);
+    
+    if (fieldIndex === -1) {
+      throw new Error(`Field with id ${fieldId} not found in schema ${schemaId}`);
+    }
+
+    // Create updated field and schema
+    const updatedField = { ...schema.fields[fieldIndex], ...updates };
+    const updatedFields = [...schema.fields];
+    updatedFields[fieldIndex] = updatedField;
+    const updatedSchema = { ...schema, fields: updatedFields };
+
+    // Save the updated schema
+    schemas[schemaIndex] = updatedSchema;
+    await this.saveSchemas(schemas);
+    return updatedSchema;
   }
 } 

@@ -4,12 +4,12 @@ import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSche
 import { ContentApi } from "@/lib/api";
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
-import { ContentTable } from "@/components/Content/ContentList/ContentTable";
+import { DataTable, TableColumn } from "@/components/DataTable";
 import { ContentPagination } from "@/components/Content/ContentList/ContentPagination";
 import { getUniqueAuthors, paginateItems } from "@/components/Content/ContentList/utils";
 import { SortSelect, SortOption } from "@/components/Content/ContentList/SortSelect";
 import { ResultsBar } from "@/components/Content/ContentList/ResultsBar";
-import { Loader2, Download, Trash2, EyeOff, Users } from "lucide-react";
+import { Loader2, Download, Trash2, EyeOff, Users, FileText, Calendar } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,80 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { downloadContent } from "@/lib/download";
+import { ContentStatusBadge } from "@/components/Content/ContentList/ContentStatusBadge";
+import { formatDate } from "@/utils/formatDate";
+
+// Content Table Configuration
+const ContentTable: React.FC<{
+  items: ContentItem[];
+  schemas: ContentSchema[];
+  onRowClick: (item: ContentItem) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  itemsPerPage: number;
+  onItemsPerPageChange: (value: number) => void;
+  onSelectionChange?: (selectedItems: ContentItem[]) => void;
+}> = (props) => {
+  const columns: TableColumn<ContentItem>[] = [
+    {
+      header: "Title",
+      accessorKey: "title",
+      width: "300px",
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          {item.icon || <FileText size={16} className="text-muted-foreground" />}
+          {item.title}
+        </div>
+      ),
+    },
+    {
+      header: "Type",
+      accessorKey: "schemaId",
+      width: "120px",
+      cell: (item) => {
+        const schema = props.schemas.find(s => s.id === item.schemaId);
+        return (
+          <div className="flex items-center gap-2">
+            {schema?.name || 'Unknown Schema'}
+          </div>
+        );
+      },
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      width: "120px",
+      cell: (item) => <ContentStatusBadge status={item.status} />,
+    },
+    {
+      header: "Description",
+      accessorKey: "description",
+      width: "200px",
+      className: "text-muted-foreground truncate",
+      cell: (item) => item.data?.description || 'No description',
+    },
+    {
+      header: (
+        <span className="flex items-center gap-2">
+          <Calendar size={14} />
+          Last Updated
+        </span>
+      ),
+      accessorKey: "updatedAt",
+      cell: (item) => formatDate(item.updatedAt),
+    },
+  ];
+
+  return (
+    <DataTable
+      {...props}
+      columns={columns}
+      getItemId={(item) => item.id}
+      emptyMessage="No content items found."
+    />
+  );
+};
 
 const ContentManagerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -103,20 +177,16 @@ const ContentManagerPage: React.FC = () => {
     const queryParams = new URLSearchParams(location.search);
     
     // Get and validate status from URL
-    let status = queryParams.get("status") || "";
-    if (status !== "published" && status !== "draft" && status !== "pending_review") {
-      status = ""; // Empty string will be converted to "all" in the form
+    let status = queryParams.get("status") || "all";
+    if (status !== "published" && status !== "draft" && status !== "pending_review" && status !== "all") {
+      status = "all";
     }
-    
-    // Get schema and author
-    const schemaId = queryParams.get("schema") || "";
-    const author = queryParams.get("author") || "";
     
     // Set up initial filters
     const initialFilters: FilterValues = {
       status: status,
-      schemaId: schemaId,
-      author: author,
+      schemaId: queryParams.get("schema-id") || "all",
+      author: queryParams.get("author") || "all",
       search: queryParams.get("search") || "",
       page: Number(queryParams.get("page")) || 1,
       perPage: Number(queryParams.get("perPage")) || 10,
@@ -199,12 +269,12 @@ const ContentManagerPage: React.FC = () => {
     
     // Update URL with filter parameters
     const params = new URLSearchParams();
-    if (values.status) params.set("status", values.status);
-    if (values.schemaId) params.set("schema", values.schemaId);
-    if (values.author) params.set("author", values.author);
+    params.set("status", values.status || "all");
+    params.set("schema-id", values.schemaId || "all");
+    params.set("author", values.author || "all");
     if (values.search) params.set("search", values.search);
     if (sortField && sortField !== "title") params.set("sort", sortField);
-    params.set("page", "1"); // Reset to page 1 when applying new filters
+    params.set("page", "1");
     params.set("perPage", values.perPage.toString());
     
     navigate({

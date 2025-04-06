@@ -10,6 +10,7 @@ import { ContentItem } from "@/lib/contentSchema";
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
 import { toast } from "@/hooks/use-toast";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
+import { cn } from "@/lib/utils";
 
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
@@ -208,8 +209,11 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-full">
-      <div className="flex items-center justify-between">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
+          Manage and monitor your content activities
+        </p>
       </div>
 
       {/* Quickstart Templates Section */}
@@ -291,7 +295,10 @@ const Dashboard: React.FC = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="grid grid-rows-3 gap-6">
+        <div className={cn(
+          "grid grid-rows-3 gap-6",
+          !isFeatureEnabled(FeatureFlags.APPROVAL_FLOWS) && "lg:col-span-2"
+        )}>
           <Card className="w-full">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>

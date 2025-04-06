@@ -26,11 +26,11 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">Content Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Content Manager</h1>
           <DocsButton href="https://docs.supacontent.tznc.net/content-management" />
         </div>
-        <p className="text-muted-foreground">
-          Manage and organize all your content items
+        <p className="text-muted-foreground mt-1">
+          Create, edit and manage your content items
         </p>
       </div>
       <div className="flex gap-2">
