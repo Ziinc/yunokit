@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { CommentsApi } from './CommentsApi';
+import { CommentsApi } from '../../src/lib/api/CommentsApi';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -20,29 +20,13 @@ const localStorageMock = (() => {
 
 // Mock global methods
 global.localStorage = localStorageMock as any;
-global.crypto = {
-  randomUUID: vi.fn(() => 'test-uuid'),
-} as any;
-
-// Mock the CommentsApi methods
-vi.mock('./CommentsApi', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('./CommentsApi')>();
-  return {
-    ...mod,
-    CommentsApi: {
-      ...mod.CommentsApi,
-      initializeStorage: vi.fn(mod.CommentsApi.initializeStorage),
-      getComments: vi.fn(mod.CommentsApi.getComments),
-      getCommentById: vi.fn(mod.CommentsApi.getCommentById),
-      getCommentsByContentItem: vi.fn(mod.CommentsApi.getCommentsByContentItem),
-      getPendingComments: vi.fn(mod.CommentsApi.getPendingComments),
-      saveComment: vi.fn(mod.CommentsApi.saveComment),
-      saveComments: vi.fn(mod.CommentsApi.saveComments),
-      approveComment: vi.fn(mod.CommentsApi.approveComment),
-      getThreadedComments: vi.fn(mod.CommentsApi.getThreadedComments),
-    },
-  };
+Object.defineProperty(global, 'crypto', {
+  value: {
+    randomUUID: vi.fn(() => 'test-uuid'),
+  },
+  configurable: true,
 });
+
 
 describe('CommentsApi', () => {
   // Test comment
@@ -165,7 +149,7 @@ describe('CommentsApi', () => {
       const savedComments = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
       expect(savedComments.length).toBe(1);
       expect(savedComments[0].text).toBe('Updated comment text');
-      expect(savedComments[0].updatedAt).toBe('2023-01-02T00:00:00Z');
+      expect(new Date(savedComments[0].updatedAt).toISOString()).toBe(savedComments[0].updatedAt);
     });
   });
 

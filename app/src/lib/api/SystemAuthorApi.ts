@@ -36,7 +36,6 @@ export class SystemAuthorApi {
 
   // Get all system authors
   static async getSystemAuthors(): Promise<SystemAuthor[]> {
-    await simulateNetworkDelay(200, 600);
     const storedAuthors = localStorage.getItem(SYSTEM_AUTHORS_STORAGE_KEY);
     if (!storedAuthors) return [];
     return JSON.parse(storedAuthors);

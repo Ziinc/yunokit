@@ -61,7 +61,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({ onSucc
       const newWorkspace = await WorkspaceApi.createWorkspace({
         name: newWorkspaceName,
         description: newWorkspaceDescription,
-        ownerId: "user-1", // TODO: Get from auth context
+        userId: "user-1", // TODO: Get from auth context
         members: [{
           id: crypto.randomUUID(),
           userId: "user-1",

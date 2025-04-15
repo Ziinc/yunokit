@@ -9,7 +9,12 @@
     "crossProjectDataMigrations": false,
     "systemAuthors": false,
     "search": false,
-    "assetLibrary": false
+    "assetLibrary": false,
+    "pseudonym": false,
+    "profileLinks": false,
+    "profilePicture": false,
+    "emailAuth": false,
+    "profileName": false
   },
   "scripts": {
     "dev": "vite",
@@ -55,6 +60,7 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@supabase/supabase-js": "^2.49.1",
     "@tanstack/react-query": "^5.56.2",
+    "@testing-library/react": "^16.3.0",
     "@tiptap/extension-image": "^2.11.5",
     "@tiptap/extension-link": "^2.11.5",
     "@tiptap/extension-table": "^2.11.5",
@@ -72,6 +78,7 @@
     "date-fns": "^3.6.0",
     "lucide-react": "^0.462.0",
     "markdown-it": "^14.1.0",
+    "prismjs": "^1.30.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.0",

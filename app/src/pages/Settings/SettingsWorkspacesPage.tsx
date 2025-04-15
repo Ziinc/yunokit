@@ -2,96 +2,35 @@ import React, { useState, useEffect } from "react";
 import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Loader2, Trash2, Star, StarOff, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+import { CreateWorkspaceForm } from "@/components/Workspace/CreateWorkspaceForm";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
-
-interface Workspace {
-  id: string;
-  name: string;
-  description: string;
-}
+import { WorkspaceApi } from "@/lib/api/WorkspaceApi";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
 
 const SettingsWorkspacesPage: React.FC = () => {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [newWorkspaceName, setNewWorkspaceName] = useState("");
-  const [newWorkspaceDescription, setNewWorkspaceDescription] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const { workspaces, isLoading, refreshWorkspaces, currentWorkspace, setCurrentWorkspace } = useWorkspace();
   const { toast } = useToast();
+  const [workspaceLimit, setWorkspaceLimit] = useState<{ currentCount: number; maxWorkspaces: number; canCreate: boolean } | null>(null);
 
   useEffect(() => {
-    const fetchWorkspaces = async () => {
-      setIsLoading(true);
+    const fetchWorkspaceLimit = async () => {
       try {
-        // TODO: Replace with actual API call
-        const mockWorkspaces = [
-          { id: "1", name: "Personal", description: "My personal workspace" },
-          { id: "2", name: "Team", description: "Team workspace" }
-        ];
-        setWorkspaces(mockWorkspaces);
+        const limit = await WorkspaceApi.getWorkspaceLimit();
+        setWorkspaceLimit(limit);
       } catch (error) {
-        console.error("Failed to fetch workspaces:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load workspaces",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+        console.error("Failed to fetch workspace limit:", error);
       }
     };
-
-    fetchWorkspaces();
-  }, [toast]);
-
-  const handleCreateWorkspace = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newWorkspaceName.trim()) {
-      toast({
-        title: "Workspace name required",
-        description: "Please enter a workspace name",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setIsCreating(true);
-
-      // TODO: Replace with actual API call
-      const newWorkspace = {
-        id: String(workspaces.length + 1),
-        name: newWorkspaceName,
-        description: newWorkspaceDescription
-      };
-
-      setWorkspaces([...workspaces, newWorkspace]);
-      setNewWorkspaceName("");
-      setNewWorkspaceDescription("");
-
-      toast({
-        title: "Workspace created",
-        description: "Your new workspace has been created successfully"
-      });
-    } catch (error) {
-      console.error("Create workspace error:", error);
-      toast({
-        title: "Failed to create workspace",
-        description: error instanceof Error ? error.message : "Please try again later",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreating(false);
-    }
-  };
+    fetchWorkspaceLimit();
+  }, []);
 
   const handleDeleteWorkspace = async (workspaceId: string) => {
     try {
-      // TODO: Replace with actual API call
-      setWorkspaces(workspaces.filter(w => w.id !== workspaceId));
+      await WorkspaceApi.deleteWorkspace(workspaceId);
+      await refreshWorkspaces();
 
       toast({
         title: "Workspace deleted",
@@ -101,6 +40,23 @@ const SettingsWorkspacesPage: React.FC = () => {
       console.error("Delete workspace error:", error);
       toast({
         title: "Failed to delete workspace",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSetDefaultWorkspace = async (workspace: typeof workspaces[0]) => {
+    try {
+      setCurrentWorkspace(workspace);
+      toast({
+        title: "Default workspace updated",
+        description: `${workspace.name} is now your default workspace`
+      });
+    } catch (error) {
+      console.error("Set default workspace error:", error);
+      toast({
+        title: "Failed to set default workspace",
         description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive"
       });
@@ -123,22 +79,68 @@ const SettingsWorkspacesPage: React.FC = () => {
             </div>
           ) : (
             <>
+              {/* Workspace Limit Status */}
+              {workspaceLimit && (
+                <div className="flex items-center gap-2">
+                  {workspaceLimit.canCreate ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <span className="text-sm text-muted-foreground">
+                        You can create {workspaceLimit.maxWorkspaces - workspaceLimit.currentCount} more workspace{workspaceLimit.maxWorkspaces - workspaceLimit.currentCount !== 1 ? 's' : ''}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                      <span className="text-sm text-muted-foreground">
+                        You've reached your workspace limit ({workspaceLimit.currentCount}/{workspaceLimit.maxWorkspaces})
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                      >
+                        <Link to="/settings/billing">
+                          Add Workspace (+$10/mo)
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Existing Workspaces */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Your Workspaces</h3>
                 {workspaces.map(workspace => (
                   <Card key={workspace.id}>
                     <CardContent className="flex items-center justify-between p-4">
-                      <div>
-                        <h4 className="font-medium">{workspace.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {workspace.description}
-                        </p>
+                      <div className="flex items-center gap-3 flex-grow">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSetDefaultWorkspace(workspace)}
+                          title={workspace.id === currentWorkspace?.id ? "Current default workspace" : "Set as default workspace"}
+                        >
+                          {workspace.id === currentWorkspace?.id ? (
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          ) : (
+                            <StarOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                        <div>
+                          <h4 className="font-medium">{workspace.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {workspace.description}
+                          </p>
+                        </div>
                       </div>
                       <Button
                         variant="destructive"
                         size="icon"
                         onClick={() => handleDeleteWorkspace(workspace.id)}
+                        disabled={workspace.id === currentWorkspace?.id}
+                        title={workspace.id === currentWorkspace?.id ? "Cannot delete default workspace" : "Delete workspace"}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -150,47 +152,7 @@ const SettingsWorkspacesPage: React.FC = () => {
               {/* Create New Workspace */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-medium mb-4">Create New Workspace</h3>
-                <form onSubmit={handleCreateWorkspace} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="workspace-name">Workspace Name</Label>
-                    <Input
-                      id="workspace-name"
-                      placeholder="Enter workspace name"
-                      value={newWorkspaceName}
-                      onChange={(e) => setNewWorkspaceName(e.target.value)}
-                      disabled={isCreating}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="workspace-description">Description</Label>
-                    <Input
-                      id="workspace-description"
-                      placeholder="Enter workspace description"
-                      value={newWorkspaceDescription}
-                      onChange={(e) => setNewWorkspaceDescription(e.target.value)}
-                      disabled={isCreating}
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    disabled={isCreating}
-                    className="gap-2"
-                  >
-                    {isCreating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-4 w-4" />
-                        Create Workspace
-                      </>
-                    )}
-                  </Button>
-                </form>
+                <CreateWorkspaceForm onSuccess={refreshWorkspaces} />
               </div>
             </>
           )}

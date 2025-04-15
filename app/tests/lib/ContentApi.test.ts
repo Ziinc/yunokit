@@ -2,44 +2,6 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ContentApi } from './ContentApi';
 import { ContentItem } from '../contentSchema';
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: vi.fn(() => {
-      store = {};
-    }),
-  };
-})();
-
-// Mock global methods
-global.localStorage = localStorageMock as any;
-global.crypto = {
-  randomUUID: vi.fn(() => 'test-uuid'),
-} as any;
-
-// Mock network delay 
-vi.mock('./ContentApi', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('./ContentApi')>();
-  return {
-    ...mod,
-    ContentApi: {
-      ...mod.ContentApi,
-      initializeStorage: vi.fn(mod.ContentApi.initializeStorage),
-      getContentItems: vi.fn(mod.ContentApi.getContentItems),
-      getContentItemById: vi.fn(mod.ContentApi.getContentItemById),
-      saveContentItem: vi.fn(mod.ContentApi.saveContentItem),
-      deleteContentItem: vi.fn(mod.ContentApi.deleteContentItem),
-    },
-  };
-});
 
 describe('ContentApi', () => {
   // Test content item

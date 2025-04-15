@@ -7,7 +7,7 @@ export const mockWorkspaces: Workspace[] = [
     description: "Main workspace for your content",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
-    ownerId: "user-1",
+    userId: "user-1",
     members: [
       {
         id: "member-1",
@@ -24,7 +24,7 @@ export const mockWorkspaces: Workspace[] = [
     description: "Marketing team workspace",
     createdAt: "2024-01-02T00:00:00Z",
     updatedAt: "2024-01-02T00:00:00Z",
-    ownerId: "user-1",
+    userId: "user-1",
     members: [
       {
         id: "member-2",
@@ -48,7 +48,7 @@ export const mockWorkspaces: Workspace[] = [
     description: "Development team workspace",
     createdAt: "2024-01-03T00:00:00Z",
     updatedAt: "2024-01-03T00:00:00Z",
-    ownerId: "user-1",
+    userId: "user-1",
     members: [
       {
         id: "member-4",
@@ -66,4 +66,4 @@ export const mockWorkspaces: Workspace[] = [
       }
     ]
   }
-]; 
+];

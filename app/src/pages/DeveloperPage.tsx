@@ -4,11 +4,26 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, Code } from "lucide-react";
 import { ApiDocumentation } from "@/components/Documentation/ApiDocumentation";
 import DatabaseMigrationPage from "./DatabaseMigrationPage";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 const DeveloperPage: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   const currentTab = currentPath.includes("migrations") ? "migrations" : "api-docs";
+  const { currentWorkspace } = useWorkspace();
+
+  if (!currentWorkspace) {
+    return (
+      <div className="space-y-6 max-w-full">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Developer Tools</h1>
+          <p className="text-muted-foreground mt-1">
+            Please select a workspace to continue
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-full">
@@ -36,8 +51,8 @@ const DeveloperPage: React.FC = () => {
         </TabsList>
 
         <div className="space-y-4">
-          {currentPath === "/developer/api-docs" && <ApiDocumentation />}
-          {currentPath === "/developer/migrations" && <DatabaseMigrationPage />}
+          {currentPath === "/developer/api-docs" && <ApiDocumentation workspaceId={currentWorkspace.id} />}
+          {currentPath === "/developer/migrations" && <DatabaseMigrationPage workspaceId={currentWorkspace.id} />}
         </div>
       </Tabs>
     </div>

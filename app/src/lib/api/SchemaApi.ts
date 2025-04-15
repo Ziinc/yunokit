@@ -1,14 +1,27 @@
 import { ContentSchema, ContentField } from "../contentSchema";
 import { contentSchemas as exampleSchemas } from "../mocks";
+import { supabase } from "../supabase";
+import type { Database } from "../supabase";
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+type DbClient = SupabaseClient<Database>;
+type ContentSchemaRow = Database['public']['Tables']['content_schemas']['Row'];
 
 // Storage keys
 const SCHEMA_STORAGE_KEY = 'supacontent-schemas';
 
-// Helper to simulate network delay for a more realistic experience
-const simulateNetworkDelay = async (minMs: number = 300, maxMs: number = 1200): Promise<void> => {
-  const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-  return new Promise(resolve => setTimeout(resolve, delay));
-};
+// Helper to convert Supabase schema to our ContentSchema type
+const convertSupabaseSchema = (schema: ContentSchemaRow): ContentSchema => ({
+  id: schema.id,
+  name: schema.name,
+  description: schema.description,
+  fields: schema.fields,
+  isCollection: schema.is_collection,
+  isArchived: schema.is_archived,
+  createdAt: schema.created_at,
+  updatedAt: schema.updated_at,
+  workspaceId: schema.workspace_id
+});
 
 /**
  * SchemaApi - Provides methods for managing content schemas
@@ -24,8 +37,21 @@ export class SchemaApi {
     }
   }
 
-  static async getSchemas(): Promise<ContentSchema[]> {
-    await simulateNetworkDelay(200, 600);
+  static async getSchemas(workspaceId?: string): Promise<ContentSchema[]> {
+    if (supabase.auth) {
+      let query = (supabase as DbClient)
+        .from('content_schemas')
+        .select<'*', ContentSchemaRow>('*');
+      
+      if (workspaceId) {
+        query = query.eq('workspace_id', workspaceId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []).map(convertSupabaseSchema);
+    }
+
     const storedSchemas = localStorage.getItem(SCHEMA_STORAGE_KEY);
     if (!storedSchemas) return [];
     return JSON.parse(storedSchemas);
@@ -37,7 +63,6 @@ export class SchemaApi {
   }
 
   static async saveSchema(schema: ContentSchema): Promise<ContentSchema> {
-    await simulateNetworkDelay();
     const schemas = await this.getSchemas();
     const existingIndex = schemas.findIndex(s => s.id === schema.id);
     
@@ -52,20 +77,17 @@ export class SchemaApi {
   }
 
   static async saveSchemas(schemas: ContentSchema[]): Promise<ContentSchema[]> {
-    await simulateNetworkDelay();
     localStorage.setItem(SCHEMA_STORAGE_KEY, JSON.stringify(schemas));
     return schemas;
   }
 
   static async deleteSchema(id: string): Promise<void> {
-    await simulateNetworkDelay();
     const schemas = await this.getSchemas();
     const filteredSchemas = schemas.filter(schema => schema.id !== id);
     localStorage.setItem(SCHEMA_STORAGE_KEY, JSON.stringify(filteredSchemas));
   }
 
   static async renameField(schemaId: string, fieldId: string, newName: string): Promise<ContentSchema> {
-    await simulateNetworkDelay();
     const schemas = await this.getSchemas();
     const schemaIndex = schemas.findIndex(s => s.id === schemaId);
     
@@ -93,7 +115,6 @@ export class SchemaApi {
   }
 
   static async reorderFields(schemaId: string, fieldIds: string[]): Promise<ContentSchema> {
-    await simulateNetworkDelay();
     const schemas = await this.getSchemas();
     const schemaIndex = schemas.findIndex(s => s.id === schemaId);
     
@@ -123,7 +144,6 @@ export class SchemaApi {
   }
 
   static async updateField(schemaId: string, fieldId: string, updates: Partial<ContentField>): Promise<ContentSchema> {
-    await simulateNetworkDelay();
     const schemas = await this.getSchemas();
     const schemaIndex = schemas.findIndex(s => s.id === schemaId);
     

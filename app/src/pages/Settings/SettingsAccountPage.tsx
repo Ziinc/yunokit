@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { getUserProfile, updateUsername, updateEmail, updatePassword, signOut } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, User, Lock, Mail, Save, Loader2, Trash2 } from "lucide-react";
+import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 
 const SettingsAccountPage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any | null>(null);
@@ -259,27 +260,35 @@ const SettingsAccountPage: React.FC = () => {
               {/* Profile Information */}
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-full overflow-hidden bg-muted">
-                    {userProfile?.avatarUrl ? (
-                      <img 
-                        src={userProfile.avatarUrl} 
-                        alt={userProfile.username || 'User'} 
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-primary/10">
-                        <User size={32} className="text-primary" />
-                      </div>
-                    )}
-                  </div>
+                  {isFeatureEnabled(FeatureFlags.PROFILE_PICTURE) ? (
+                    <div className="h-20 w-20 rounded-full overflow-hidden bg-muted">
+                      {userProfile?.avatarUrl ? (
+                        <img 
+                          src={userProfile.avatarUrl} 
+                          alt={userProfile.username || 'User'} 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-primary/10">
+                          <User size={32} className="text-primary" />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="h-20 w-20 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                      <User size={32} className="text-primary" />
+                    </div>
+                  )}
                   <div>
                     <h3 className="text-lg font-medium">
                       {userProfile?.first_name && userProfile?.last_name 
                         ? `${userProfile.first_name} ${userProfile.last_name}`
                         : userProfile?.username || 'User'}
                     </h3>
-                    <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
-                    {userProfile?.pseudonym && (
+                    {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
+                      <p className="text-sm text-muted-foreground">{userProfile?.email}</p>
+                    )}
+                    {isFeatureEnabled(FeatureFlags.PSEUDONYM) && userProfile?.pseudonym && (
                       <p className="text-sm text-muted-foreground">Writing as: {userProfile.pseudonym}</p>
                     )}
                   </div>
@@ -287,134 +296,146 @@ const SettingsAccountPage: React.FC = () => {
               </div>
 
               {/* Profile Details */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium mb-4">Profile Details</h3>
-                <form onSubmit={handleUpdateUsername} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        placeholder="Enter your first name"
-                        value={firstNameInput}
-                        onChange={(e) => setFirstNameInput(e.target.value)}
-                      />
+              {isFeatureEnabled(FeatureFlags.PROFILE_NAME) && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-medium mb-4">Profile Details</h3>
+                  <form onSubmit={handleUpdateUsername} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          placeholder="Enter your first name"
+                          value={firstNameInput}
+                          onChange={(e) => setFirstNameInput(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          placeholder="Enter your last name"
+                          value={lastNameInput}
+                          onChange={(e) => setLastNameInput(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="Enter your last name"
-                        value={lastNameInput}
-                        onChange={(e) => setLastNameInput(e.target.value)}
-                      />
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      disabled
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Email can be changed in the account security section below.
-                    </p>
-                  </div>
+                    {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={emailInput}
+                          onChange={(e) => setEmailInput(e.target.value)}
+                          disabled
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Email can be changed in the account security section below.
+                        </p>
+                      </div>
+                    )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="pseudonym">Pseudonym</Label>
-                    <Input
-                      id="pseudonym"
-                      placeholder="Enter your writing pseudonym"
-                      value={pseudonymInput}
-                      onChange={(e) => setPseudonymInput(e.target.value)}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      This name will be used for your published content. Leave empty to use your real name.
-                    </p>
-                  </div>
+                    {isFeatureEnabled(FeatureFlags.PSEUDONYM) && (
+                      <div className="space-y-2">
+                        <Label htmlFor="pseudonym">Pseudonym</Label>
+                        <Input
+                          id="pseudonym"
+                          placeholder="Enter your writing pseudonym"
+                          value={pseudonymInput}
+                          onChange={(e) => setPseudonymInput(e.target.value)}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          This name will be used for your published content. Leave empty to use your real name.
+                        </p>
+                      </div>
+                    )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedin">LinkedIn Profile</Label>
-                    <div className="relative">
-                      <Input
-                        id="linkedin"
-                        placeholder="https://linkedin.com/in/username"
-                        value={linkedinInput}
-                        onChange={(e) => setLinkedinInput(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="github">GitHub Profile</Label>
-                    <div className="relative">
-                      <Input
-                        id="github"
-                        placeholder="https://github.com/username"
-                        value={githubInput}
-                        onChange={(e) => setGithubInput(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <Button type="submit" className="gap-2">
-                    {isUpdatingPseudonym ? (
+                    {isFeatureEnabled(FeatureFlags.PROFILE_LINKS) && (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Save Profile
+                        <div className="space-y-2">
+                          <Label htmlFor="linkedin">LinkedIn Profile</Label>
+                          <div className="relative">
+                            <Input
+                              id="linkedin"
+                              placeholder="https://linkedin.com/in/username"
+                              value={linkedinInput}
+                              onChange={(e) => setLinkedinInput(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="github">GitHub Profile</Label>
+                          <div className="relative">
+                            <Input
+                              id="github"
+                              placeholder="https://github.com/username"
+                              value={githubInput}
+                              onChange={(e) => setGithubInput(e.target.value)}
+                            />
+                          </div>
+                        </div>
                       </>
                     )}
-                  </Button>
-                </form>
-              </div>
+
+                    <Button type="submit" className="gap-2">
+                      {isUpdatingPseudonym ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Save Profile
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </div>
+              )}
 
               {/* Username Update */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium mb-4">Update Username</h3>
-                <form onSubmit={handleUpdateUsername} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      placeholder="Enter your username"
-                      value={usernameInput}
-                      onChange={(e) => setUsernameInput(e.target.value)}
+              {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-medium mb-4">Update Username</h3>
+                  <form onSubmit={handleUpdateUsername} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        placeholder="Enter your username"
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value)}
+                        disabled={isUpdatingUsername}
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
                       disabled={isUpdatingUsername}
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    disabled={isUpdatingUsername}
-                    className="gap-2"
-                  >
-                    {isUpdatingUsername ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Save Username
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </div>
+                      className="gap-2"
+                    >
+                      {isUpdatingUsername ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Save Username
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </div>
+              )}
 
               {/* Email Update - Only for email/password accounts, not for OAuth */}
-              {(!userProfile?.providers || userProfile.providers.length === 0) && (
+              {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (!userProfile?.providers || userProfile.providers.length === 0) && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-medium mb-4">Update Email</h3>
                   <form onSubmit={handleUpdateEmail} className="space-y-4">
@@ -454,7 +475,7 @@ const SettingsAccountPage: React.FC = () => {
               )}
 
               {/* Password Update - Only for email/password accounts, not for OAuth */}
-              {(!userProfile?.providers || userProfile.providers.length === 0) && (
+              {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (!userProfile?.providers || userProfile.providers.length === 0) && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-medium mb-4">Update Password</h3>
                   <form onSubmit={handleUpdatePassword} className="space-y-4">

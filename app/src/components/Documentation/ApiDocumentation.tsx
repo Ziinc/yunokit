@@ -1,145 +1,274 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Code } from "lucide-react";
+import { Code, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-okaidia.css';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-javascript';
 
-export const ApiDocumentation: React.FC = () => {
+interface ApiDocumentationProps {
+  workspaceId: string;
+}
+
+const CodeBlock: React.FC<{ code: string; language: string }> = ({ code, language }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative group">
+      <Button
+        size="icon"
+        variant="ghost"
+        className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+        onClick={copyToClipboard}
+      >
+        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      </Button>
+      <pre className="!bg-[#272822] !m-0 rounded-md !text-[13px] leading-normal p-4">
+        <code className={`language-${language}`}>
+          {code}
+        </code>
+      </pre>
+    </div>
+  );
+};
+
+const EXAMPLE_SCHEMAS = {
+  blog: {
+    name: "Blog",
+    table: "blog_posts",
+    fields: ["id", "title", "content", "author_id", "category_id", "status", "published_at", "created_at"],
+    relations: ["authors", "categories", "comments"],
+  },
+  product: {
+    name: "Product Catalog",
+    table: "products",
+    fields: ["id", "name", "description", "price", "stock", "category_id", "metadata", "created_at"],
+    relations: ["categories", "variants", "reviews"],
+  },
+  event: {
+    name: "Event",
+    table: "events",
+    fields: ["id", "title", "description", "start_date", "end_date", "location", "organizer_id", "status"],
+    relations: ["organizers", "attendees", "tickets"],
+  }
+};
+
+export const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ workspaceId }) => {
+  const [selectedSchema, setSelectedSchema] = React.useState<keyof typeof EXAMPLE_SCHEMAS>("blog");
+  const schema = EXAMPLE_SCHEMAS[selectedSchema];
+
+  React.useEffect(() => {
+    Prism.highlightAll();
+  }, [selectedSchema]);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>API Auto-Documentation</CardTitle>
-        <CardDescription>
-          Understanding how API examples are automatically generated
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>API Documentation</CardTitle>
+            <CardDescription>
+              Access your content using the Supabase JavaScript client
+            </CardDescription>
+          </div>
+          <Select value={selectedSchema} onValueChange={(value: keyof typeof EXAMPLE_SCHEMAS) => setSelectedSchema(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(EXAMPLE_SCHEMAS).map(([key, { name }]) => (
+                <SelectItem key={key} value={key}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">How API Auto-Docs Work</h3>
-          <p>
-            SupaContent automatically generates API documentation based on your content schemas. This ensures that API examples always
-            stay in sync with your content structure, providing ready-to-use code snippets for developers.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div className="space-y-3">
-              <h4 className="font-medium mb-2">Auto-Generation Process</h4>
-              <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside ml-2">
-                <li>
-                  Schema definitions are analyzed
-                </li>
-                <li>
-                  API endpoints are mapped to schema operations
-                </li>
-                <li>
-                  Request and response examples are created
-                </li>
-                <li>
-                  Code snippets are generated for multiple platforms
-                </li>
-                <li>
-                  Documentation refreshes when schemas change
-                </li>
-              </ol>
-            </div>
-            
-            <div className="space-y-3">
-              <h4 className="font-medium mb-2">Available Code Examples</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <strong>JavaScript/TypeScript:</strong> Fetch API, Axios
-                </li>
-                <li>
-                  <strong>React:</strong> React Query, SWR
-                </li>
-                <li>
-                  <strong>Vue:</strong> Vue composables
-                </li>
-                <li>
-                  <strong>Mobile:</strong> React Native, Flutter
-                </li>
-                <li>
-                  <strong>Server:</strong> Node.js, Python, PHP
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-4 mt-6">
-          <h3 className="text-lg font-medium">Example Auto-Generated API Code</h3>
-          
           <Card className="bg-muted p-4">
-            <h4 className="font-medium mb-2">Fetch Blog Posts (React with TanStack Query)</h4>
-            <pre className="text-xs bg-black text-white p-3 rounded overflow-x-auto">
-{`import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+            <h4 className="font-medium mb-2">Setup Supabase Client</h4>
+            <CodeBlock
+              language="typescript"
+              code={`import { createClient } from '@supabase/supabase-js'
 
-// Fetch all blog posts
-export const useBlogPosts = (filters = {}) => {
-  return useQuery({
-    queryKey: ['blog-posts', filters],
-    queryFn: async () => {
-      let query = supabase
-        .from('content_items')
-        .select('*')
-        .eq('schema_id', 'blog-post');
-        
-      // Apply filters
-      if (filters.status) {
-        query = query.eq('status', filters.status);
-      }
-      
-      if (filters.category) {
-        query = query.contains('content', { category: filters.category });
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-};
-
-// Fetch a single blog post by ID
-export const useBlogPost = (id) => {
-  return useQuery({
-    queryKey: ['blog-post', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('content_items')
-        .select('*')
-        .eq('id', id)
-        .eq('schema_id', 'blog-post')
-        .single();
-        
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id
-  });
-};`}
-            </pre>
+// Initialize the Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)`}
+            />
           </Card>
-          
-          <div className="mt-4">
-            <Link to="/api-examples">
-              <Button className="gap-2">
-                <Code className="h-4 w-4" />
-                <span>Explore Complete API Examples</span>
-              </Button>
-            </Link>
-          </div>
-          
-          <Alert>
-            <AlertDescription>
-              <strong>Pro Tip:</strong> Copy-paste code examples directly into your frontend applications for quick integration with your CMS content.
-            </AlertDescription>
-          </Alert>
+
+          <Card className="bg-muted p-4">
+            <h4 className="font-medium mb-2">Basic CRUD Operations</h4>
+            <CodeBlock
+              language="typescript"
+              code={`// Create a new ${schema.name.toLowerCase()}
+const create = async (data) => {
+  const { data: result, error } = await supabase
+    .from('${schema.table}')
+    .insert(data)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return result
+}
+
+// Read a single ${schema.name.toLowerCase()} by ID
+const getById = async (id) => {
+  const { data, error } = await supabase
+    .from('${schema.table}')
+    .select(\`
+      ${schema.fields.join(',\n      ')}
+    \`)
+    .eq('id', id)
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+// Update a ${schema.name.toLowerCase()}
+const update = async (id, data) => {
+  const { data: result, error } = await supabase
+    .from('${schema.table}')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return result
+}
+
+// Delete a ${schema.name.toLowerCase()}
+const delete${schema.name} = async (id) => {
+  const { error } = await supabase
+    .from('${schema.table}')
+    .delete()
+    .eq('id', id)
+  
+  if (error) throw error
+}`}
+            />
+          </Card>
+
+          <Card className="bg-muted p-4">
+            <h4 className="font-medium mb-2">Advanced Queries</h4>
+            <CodeBlock
+              language="typescript"
+              code={`// Fetch ${schema.name.toLowerCase()} with relations
+const getWithRelations = async (id) => {
+  const { data, error } = await supabase
+    .from('${schema.table}')
+    .select(\`
+      *,
+      ${schema.relations.map(r => `${r} (*)`).join(',\n      ')}
+    \`)
+    .eq('id', id)
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+// Query with filters and pagination
+const queryWithFilters = async ({ 
+  page = 1, 
+  perPage = 10,
+  filters = {},
+  orderBy = { column: 'created_at', ascending: false }
+}) => {
+  let query = supabase
+    .from('${schema.table}')
+    .select('*', { count: 'exact' })
+  
+  // Apply filters
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) query = query.eq(key, value)
+  })
+  
+  // Apply pagination
+  const start = (page - 1) * perPage
+  query = query
+    .order(orderBy.column, { ascending: orderBy.ascending })
+    .range(start, start + perPage - 1)
+  
+  const { data, error, count } = await query
+  if (error) throw error
+  return { data, count }
+}
+
+// Upsert (insert or update) ${schema.name.toLowerCase()}
+const upsert = async (data) => {
+  const { data: result, error } = await supabase
+    .from('${schema.table}')
+    .upsert(data, {
+      onConflict: 'id',
+      ignoreDuplicates: false
+    })
+    .select()
+  
+  if (error) throw error
+  return result
+}
+
+// Complex nested query with specific fields
+const getDetailedView = async (id) => {
+  const { data, error } = await supabase
+    .from('${schema.table}')
+    .select(\`
+      id,
+      ${schema.fields.slice(1, 4).join(',\n      ')},
+      ${schema.relations[0]!} (
+        id,
+        name,
+        email
+      ),
+      ${schema.relations[1]!} (
+        id,
+        name,
+        ${schema.relations[1] === 'categories' ? 'parent_id' : 'type'}
+      )
+    \`)
+    .eq('id', id)
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+// Full-text search with ordering
+const search = async (query, { limit = 10, offset = 0 }) => {
+  const { data, error } = await supabase
+    .from('${schema.table}')
+    .select('*')
+    .textSearch('${schema.fields[1]}', query)
+    .order('${schema.fields[schema.fields.length - 1]}', { ascending: false })
+    .range(offset, offset + limit - 1)
+  
+  if (error) throw error
+  return data
+}`}
+            />
+          </Card>
         </div>
+
+        <Alert>
+          <AlertDescription>
+            <strong>Note:</strong> For more examples and advanced usage, refer to the <a href="https://supabase.com/docs" target="_blank" rel="noopener noreferrer" className="underline">official Supabase documentation</a>.
+          </AlertDescription>
+        </Alert>
       </CardContent>
     </Card>
   );

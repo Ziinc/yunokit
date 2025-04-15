@@ -18,7 +18,7 @@ import SettingsPage from "./pages/SettingsPage";
 import SettingsAccountPage from "./pages/Settings/SettingsAccountPage";
 import SettingsSupabasePage from "./pages/Settings/SettingsSupabasePage";
 import SettingsWorkspacesPage from "./pages/Settings/SettingsWorkspacesPage";
-import SettingsTeamPage from "./pages/Settings/SettingsTeamPage";
+import SettingsMembersPage from "./pages/Settings/SettingsMembersPage";
 import SettingsBillingPage from "./pages/Settings/SettingsBillingPage";
 import AssetsLibraryPage from "./pages/AssetsLibraryPage";
 import SignInPage from "./pages/SignInPage";
@@ -30,6 +30,7 @@ import CommentsPage from "./pages/CommentsPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
+import { WorkspaceProvider } from "@/lib/contexts/WorkspaceContext";
 import { initializeApiStorage } from "@/lib/api";
 import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -71,7 +72,9 @@ const App = () => {
                     {/* Protected Routes */}
                     <Route path="/" element={
                       <ProtectedRoute>
-                        <AppLayout />
+                        <WorkspaceProvider>
+                          <AppLayout />
+                        </WorkspaceProvider>
                       </ProtectedRoute>
                     }>
                       <Route index element={<Index />} />
@@ -91,7 +94,7 @@ const App = () => {
                         <Route path="supabase" element={<SettingsSupabasePage />} />
                         <Route path="supabase/callback" element={<SettingsSupabaseCallback />} />
                         <Route path="workspaces" element={<SettingsWorkspacesPage />} />
-                        <Route path="team" element={<SettingsTeamPage />} />
+                        <Route path="members" element={<SettingsMembersPage />} />
                         <Route path="billing" element={<SettingsBillingPage />} />
                       </Route>
                       <Route path="/developer" element={<Navigate to="/developer/api-docs" replace />} />

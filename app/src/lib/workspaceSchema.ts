@@ -4,7 +4,7 @@ export interface Workspace {
   description: string;
   createdAt: string;
   updatedAt: string;
-  ownerId: string;
+  userId: string;
   members: WorkspaceMember[];
 }
 

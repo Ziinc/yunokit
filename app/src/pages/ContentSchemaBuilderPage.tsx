@@ -16,6 +16,8 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { DataTable, TableColumn } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/utils/formatDate";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 
 // Schema Table Configuration
 const ContentTable: React.FC<{
@@ -172,13 +174,14 @@ const ContentSchemaBuilderPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSchemas, setSelectedSchemas] = useState<ContentSchema[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { currentWorkspace } = useWorkspace();
 
   // Load schemas from API
   useEffect(() => {
     const loadSchemas = async () => {
       try {
         setIsLoading(true);
-        const data = await SchemaApi.getSchemas();
+        const data = await SchemaApi.getSchemas(currentWorkspace?.id);
         setSchemas(data);
       } catch (error) {
         console.error("Error loading schemas:", error);
@@ -192,17 +195,20 @@ const ContentSchemaBuilderPage: React.FC = () => {
       }
     };
 
-    loadSchemas();
-  }, [toast]);
+    if (currentWorkspace) {
+      loadSchemas();
+    }
+  }, [currentWorkspace, toast]);
 
   // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
     // First filter by type and archived status
     const filtered = schemas.filter(schema => {
-      if (schemaTypeFilter === "archived") return schema.isArchived;
+      if (!isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && schema.isArchived) return false;
+      if (schemaTypeFilter === "archived") return isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && schema.isArchived;
       if (schemaTypeFilter === "collection") return schema.isCollection && !schema.isArchived;
       if (schemaTypeFilter === "single") return !schema.isCollection && !schema.isArchived;
-      return true; // "all" shows everything
+      return !schema.isArchived || (isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && schema.isArchived); // "all" shows everything except archived unless feature enabled
     });
     
     // Then apply search filter
@@ -422,10 +428,12 @@ const ContentSchemaBuilderPage: React.FC = () => {
                   <File size={16} />
                   Singles
                 </TabsTrigger>
-                <TabsTrigger value="archived" className="flex items-center gap-2">
-                  <Archive size={16} />
-                  Archived
-                </TabsTrigger>
+                {isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && (
+                  <TabsTrigger value="archived" className="flex items-center gap-2">
+                    <Archive size={16} />
+                    Archived
+                  </TabsTrigger>
+                )}
               </TabsList>
             </Tabs>
           </div>
@@ -448,11 +456,11 @@ const ContentSchemaBuilderPage: React.FC = () => {
                 <SelectionActionsBar
                   selectedCount={selectedSchemas.length}
                   actions={[
-                    {
+                    ...(isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) ? [{
                       label: "Archive",
                       icon: <Archive size={16} />,
                       onClick: handleArchiveSchemas,
-                    },
+                    }] : []),
                     {
                       label: "Delete",
                       icon: <Trash2 size={16} />,
@@ -463,13 +471,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
                 />
               )}
               <ContentTable
-                items={schemaItems.map(item => ({
-                  ...item,
-                  data: {
-                    ...item.data,
-                    fields: `${schemas.find(s => s.id === item.id)?.fields.length || 0} fields`,
-                  }
-                }))}
+                items={schemaItems}
                 schemas={[]} // Empty since we're displaying schemas themselves
                 onRowClick={handleRowClick}
                 currentPage={currentSchemasPage}

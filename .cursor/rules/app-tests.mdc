@@ -1,0 +1,21 @@
+---
+description: 
+globs: app/tests/**
+alwaysApply: false
+---
+
+## Testing
+
+- Tests should always be written under the `app/tests` directory. 
+- Use the global setup file to perform common app-level setup.
+
+### mocks
+- always use automocks in __mocks__ folder
+- never use `vi.mock()`
+
+### assertions
+
+- don't use `.toHaveAttribute()`, instead check the element directly
+- always use `screen.findBy*` to perform element assertion
+- never import `@testing-library/jest-dom` or use any related APIs or functions or modules.
+- always remove jest-dom usage.

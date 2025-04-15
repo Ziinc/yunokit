@@ -25,13 +25,8 @@ export interface ContentField {
 export interface ContentSchema {
   id: string;
   name: string;
-  description?: string;
-  fields: ContentField[];
-  isCollection: boolean;
-  isArchived?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  schemaType?: 'collection' | 'single';
+  fields: any[];
+  type: 'collection' | 'single';
 }
 
 // Add content item status type
@@ -40,34 +35,12 @@ export type ContentItemStatus = 'draft' | 'pending_review' | 'published';
 // Content item interface
 export interface ContentItem {
   id: string;
+  title: string;
   schemaId: string;
-  title: string; // Display title
-  content?: Record<string, any>; // Backward compatibility field name
-  data?: Record<string, any>; // New field name for schema-specific content
-  status: ContentItemStatus;
+  status: 'published' | 'draft';
   createdAt: string;
   updatedAt: string;
-  publishedAt?: string;
-  createdBy?: string;
-  updatedBy?: string;
-  publishedBy?: string;
-  comments?: ContentItemComment[];
-  // Review-related fields at the top level
-  reviewStatus?: 'awaiting_review' | 'changes_requested' | 'approved';
-  reviewRequestedAt?: string;
-  reviewRequestedBy?: string;
-  reviewedAt?: string;
-  reviewedBy?: string;
-  reviewComments?: string;
-  // Additional fields for search functionality
-  type?: string;
-  lastUpdated?: string;
-  tags?: string[];
-  author?: {
-    name: string;
-    avatar: string;
-  };
-  icon?: React.ReactNode;
+  data: Record<string, any>;
 }
 
 // Comment interface for review process

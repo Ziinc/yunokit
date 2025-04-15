@@ -69,12 +69,6 @@ const mockAssets: Asset[] = [
 // Storage key
 const ASSETS_STORAGE_KEY = 'supacontent-assets';
 
-// Helper to simulate network delay for a more realistic experience
-const simulateNetworkDelay = async (minMs: number = 300, maxMs: number = 1200): Promise<void> => {
-  const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-  return new Promise(resolve => setTimeout(resolve, delay));
-};
-
 /**
  * AssetsApi - Provides methods for managing assets
  * Currently uses localStorage for persistence and DataURLs for files
@@ -91,7 +85,6 @@ export class AssetsApi {
 
   // Asset Operations
   static async getAssets(): Promise<Asset[]> {
-    await simulateNetworkDelay(200, 600);
     const storedAssets = localStorage.getItem(ASSETS_STORAGE_KEY);
     if (!storedAssets) return [];
     return JSON.parse(storedAssets);
@@ -103,7 +96,6 @@ export class AssetsApi {
   }
 
   static async saveAsset(asset: Asset): Promise<Asset> {
-    await simulateNetworkDelay();
     const assets = await this.getAssets();
     const existingIndex = assets.findIndex(a => a.id === asset.id);
     
@@ -126,21 +118,17 @@ export class AssetsApi {
   }
 
   static async saveAssets(assets: Asset[]): Promise<Asset[]> {
-    await simulateNetworkDelay();
     localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(assets));
     return assets;
   }
 
   static async deleteAsset(id: string): Promise<void> {
-    await simulateNetworkDelay();
     const assets = await this.getAssets();
     const filteredAssets = assets.filter(asset => asset.id !== id);
     localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(filteredAssets));
   }
 
   static async uploadAsset(file: File): Promise<Asset> {
-    await simulateNetworkDelay(1000, 3000); // Longer delay to simulate upload
-    
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       

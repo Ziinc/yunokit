@@ -9,7 +9,7 @@ export interface Database {
           id: string;
           username: string;
           email: string;
-          pseudonym: string | null;
+          pseudonym: string;
           created_at: string;
           updated_at: string;
         };
@@ -17,7 +17,7 @@ export interface Database {
           id: string;
           username: string;
           email: string;
-          pseudonym?: string | null;
+          pseudonym?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -25,7 +25,7 @@ export interface Database {
           id?: string;
           username?: string;
           email?: string;
-          pseudonym?: string | null;
+          pseudonym?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -34,9 +34,40 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          email: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+          email: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          email?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      workspaces: {
+        Row: {
+          id: string;
+          name: string;
           description: string;
           created_at: string;
           updated_at: string;
+          user_id: string;
+          members: {
+            id: string;
+            user_id: string;
+            role: 'owner' | 'admin' | 'member';
+            email: string;
+            name: string;
+          }[];
         };
         Insert: {
           id?: string;
@@ -44,6 +75,14 @@ export interface Database {
           description: string;
           created_at?: string;
           updated_at?: string;
+          user_id: string;
+          members: {
+            id: string;
+            user_id: string;
+            role: 'owner' | 'admin' | 'member';
+            email: string;
+            name: string;
+          }[];
         };
         Update: {
           id?: string;
@@ -51,6 +90,87 @@ export interface Database {
           description?: string;
           created_at?: string;
           updated_at?: string;
+          user_id?: string;
+          members?: {
+            id: string;
+            user_id: string;
+            role: 'owner' | 'admin' | 'member';
+            email: string;
+            name: string;
+          }[];
+        };
+      };
+      content_schemas: {
+        Row: {
+          id: string;
+          name: string;
+          description: string;
+          fields: any[];
+          is_collection: boolean;
+          is_archived: boolean;
+          created_at: string;
+          updated_at: string;
+          workspace_id: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string;
+          fields: any[];
+          is_collection: boolean;
+          is_archived?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          workspace_id: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string;
+          fields?: any[];
+          is_collection?: boolean;
+          is_archived?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          workspace_id?: string;
+        };
+      };
+      content_items: {
+        Row: {
+          id: string;
+          title: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+          created_by: string;
+          updated_by: string;
+          schema_id: string;
+          workspace_id: string;
+          data: any;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          status: string;
+          created_at?: string;
+          updated_at?: string;
+          created_by: string;
+          updated_by: string;
+          schema_id: string;
+          workspace_id: string;
+          data: any;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string;
+          updated_by?: string;
+          schema_id?: string;
+          workspace_id?: string;
+          data?: any;
         };
       };
     };

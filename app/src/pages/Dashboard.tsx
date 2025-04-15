@@ -5,12 +5,13 @@ import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, Boo
 import { Link } from "react-router-dom";
 import { NewContentDialog } from "@/components/Content/NewContentDialog";
 import { Badge } from "@/components/ui/badge";
-import { ContentApi } from "@/lib/api";
+import { ContentApi } from "@/lib/api/ContentApi";
 import { ContentItem } from "@/lib/contentSchema";
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
 import { toast } from "@/hooks/use-toast";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { cn } from "@/lib/utils";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
@@ -20,14 +21,15 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   // Track approval state by item id instead of a single global state
   const [approvingItems, setApprovingItems] = useState<Record<string, boolean>>({});
+  const { currentWorkspace } = useWorkspace();
 
   // Load content items and schemas
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const items = await ContentApi.getContentItems();
-        const schemaData = await ContentApi.getSchemas();
+        const items = await ContentApi.getContentItems(currentWorkspace?.id);
+        const schemaData = await ContentApi.getSchemas(currentWorkspace?.id);
         setContentItems(items);
         setSchemas(schemaData);
       } catch (error) {
@@ -37,8 +39,10 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    loadData();
-  }, []);
+    if (currentWorkspace) { 
+      loadData();
+    }
+  }, [currentWorkspace]);
 
   // Filter content by status
   const publishedContent = contentItems
@@ -203,9 +207,40 @@ const Dashboard: React.FC = () => {
   );
 
   // Empty state
-  const renderEmptyState = (message: string) => (
-    <p className="py-3 text-center text-sm text-muted-foreground">{message}</p>
-  );
+  const renderEmptyState = (type: 'recent' | 'draft' | 'published' | 'review') => {
+    const config = {
+      recent: {
+        icon: <Clock className="h-12 w-12 text-muted-foreground" />,
+        title: "No recent activity",
+        description: "Content you edit will appear here"
+      },
+      draft: {
+        icon: <FileText className="h-12 w-12 text-muted-foreground" />,
+        title: "No draft content",
+        description: "Content you save as draft will appear here"
+      },
+      published: {
+        icon: <CheckCircle className="h-12 w-12 text-muted-foreground" />,
+        title: "No published content",
+        description: "Content you publish will appear here"
+      },
+      review: {
+        icon: <AlertCircle className="h-12 w-12 text-muted-foreground" />,
+        title: "No content to review",
+        description: "Content waiting for your review will appear here"
+      }
+    };
+
+    const { icon, title, description } = config[type];
+
+    return (
+      <div className="flex flex-col items-center justify-center py-8 min-h-[200px]">
+        {icon}
+        <h3 className="mt-4 text-lg font-medium">{title}</h3>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-full">
@@ -220,7 +255,6 @@ const Dashboard: React.FC = () => {
       <Card className="w-full">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
-            <img src="/supacontent-icon-fill.png" alt="SupaContent" className="w-8 h-8" />
             <div>
               <CardTitle className="text-lg">Quickstart Templates</CardTitle>
               <CardDescription>
@@ -310,13 +344,15 @@ const Dashboard: React.FC = () => {
                   Recently updated content
                 </CardDescription>
               </div>
-              <Link 
-                to="/manager?sort=updatedAt" 
-                className="text-sm text-primary font-medium flex items-center hover:underline"
-              >
-                View more
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
+              {recentlyEditedContent.length > 0 && (
+                <Link 
+                  to="/manager?sort=updatedAt" 
+                  className="text-sm text-primary font-medium flex items-center hover:underline"
+                >
+                  View more
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Link>
+              )}
             </CardHeader>
             <CardContent className="px-6">
               <div className="divide-border divide-y">
@@ -325,7 +361,7 @@ const Dashboard: React.FC = () => {
                 ) : recentlyEditedContent.length > 0 ? (
                   recentlyEditedContent.map(item => renderContentItem(item))
                 ) : (
-                  renderEmptyState("No recently edited content")
+                  renderEmptyState("recent")
                 )}
               </div>
             </CardContent>
@@ -342,13 +378,15 @@ const Dashboard: React.FC = () => {
                   Content in draft stage
                 </CardDescription>
               </div>
-              <Link 
-                to="/manager?status=draft" 
-                className="text-sm text-primary font-medium flex items-center hover:underline"
-              >
-                View more
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
+              {draftContent.length > 0 && (
+                <Link 
+                  to="/manager?status=draft" 
+                  className="text-sm text-primary font-medium flex items-center hover:underline"
+                >
+                  View more
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Link>
+              )}
             </CardHeader>
             <CardContent className="px-6">
               <div className="divide-border divide-y">
@@ -357,7 +395,7 @@ const Dashboard: React.FC = () => {
                 ) : draftContent.length > 0 ? (
                   draftContent.map(item => renderContentItem(item))
                 ) : (
-                  renderEmptyState("No draft content")
+                  renderEmptyState("draft")
                 )}
               </div>
             </CardContent>
@@ -374,13 +412,15 @@ const Dashboard: React.FC = () => {
                   Recently published content
                 </CardDescription>
               </div>
-              <Link 
-                to="/manager?status=published" 
-                className="text-sm text-primary font-medium flex items-center hover:underline"
-              >
-                View more
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
+              {publishedContent.length > 0 && (
+                <Link 
+                  to="/manager?status=published" 
+                  className="text-sm text-primary font-medium flex items-center hover:underline"
+                >
+                  View more
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Link>
+              )}
             </CardHeader>
             <CardContent className="px-6">
               <div className="divide-border divide-y">
@@ -389,7 +429,7 @@ const Dashboard: React.FC = () => {
                 ) : publishedContent.length > 0 ? (
                   publishedContent.map(item => renderContentItem(item))
                 ) : (
-                  renderEmptyState("No published content")
+                  renderEmptyState("published")
                 )}
               </div>
             </CardContent>
@@ -409,13 +449,15 @@ const Dashboard: React.FC = () => {
                     Content waiting for your review
                   </CardDescription>
                 </div>
-                <Link 
-                  to="/manager?status=pending_review" 
-                  className="text-sm text-primary font-medium flex items-center hover:underline"
-                >
-                  View more
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Link>
+                {pendingReviewContent.length > 0 && (
+                  <Link 
+                    to="/manager?status=pending_review" 
+                    className="text-sm text-primary font-medium flex items-center hover:underline"
+                  >
+                    View more
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                )}
               </CardHeader>
               <CardContent className="px-6">
                 <div className="divide-border divide-y">
@@ -424,7 +466,7 @@ const Dashboard: React.FC = () => {
                   ) : pendingReviewContent.length > 0 ? (
                     pendingReviewContent.map(item => renderApprovalItem(item))
                   ) : (
-                    renderEmptyState("No content waiting for review")
+                    renderEmptyState("review")
                   )}
                 </div>
               </CardContent>

@@ -7,22 +7,22 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, UserPlus, UserMinus } from "lucide-react";
 
-interface TeamMember {
+interface Member {
   id: string;
   email: string;
   role: string;
   status: "active" | "pending";
 }
 
-const SettingsTeamPage: React.FC = () => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+const SettingsMembersPage: React.FC = () => {
+  const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchTeamMembers = async () => {
+    const fetchMembers = async () => {
       setIsLoading(true);
       try {
         // TODO: Replace with actual API call
@@ -31,12 +31,12 @@ const SettingsTeamPage: React.FC = () => {
           { id: "2", email: "jane@example.com", role: "Member", status: "active" as const },
           { id: "3", email: "bob@example.com", role: "Member", status: "pending" as const }
         ];
-        setTeamMembers(mockMembers);
+        setMembers(mockMembers);
       } catch (error) {
-        console.error("Failed to fetch team members:", error);
+        console.error("Failed to fetch members:", error);
         toast({
           title: "Error",
-          description: "Failed to load team members",
+          description: "Failed to load members",
           variant: "destructive"
         });
       } finally {
@@ -44,7 +44,7 @@ const SettingsTeamPage: React.FC = () => {
       }
     };
 
-    fetchTeamMembers();
+    fetchMembers();
   }, [toast]);
 
   const handleInviteMember = async (e: React.FormEvent) => {
@@ -64,18 +64,18 @@ const SettingsTeamPage: React.FC = () => {
 
       // TODO: Replace with actual API call
       const newMember = {
-        id: String(teamMembers.length + 1),
+        id: String(members.length + 1),
         email: newMemberEmail,
         role: "Member",
         status: "pending" as const
       };
 
-      setTeamMembers([...teamMembers, newMember]);
+      setMembers([...members, newMember]);
       setNewMemberEmail("");
 
       toast({
         title: "Invitation sent",
-        description: "Team member has been invited successfully"
+        description: "Member has been invited successfully"
       });
     } catch (error) {
       console.error("Invite member error:", error);
@@ -92,11 +92,11 @@ const SettingsTeamPage: React.FC = () => {
   const handleRemoveMember = async (memberId: string) => {
     try {
       // TODO: Replace with actual API call
-      setTeamMembers(teamMembers.filter(m => m.id !== memberId));
+      setMembers(members.filter(m => m.id !== memberId));
 
       toast({
         title: "Member removed",
-        description: "Team member has been removed successfully"
+        description: "Member has been removed successfully"
       });
     } catch (error) {
       console.error("Remove member error:", error);
@@ -109,12 +109,12 @@ const SettingsTeamPage: React.FC = () => {
   };
 
   return (
-    <TabsContent value="team" className="space-y-4 mt-6">
+    <TabsContent value="members" className="space-y-4 mt-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Team Management</CardTitle>
+          <CardTitle className="text-xl">Members Management</CardTitle>
           <CardDescription>
-            Manage your team members and their roles
+            Manage your members and their roles
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -124,10 +124,10 @@ const SettingsTeamPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Team Members List */}
+              {/* Members List */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Team Members</h3>
-                {teamMembers.map(member => (
+                <h3 className="text-lg font-medium">Members</h3>
+                {members.map(member => (
                   <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <p className="font-medium">{member.email}</p>
@@ -192,4 +192,4 @@ const SettingsTeamPage: React.FC = () => {
   );
 };
 
-export default SettingsTeamPage; 
+export default SettingsMembersPage; 

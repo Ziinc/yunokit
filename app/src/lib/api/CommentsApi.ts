@@ -79,16 +79,6 @@ const mockComments: Comment[] = [
 // Storage key
 const COMMENTS_STORAGE_KEY = 'supacontent-comments';
 
-// Helper to simulate network delay for a more realistic experience
-const simulateNetworkDelay = async (minMs: number = 300, maxMs: number = 1200): Promise<void> => {
-  const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-  return new Promise(resolve => setTimeout(resolve, delay));
-};
-
-/**
- * CommentsApi - Provides methods for managing content comments
- * Currently uses localStorage for persistence
- */
 export class CommentsApi {
   // Initialize storage with example comments if empty
   static async initializeStorage(): Promise<void> {
@@ -101,7 +91,6 @@ export class CommentsApi {
 
   // Comment Operations
   static async getComments(): Promise<Comment[]> {
-    await simulateNetworkDelay(200, 600);
     const storedComments = localStorage.getItem(COMMENTS_STORAGE_KEY);
     if (!storedComments) return [];
     return JSON.parse(storedComments);
@@ -123,7 +112,6 @@ export class CommentsApi {
   }
 
   static async saveComment(comment: Comment): Promise<Comment> {
-    await simulateNetworkDelay();
     const comments = await this.getComments();
     const existingIndex = comments.findIndex(c => c.id === comment.id);
     
@@ -147,13 +135,11 @@ export class CommentsApi {
   }
 
   static async saveComments(comments: Comment[]): Promise<Comment[]> {
-    await simulateNetworkDelay();
     localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
     return comments;
   }
 
   static async deleteComment(id: string): Promise<void> {
-    await simulateNetworkDelay();
     const comments = await this.getComments();
     const filteredComments = comments.filter(comment => comment.id !== id);
     localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(filteredComments));

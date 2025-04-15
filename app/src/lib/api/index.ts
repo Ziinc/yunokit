@@ -6,6 +6,7 @@ export * from './TemplateService';
 export * from './TemplateGenerators'; 
 export * from './AuthApi';
 export * from './SystemAuthorApi';
+export * from './WorkspaceApi';
 
 // Initialize all API storage when the app starts
 export const initializeApiStorage = async () => {
@@ -14,7 +15,9 @@ export const initializeApiStorage = async () => {
   const { AssetsApi } = await import('./AssetsApi');
   const { CommentsApi } = await import('./CommentsApi');
   const { AuthApi } = await import('./AuthApi');
+  const { WorkspaceApi } = await import('./WorkspaceApi');
   
+  await WorkspaceApi.initializeStorage();
   await SchemaApi.initializeStorage();
   await ContentApi.initializeStorage();
   await AssetsApi.initializeStorage();

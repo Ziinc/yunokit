@@ -19,27 +19,6 @@ const localStorageMock = (() => {
   };
 })();
 
-// Mock global methods
-global.localStorage = localStorageMock as any;
-global.crypto = {
-  randomUUID: vi.fn(() => 'test-uuid'),
-} as any;
-
-// Mock SchemaApi methods
-vi.mock('./SchemaApi', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('./SchemaApi')>();
-  return {
-    ...mod,
-    SchemaApi: {
-      ...mod.SchemaApi,
-      initializeStorage: vi.fn(mod.SchemaApi.initializeStorage),
-      getSchemas: vi.fn(mod.SchemaApi.getSchemas),
-      getSchemaById: vi.fn(mod.SchemaApi.getSchemaById),
-      saveSchema: vi.fn(mod.SchemaApi.saveSchema),
-      deleteSchema: vi.fn(mod.SchemaApi.deleteSchema),
-    },
-  };
-});
 
 describe('SchemaApi', () => {
   // Test schema

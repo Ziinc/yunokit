@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSchema";
 import { ContentApi } from "@/lib/api";
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
@@ -52,6 +52,7 @@ import {
 import { downloadContent } from "@/lib/download";
 import { ContentStatusBadge } from "@/components/Content/ContentList/ContentStatusBadge";
 import { formatDate } from "@/utils/formatDate";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 // Content Table Configuration
 const ContentTable: React.FC<{
@@ -127,8 +128,7 @@ const ContentTable: React.FC<{
       cell: (item) => {
         const authors = new Set([
           item.createdBy,
-          item.updatedBy,
-          ...(item.coAuthors || [])
+          item.updatedBy
         ].filter(Boolean));
         return authors.size > 0 ? Array.from(authors).map(author => author.split('@')[0]).join(', ') : '-';
       },
@@ -166,6 +166,7 @@ const ContentManagerPage: React.FC = () => {
   const [showAuthorDialog, setShowAuthorDialog] = useState(false);
   const [newAuthors, setNewAuthors] = useState<Author[]>([]);
   const [isChangingAuthor, setIsChangingAuthor] = useState(false);
+  const { currentWorkspace } = useWorkspace();
   
   const [filterValues, setFilterValues] = useState<FilterValues>({
     status: "",
@@ -176,24 +177,34 @@ const ContentManagerPage: React.FC = () => {
     perPage: 10,
   });
   
+  const [searchParams] = useSearchParams();
+  const selectedSchemaId = searchParams.get('schema-id');
+  
   // Load data
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const contentItems = await ContentApi.getContentItems();
-        const schemaData = await ContentApi.getSchemas();
+        const contentItems = await ContentApi.getContentItems(currentWorkspace?.id);
+        const schemaData = await ContentApi.getSchemas(currentWorkspace?.id);
         setAllItems(contentItems);
         setSchemas(schemaData);
       } catch (error) {
         console.error("Error loading data:", error);
+        toast({
+          title: "Error loading data",
+          description: "There was a problem loading your content.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
-  }, []);
+    if (currentWorkspace) {
+      loadData();
+    }
+  }, [currentWorkspace, toast]);
   
   // Parse and apply filters from URL query parameters
   useEffect(() => {

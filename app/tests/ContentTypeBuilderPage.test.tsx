@@ -4,12 +4,6 @@ import ContentTypeBuilderPage from '@/pages/ContentTypeBuilderPage';
 import { exampleSchemas, mockContentItems } from '@/lib/mocks';
 import { BrowserRouter } from 'react-router-dom';
 
-// Mock the toast hook
-vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({
-    toast: vi.fn(),
-  }),
-}));
 
 describe('ContentTypeBuilderPage', () => {
   const renderPage = () => {
