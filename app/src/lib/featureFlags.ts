@@ -1,22 +1,24 @@
 import packageJson from '../../package.json';
 
-export type FeatureFlag = keyof typeof packageJson.featureFlags | keyof typeof FeatureFlags;
+export type FeatureFlag = keyof typeof packageJson.featureFlags;
 
 export const isFeatureEnabled = (feature: FeatureFlag): boolean => {
   return packageJson.featureFlags[feature] ?? false;
 };
 
-// Type-safe feature flag keys
+// Feature flag keys
 export const FeatureFlags = {
-  APPROVAL_FLOWS: 'approvalFlows' as const,
-  COMMUNITY: 'community' as const,
-  CROSS_PROJECT_DATA_MIGRATIONS: 'crossProjectDataMigrations' as const,
-  SYSTEM_AUTHORS: 'systemAuthors' as const,
-  SEARCH: 'search' as const,
-  ASSET_LIBRARY: 'assetLibrary' as const,
-  PSEUDONYM: 'pseudonym' as const,
-  PROFILE_LINKS: 'profileLinks' as const,
-  PROFILE_PICTURE: 'profilePicture' as const,
-  EMAIL_AUTH: 'emailAuth' as const,
-  SCHEMA_ARCHIVING: 'schemaArchiving' as const,
+  APPROVAL_FLOWS: 'approvalFlows',
+  COMMUNITY: 'community',
+  CROSS_PROJECT_DATA_MIGRATIONS: 'crossProjectDataMigrations',
+  SYSTEM_AUTHORS: 'systemAuthors',
+  SEARCH: 'search',
+  ASSET_LIBRARY: 'assetLibrary',
+  PSEUDONYM: 'pseudonym',
+  PROFILE_LINKS: 'profileLinks',
+  PROFILE_PICTURE: 'profilePicture',
+  EMAIL_AUTH: 'emailAuth',
+  SCHEMA_ARCHIVING: 'schemaArchiving',
+  GITHUB_AUTH: 'githubAuth',
+  MICROSOFT_AUTH: 'microsoftAuth',
 } as const;

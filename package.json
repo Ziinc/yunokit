@@ -1,5 +1,20 @@
 {
   "devDependencies": {
     "@types/prismjs": "^1.26.5"
+  },
+  "featureFlags": {
+    "approvalFlows": false,
+    "community": false,
+    "crossProjectDataMigrations": false,
+    "systemAuthors": false,
+    "search": false,
+    "assetLibrary": false,
+    "pseudonym": false,
+    "profileLinks": false,
+    "profilePicture": false,
+    "emailAuth": false,
+    "schemaArchiving": false,
+    "githubAuth": false,
+    "microsoftAuth": false
   }
 }

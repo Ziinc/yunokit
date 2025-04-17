@@ -2,15 +2,12 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { vi } from 'vitest';
 import ContentTypeBuilderPage from '@/pages/ContentTypeBuilderPage';
 import { exampleSchemas, mockContentItems } from '@/lib/mocks';
-import { BrowserRouter } from 'react-router-dom';
 
 
 describe('ContentTypeBuilderPage', () => {
   const renderPage = () => {
     return render(
-      <BrowserRouter>
         <ContentTypeBuilderPage />
-      </BrowserRouter>
     );
   };
 

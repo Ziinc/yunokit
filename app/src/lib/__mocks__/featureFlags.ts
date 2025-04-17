@@ -11,6 +11,8 @@ export const FeatureFlags = {
     PROFILE_PICTURE: 'profilePicture',
     EMAIL_AUTH: 'emailAuth',
     SCHEMA_ARCHIVING: 'schemaArchiving',
-  } as const;
+    GITHUB_AUTH: 'githubAuth',
+    MICROSOFT_AUTH: 'microsoftAuth',
+} as const;
   
-  export const isFeatureEnabled = vi.fn();
+export const isFeatureEnabled = vi.fn();

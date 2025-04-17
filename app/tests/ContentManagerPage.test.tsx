@@ -1,12 +1,10 @@
 import React from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
 import ContentManagerPage from '../src/pages/ContentManagerPage';
 import { act } from 'react-dom/test-utils';
 import { render } from './utils/test-utils';
-import { WorkspaceProvider } from '../src/lib/contexts/WorkspaceContext';
-import { ContentApi } from '../src/lib/api';
+import { ContentApi } from '../src/lib/api/ContentApi';
 
 const mockContentItems = [
   {
@@ -113,9 +111,7 @@ describe('ContentManagerPage', () => {
     // Re-render to simulate navigation
     act(() => {
       rerender(
-        <BrowserRouter>
           <ContentManagerPage />
-        </BrowserRouter>
       );
     });
     
@@ -272,11 +268,7 @@ describe('ContentManagerPage - Selection Actions', () => {
   
   it('selection persists in table after changing author', async () => {
     render(
-      <BrowserRouter>
-        <WorkspaceProvider>
           <ContentManagerPage />
-        </WorkspaceProvider>
-      </BrowserRouter>
     );
     
     // Wait for content to load

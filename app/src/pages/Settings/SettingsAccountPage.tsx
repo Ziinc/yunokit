@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { getUserProfile, updateUsername, updateEmail, updatePassword, signOut } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, User, Lock, Mail, Save, Loader2, Trash2 } from "lucide-react";
+import { AlertTriangle, User, Lock, Mail, Save, Loader2, Trash2, LogOut } from "lucide-react";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
+import { useNavigate } from "react-router-dom";
 
 const SettingsAccountPage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any | null>(null);
@@ -33,6 +34,7 @@ const SettingsAccountPage: React.FC = () => {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Load user profile data
   useEffect(() => {
@@ -228,6 +230,7 @@ const SettingsAccountPage: React.FC = () => {
       // Add a short delay to simulate deletion
       setTimeout(async () => {
         await signOut();
+        navigate("/sign-in");
       }, 2000);
       
     } catch (error) {
@@ -526,21 +529,40 @@ const SettingsAccountPage: React.FC = () => {
                 </div>
               )}
 
+              <div className="border-t pt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    toast({
+                      title: "Signed out",
+                      description: "You have been successfully signed out"
+                    });
+                    await signOut();
+                    navigate("/sign-in");
+                  }}
+                  className="w-fit gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+
               {/* Danger Zone */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-medium mb-4 text-destructive flex items-center gap-2">
                   <AlertTriangle size={18} />
                   Danger Zone
                 </h3>
-                <Alert variant="destructive" className="mb-4">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Delete Account</AlertTitle>
-                  <AlertDescription>
-                    This action permanently deletes your account and all associated data. This action cannot be undone.
-                  </AlertDescription>
-                </Alert>
                 
                 <div className="space-y-4">
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Delete Account</AlertTitle>
+                    <AlertDescription>
+                      This action permanently deletes your account and all associated data. This action cannot be undone.
+                    </AlertDescription>
+                  </Alert>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="delete-confirm">
                       Type "DELETE" to confirm

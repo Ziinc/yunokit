@@ -15,3 +15,4 @@ dist
 
 supabase/.env.prod
 supabase/.env.dev
+supabase/.env
