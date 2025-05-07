@@ -1,11 +1,15 @@
 ---
 description: 
-globs: app/**
+globs: *.tsx,*.ts
 alwaysApply: false
 ---
 # Dev rules for working on /app
 
 - never suggest performing an `npm install`, only recommend the packages that is used in the generated code.
+- Always use [database.types.ts](mdc:app/database.types.ts) as the supabase schema reference.
+
+## useEffect callback
+- never create a callback in a useEffect. Always create it outside of the useEffect.
 
 ## Routing
 Use the [App.tsx](mdc:app/src/App.tsx) router logic to determine the correct paths for links and general navigation

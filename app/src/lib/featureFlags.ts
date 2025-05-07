@@ -21,4 +21,5 @@ export const FeatureFlags = {
   SCHEMA_ARCHIVING: 'schemaArchiving',
   GITHUB_AUTH: 'githubAuth',
   MICROSOFT_AUTH: 'microsoftAuth',
+  QUICKSTART_TEMPLATES: 'quickstartTemplates',
 } as const;

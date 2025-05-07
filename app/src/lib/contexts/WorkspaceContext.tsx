@@ -1,56 +1,39 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Workspace } from '../workspaceSchema';
-import { WorkspaceApi } from '../api/WorkspaceApi';
-import { initializeApiStorage } from '../api';
-
+import React, { createContext, useContext } from "react";
+import useSWR from "swr";
+import { WorkspaceApi, WorkspaceRow } from "../api/WorkspaceApi";
 interface WorkspaceContextType {
-  workspaces: Workspace[];
-  currentWorkspace: Workspace | null;
+  workspaces: WorkspaceRow[];
+  currentWorkspace: WorkspaceRow | null;
   isLoading: boolean;
-  setCurrentWorkspace: (workspace: Workspace | null) => void;
-  refreshWorkspaces: () => Promise<void>;
+  error: Error | null;
+  setCurrentWorkspace: (workspace: WorkspaceRow | null) => void;
+  mutate: () => Promise<WorkspaceRow[] | void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 
-export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [currentWorkspace, setCurrentWorkspace] =
+    React.useState<WorkspaceRow | null>(null);
 
-  const loadWorkspaces = async () => {
-    try {
-      console.log('Loading workspaces...');
-      setIsLoading(true);
-      await initializeApiStorage();
-      const loadedWorkspaces = await WorkspaceApi.getWorkspaces();
-      console.log('Loaded workspaces:', loadedWorkspaces);
-      setWorkspaces(loadedWorkspaces);
-      
-      // Set initial workspace if none selected
-      if (!currentWorkspace && loadedWorkspaces.length > 0) {
-        console.log('Setting initial workspace:', loadedWorkspaces[0]);
-        setCurrentWorkspace(loadedWorkspaces[0]);
-      }
-    } catch (error) {
-      console.error("Failed to load workspaces:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadWorkspaces();
-  }, []);
+  const {
+    data: workspaces = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<WorkspaceRow[]>("workspaces", WorkspaceApi.getWorkspaces);
 
   return (
-    <WorkspaceContext.Provider 
+    <WorkspaceContext.Provider
       value={{
         workspaces,
         currentWorkspace,
         isLoading,
+        error,
         setCurrentWorkspace,
-        refreshWorkspaces: loadWorkspaces
+        mutate,
       }}
     >
       {children}
@@ -61,7 +44,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 export const useWorkspace = () => {
   const context = useContext(WorkspaceContext);
   if (!context) {
-    throw new Error('useWorkspace must be used within a WorkspaceProvider');
+    throw new Error("useWorkspace must be used within a WorkspaceProvider");
   }
   return context;
 };

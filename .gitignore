@@ -13,6 +13,8 @@ comp/
 .temp
 dist
 
-supabase/.env.prod
-supabase/.env.dev
+**/.env.prod
+**/.env.dev
+**/.env.local
 supabase/.env
+supabase/functions/.env

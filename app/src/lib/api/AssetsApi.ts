@@ -66,37 +66,31 @@ const mockAssets: Asset[] = [
   }
 ];
 
-// Storage key
-const ASSETS_STORAGE_KEY = 'supacontent-assets';
+// In-memory storage
+let assets: Asset[] = [...mockAssets];
 
 /**
  * AssetsApi - Provides methods for managing assets
- * Currently uses localStorage for persistence and DataURLs for files
  */
 export class AssetsApi {
   // Initialize storage with example assets if empty
   static async initializeStorage(): Promise<void> {
-    const storedAssets = localStorage.getItem(ASSETS_STORAGE_KEY);
-    if (!storedAssets) {
-      await this.saveAssets(mockAssets);
+    if (assets.length === 0) {
+      assets = [...mockAssets];
       console.log("Initialized assets storage with mock assets");
     }
   }
 
   // Asset Operations
   static async getAssets(): Promise<Asset[]> {
-    const storedAssets = localStorage.getItem(ASSETS_STORAGE_KEY);
-    if (!storedAssets) return [];
-    return JSON.parse(storedAssets);
+    return assets;
   }
 
   static async getAssetById(id: string): Promise<Asset | null> {
-    const assets = await this.getAssets();
     return assets.find(asset => asset.id === id) || null;
   }
 
   static async saveAsset(asset: Asset): Promise<Asset> {
-    const assets = await this.getAssets();
     const existingIndex = assets.findIndex(a => a.id === asset.id);
     
     if (existingIndex >= 0) {
@@ -113,19 +107,16 @@ export class AssetsApi {
       });
     }
     
-    localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(assets));
     return asset;
   }
 
-  static async saveAssets(assets: Asset[]): Promise<Asset[]> {
-    localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(assets));
+  static async saveAssets(newAssets: Asset[]): Promise<Asset[]> {
+    assets = newAssets;
     return assets;
   }
 
   static async deleteAsset(id: string): Promise<void> {
-    const assets = await this.getAssets();
-    const filteredAssets = assets.filter(asset => asset.id !== id);
-    localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(filteredAssets));
+    assets = assets.filter(asset => asset.id !== id);
   }
 
   static async uploadAsset(file: File): Promise<Asset> {
@@ -173,12 +164,10 @@ export class AssetsApi {
 
   // Filter assets by type
   static async getImageAssets(): Promise<Asset[]> {
-    const assets = await this.getAssets();
     return assets.filter(asset => asset.mimeType.startsWith('image/'));
   }
 
   static async getDocumentAssets(): Promise<Asset[]> {
-    const assets = await this.getAssets();
     return assets.filter(asset => 
       asset.mimeType === 'application/pdf' || 
       asset.mimeType.includes('word') ||
@@ -189,7 +178,6 @@ export class AssetsApi {
 
   // Search assets
   static async searchAssets(query: string): Promise<Asset[]> {
-    const assets = await this.getAssets();
     const searchTerm = query.toLowerCase();
     
     return assets.filter(asset => 
