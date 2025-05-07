@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSchema";
-import { ContentApi } from "@/lib/api";
+import { getContentItems, getSchemas, deleteContentItem, saveContentItem } from '@/lib/api/ContentApi';
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
 import { DataTable, TableColumn } from "@/components/DataTable";
@@ -185,8 +185,8 @@ const ContentManagerPage: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const contentItems = await ContentApi.getContentItems(currentWorkspace?.id);
-        const schemaData = await ContentApi.getSchemas(currentWorkspace?.id);
+        const contentItems = await getContentItems(currentWorkspace?.id);
+        const schemaData = await getSchemas(currentWorkspace?.id);
         setAllItems(contentItems);
         setSchemas(schemaData);
       } catch (error) {
@@ -402,7 +402,7 @@ const ContentManagerPage: React.FC = () => {
       
       // Delete each item
       for (const id of ids) {
-        await ContentApi.deleteContentItem(id);
+        await deleteContentItem(id);
       }
       
       // Update the items list
@@ -440,7 +440,7 @@ const ContentManagerPage: React.FC = () => {
           };
           
           // Save to API
-          await ContentApi.saveContentItem(updatedItems[itemIndex]);
+          await saveContentItem(updatedItems[itemIndex]);
         }
       }
       
@@ -490,7 +490,7 @@ const ContentManagerPage: React.FC = () => {
           updatedItems[itemIndex] = updatedItem;
           
           // Save to API
-          await ContentApi.saveContentItem(updatedItem);
+          await saveContentItem(updatedItem);
         }
       }
       

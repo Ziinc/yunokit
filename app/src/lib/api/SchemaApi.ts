@@ -7,32 +7,25 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 type DbClient = SupabaseClient<Database>;
 type ContentSchemaRow = Database['public']['Tables']['content_schemas']['Row'];
 
-// Storage keys
-const SCHEMA_STORAGE_KEY = 'supacontent-schemas';
+// In-memory storage
+let schemas: ContentSchema[] = [...exampleSchemas];
 
 // Helper to convert Supabase schema to our ContentSchema type
 const convertSupabaseSchema = (schema: ContentSchemaRow): ContentSchema => ({
   id: schema.id,
   name: schema.name,
-  description: schema.description,
   fields: schema.fields,
-  isCollection: schema.is_collection,
-  isArchived: schema.is_archived,
-  createdAt: schema.created_at,
-  updatedAt: schema.updated_at,
-  workspaceId: schema.workspace_id
+  type: schema.type as 'collection' | 'single'
 });
 
 /**
  * SchemaApi - Provides methods for managing content schemas
- * Currently uses localStorage for persistence, but can be extended to use real APIs
  */
 export class SchemaApi {
   // Initialize storage with example schemas if empty
   static async initializeStorage(): Promise<void> {
-    const storedSchemas = localStorage.getItem(SCHEMA_STORAGE_KEY);
-    if (!storedSchemas) {
-      await this.saveSchemas(exampleSchemas);
+    if (schemas.length === 0) {
+      schemas = [...exampleSchemas];
       console.log("Initialized schema storage with example schemas");
     }
   }
@@ -52,9 +45,7 @@ export class SchemaApi {
       return (data || []).map(convertSupabaseSchema);
     }
 
-    const storedSchemas = localStorage.getItem(SCHEMA_STORAGE_KEY);
-    if (!storedSchemas) return [];
-    return JSON.parse(storedSchemas);
+    return schemas;
   }
 
   static async getSchemaById(id: string): Promise<ContentSchema | null> {
@@ -63,7 +54,6 @@ export class SchemaApi {
   }
 
   static async saveSchema(schema: ContentSchema): Promise<ContentSchema> {
-    const schemas = await this.getSchemas();
     const existingIndex = schemas.findIndex(s => s.id === schema.id);
     
     if (existingIndex >= 0) {
@@ -72,23 +62,19 @@ export class SchemaApi {
       schemas.push(schema);
     }
     
-    localStorage.setItem(SCHEMA_STORAGE_KEY, JSON.stringify(schemas));
     return schema;
   }
 
-  static async saveSchemas(schemas: ContentSchema[]): Promise<ContentSchema[]> {
-    localStorage.setItem(SCHEMA_STORAGE_KEY, JSON.stringify(schemas));
+  static async saveSchemas(newSchemas: ContentSchema[]): Promise<ContentSchema[]> {
+    schemas = newSchemas;
     return schemas;
   }
 
   static async deleteSchema(id: string): Promise<void> {
-    const schemas = await this.getSchemas();
-    const filteredSchemas = schemas.filter(schema => schema.id !== id);
-    localStorage.setItem(SCHEMA_STORAGE_KEY, JSON.stringify(filteredSchemas));
+    schemas = schemas.filter(schema => schema.id !== id);
   }
 
   static async renameField(schemaId: string, fieldId: string, newName: string): Promise<ContentSchema> {
-    const schemas = await this.getSchemas();
     const schemaIndex = schemas.findIndex(s => s.id === schemaId);
     
     if (schemaIndex === -1) {
@@ -110,12 +96,10 @@ export class SchemaApi {
 
     // Save the updated schema
     schemas[schemaIndex] = updatedSchema;
-    await this.saveSchemas(schemas);
     return updatedSchema;
   }
 
   static async reorderFields(schemaId: string, fieldIds: string[]): Promise<ContentSchema> {
-    const schemas = await this.getSchemas();
     const schemaIndex = schemas.findIndex(s => s.id === schemaId);
     
     if (schemaIndex === -1) {
@@ -139,12 +123,10 @@ export class SchemaApi {
     // Update and save the schema
     const updatedSchema = { ...schema, fields: reorderedFields };
     schemas[schemaIndex] = updatedSchema;
-    await this.saveSchemas(schemas);
     return updatedSchema;
   }
 
   static async updateField(schemaId: string, fieldId: string, updates: Partial<ContentField>): Promise<ContentSchema> {
-    const schemas = await this.getSchemas();
     const schemaIndex = schemas.findIndex(s => s.id === schemaId);
     
     if (schemaIndex === -1) {
@@ -166,7 +148,6 @@ export class SchemaApi {
 
     // Save the updated schema
     schemas[schemaIndex] = updatedSchema;
-    await this.saveSchemas(schemas);
     return updatedSchema;
   }
 } 

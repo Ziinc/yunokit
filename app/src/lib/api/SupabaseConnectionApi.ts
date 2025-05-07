@@ -9,32 +9,26 @@ export interface SupabaseProject {
   connectionKey?: string;
 }
 
-const STORAGE_KEY = 'supacontent-supabase-connection';
+// In-memory storage
+let currentProject: SupabaseProject | null = null;
 
 export class SupabaseConnectionApi {
   static async initializeStorage(): Promise<void> {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
+    if (!currentProject) {
       await this.saveConnection(null);
     }
   }
 
   static async getCurrentConnection(): Promise<SupabaseProject | null> {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return null;
-    return JSON.parse(stored);
+    return currentProject;
   }
 
   static async saveConnection(project: SupabaseProject | null): Promise<void> {
-    if (project) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    currentProject = project;
   }
 
   static async disconnectProject(): Promise<void> {
-    localStorage.removeItem(STORAGE_KEY);
+    currentProject = null;
   }
 
   // Mock OAuth2 flow

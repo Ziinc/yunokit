@@ -2,17 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { NewContentDialog } from "@/components/Content/NewContentDialog";
+import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { ContentApi } from "@/lib/api/ContentApi";
+import { getContentItems, getSchemas, saveContentItem } from '@/lib/api/ContentApi';
 import { ContentItem } from "@/lib/contentSchema";
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
 import { toast } from "@/hooks/use-toast";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
-
+import { isAuthenticated } from "@/lib/api/auth";
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<"ecommerce" | "blogging" | "tutorials" | null>(null);
@@ -22,14 +21,28 @@ const Dashboard: React.FC = () => {
   // Track approval state by item id instead of a single global state
   const [approvingItems, setApprovingItems] = useState<Record<string, boolean>>({});
   const { currentWorkspace } = useWorkspace();
+  const navigate = useNavigate();
 
   // Load content items and schemas
   useEffect(() => {
-    const loadData = async () => {
+    const loadUser = async () => {
       try {
+        const isAuthed = await isAuthenticated();
+        if (!isAuthed) {
+          navigate('/signin');
+          return;
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+        navigate('/signin');
+      }
+    };
+
+    const loadData = async () => {
+      try{
         setIsLoading(true);
-        const items = await ContentApi.getContentItems(currentWorkspace?.id);
-        const schemaData = await ContentApi.getSchemas(currentWorkspace?.id);
+        const items = await getContentItems(currentWorkspace?.id);
+        const schemaData = await getSchemas(currentWorkspace?.id);
         setContentItems(items);
         setSchemas(schemaData);
       } catch (error) {
@@ -39,10 +52,11 @@ const Dashboard: React.FC = () => {
       }
     };
 
+    loadUser();
     if (currentWorkspace) { 
       loadData();
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, navigate]);
 
   // Filter content by status
   const publishedContent = contentItems
@@ -107,7 +121,7 @@ const Dashboard: React.FC = () => {
         reviewComments: 'Approved for publishing'
       };
       
-      await ContentApi.saveContentItem(updatedItem);
+      await saveContentItem(updatedItem);
       
       // Update the local state to remove the approved item from the list
       setContentItems(prevItems => 
@@ -252,81 +266,83 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quickstart Templates Section */}
-      <Card className="w-full">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div>
-              <CardTitle className="text-lg">Quickstart Templates</CardTitle>
-              <CardDescription>
-                Get started quickly with pre-built content schemas for common use cases
-              </CardDescription>
+      {isFeatureEnabled(FeatureFlags.QUICKSTART_TEMPLATES) && (
+        <Card className="w-full">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div>
+                <CardTitle className="text-lg">Quickstart Templates</CardTitle>
+                <CardDescription>
+                  Get started quickly with pre-built content schemas for common use cases
+                </CardDescription>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
-              <CardHeader className="p-4">
-                <ShoppingBag className="h-12 w-12 text-cms-purple mb-3" />
-                <CardTitle className="text-base group-hover:text-primary transition-colors">E-commerce</CardTitle>
-                <CardDescription className="text-xs">
-                  Products, categories, orders, and customers
-                </CardDescription>
-              </CardHeader>
-              <CardFooter className="p-4 pt-0">
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between group-hover:text-primary" 
-                  onClick={() => handleSelectTemplate("ecommerce")}
-                >
-                  <span>Use Template</span>
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </CardFooter>
-            </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
+                <CardHeader className="p-4">
+                  <ShoppingBag className="h-12 w-12 text-cms-purple mb-3" />
+                  <CardTitle className="text-base group-hover:text-primary transition-colors">E-commerce</CardTitle>
+                  <CardDescription className="text-xs">
+                    Products, categories, orders, and customers
+                  </CardDescription>
+                </CardHeader>
+                <CardFooter className="p-4 pt-0">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-between group-hover:text-primary" 
+                    onClick={() => handleSelectTemplate("ecommerce")}
+                  >
+                    <span>Use Template</span>
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </CardFooter>
+              </Card>
 
-            <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
-              <CardHeader className="p-4">
-                <BookOpen className="h-12 w-12 text-cms-blue mb-3" />
-                <CardTitle className="text-base group-hover:text-primary transition-colors">Blogging</CardTitle>
-                <CardDescription className="text-xs">
-                  Posts, authors, categories, and comments
-                </CardDescription>
-              </CardHeader>
-              <CardFooter className="p-4 pt-0">
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between group-hover:text-primary" 
-                  onClick={() => handleSelectTemplate("blogging")}
-                >
-                  <span>Use Template</span>
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </CardFooter>
-            </Card>
+              <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
+                <CardHeader className="p-4">
+                  <BookOpen className="h-12 w-12 text-cms-blue mb-3" />
+                  <CardTitle className="text-base group-hover:text-primary transition-colors">Blogging</CardTitle>
+                  <CardDescription className="text-xs">
+                    Posts, authors, categories, and comments
+                  </CardDescription>
+                </CardHeader>
+                <CardFooter className="p-4 pt-0">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-between group-hover:text-primary" 
+                    onClick={() => handleSelectTemplate("blogging")}
+                  >
+                    <span>Use Template</span>
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </CardFooter>
+              </Card>
 
-            <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
-              <CardHeader className="p-4">
-                <GraduationCap className="h-12 w-12 text-cms-orange mb-3" />
-                <CardTitle className="text-base group-hover:text-primary transition-colors">Tutorials</CardTitle>
-                <CardDescription className="text-xs">
-                  Courses, lessons, quizzes, and students
-                </CardDescription>
-              </CardHeader>
-              <CardFooter className="p-4 pt-0">
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between group-hover:text-primary" 
-                  onClick={() => handleSelectTemplate("tutorials")}
-                >
-                  <span>Use Template</span>
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+              <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
+                <CardHeader className="p-4">
+                  <GraduationCap className="h-12 w-12 text-cms-orange mb-3" />
+                  <CardTitle className="text-base group-hover:text-primary transition-colors">Tutorials</CardTitle>
+                  <CardDescription className="text-xs">
+                    Courses, lessons, quizzes, and students
+                  </CardDescription>
+                </CardHeader>
+                <CardFooter className="p-4 pt-0">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-between group-hover:text-primary" 
+                    onClick={() => handleSelectTemplate("tutorials")}
+                  >
+                    <span>Use Template</span>
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className={cn(

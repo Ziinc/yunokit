@@ -17,8 +17,6 @@ import {
   Sparkles,
   Zap,
   Clock,
-  Cloud,
-  FileText,
   Users,
   Database,
   Wand2,
@@ -32,7 +30,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
   resetPassword,
-} from "@/lib/supabase";
+} from "@/lib/api/auth";
 import {
   Dialog,
   DialogContent,
@@ -42,13 +40,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { AuthApi } from "@/lib/api/AuthApi";
-import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
-
+import { isFeatureEnabled, FeatureFlags, FeatureFlag } from "@/lib/featureFlags";
+import { isAuthenticated } from "@/lib/api/auth";
 const SignInPage: React.FC = () => {
   // State for OAuth loading indicators
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
-  const [isDemoLoggingIn, setIsDemoLoggingIn] = useState(false);
 
   // Testimonial quotes
   const testimonials = [
@@ -103,56 +99,21 @@ const SignInPage: React.FC = () => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Get the intended destination from location state, or default to home
-  const from = (location.state as any)?.from?.pathname || "/";
-
-  // Handle demo login with AuthApi
-  const handleDemoLogin = async () => {
+  const checkAuth = async () => {
     try {
-      setIsDemoLoggingIn(true);
-
-      // For development - bypass actual auth and directly navigate to dashboard
-      toast({
-        title: "Development mode",
-        description: "Bypassing authentication and navigating to dashboard",
-      });
-
-      // Short delay to simulate auth process
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
-
-      /* Commented out for development
-      // Initialize storage to ensure mock users exist
-      await AuthApi.initializeStorage();
-      
-      // Use the admin user for demo login
-      const { user, token } = await AuthApi.signIn("admin@example.com", "demo-password");
-      
-      toast({
-        title: "Demo login successful",
-        description: `Welcome, ${user.name}! You're using a demo account.`,
-      });
-      
-      // Navigate to the intended destination or home
-      navigate(from);
-      */
+      const isAuthed = await isAuthenticated();
+      if (isAuthed) {
+        navigate('/dashboard');
+      }
     } catch (error) {
-      console.error("Demo login error:", error);
-      toast({
-        title: "Demo login failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Could not log in with demo account",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDemoLoggingIn(false);
+      console.error('Error checking auth status:', error);
     }
   };
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
 
   const handleOAuthSignIn = async (
     provider: "google" | "microsoft" | "github"
@@ -177,10 +138,6 @@ const SignInPage: React.FC = () => {
         throw result.error;
       }
 
-      toast({
-        title: "Sign in initiated",
-        description: "Redirecting to authentication provider...",
-      });
     } catch (error) {
       console.error("Sign in error:", error);
       toast({
@@ -201,22 +158,10 @@ const SignInPage: React.FC = () => {
     try {
       setIsSigningIn(true);
 
-      // For development - bypass actual auth and directly navigate to dashboard
-      toast({
-        title: "Development mode",
-        description: "Bypassing authentication and navigating to dashboard",
-      });
-
-      // Short delay to simulate auth process
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
-
-      /* Commented out for development
       // Validate inputs
       if (!email || !password) {
         throw new Error('Please provide both email and password');
-      }
+      } 
       
       // Sign in with Supabase
       const { data, error } = await signInWithEmail(email, password);
@@ -225,17 +170,11 @@ const SignInPage: React.FC = () => {
         throw error;
       }
       
-      // Check if user exists and signin was successful
-      if (data?.user) {
-        toast({
-          title: "Sign in successful",
-          description: `Welcome back, ${data.user.email}!`,
-        });
-        
-        // Navigate to the intended destination or home
-        navigate(from);
-      }
-      */
+      toast({
+        title: "Sign in successful",
+        description: `Welcome back!`,
+      });
+      navigate("/");
     } catch (error) {
       console.error("Sign in error:", error);
       toast({
@@ -376,31 +315,6 @@ const SignInPage: React.FC = () => {
     },
   ];
 
-  // Main SupaContent capabilities
-  const mainFeatures = [
-    {
-      title: "Content Management",
-      description:
-        "Edit like a pro with our smart tools that make content creation magical and effortless.",
-      features: [
-        "Rich text editor",
-        "Media library",
-        "Version control",
-        "Smart scheduling",
-      ],
-    },
-    {
-      title: "Community Engagement",
-      description:
-        "Build thriving communities with tools designed for meaningful interactions.",
-      features: [
-        "Comment systems",
-        "Interactive forums",
-        "User profiles",
-        "Moderation tools",
-      ],
-    },
-  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
@@ -551,7 +465,7 @@ const SignInPage: React.FC = () => {
             <>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
-                  {isFeatureEnabled("githubAuth") && (
+                  {isFeatureEnabled(FeatureFlags.GITHUB_AUTH as FeatureFlag) && (
                     <Button
                       onClick={() => handleOAuthSignIn("github")}
                       className="w-full bg-gray-900 hover:bg-gray-800 text-white"

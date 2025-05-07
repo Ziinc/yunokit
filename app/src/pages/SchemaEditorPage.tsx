@@ -66,7 +66,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ContentApi } from "@/lib/api";
+import { getContentItemsBySchema, saveContentItem } from '@/lib/api/ContentApi';
 import { ContentItem } from "@/lib/contentSchema";
 
 // Field type definitions with their icons and labels
@@ -166,7 +166,7 @@ const SchemaEditorPage: React.FC = () => {
       if (!schema) return;
       
       try {
-        const items = await ContentApi.getContentItemsBySchema(schema.id);
+        const items = await getContentItemsBySchema(schema.id);
         if (schema.isCollection) {
           setContentCount(items.length);
         } else {
@@ -413,7 +413,7 @@ const SchemaEditorPage: React.FC = () => {
         data: {}
       };
       
-      await ContentApi.saveContentItem(newItem);
+      await saveContentItem(newItem);
       setSingleContentItem(newItem);
       
       toast({

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { CommentsApi } from '../../src/lib/api/CommentsApi';
+import { initializeStorage, getComments, getCommentById, getCommentsByContentItem, getPendingComments, saveComment, approveComment, getThreadedComments } from '../../src/lib/api/CommentsApi';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -56,13 +56,13 @@ describe('CommentsApi', () => {
 
   describe('initializeStorage', () => {
     it('should initialize storage with mock comments if empty', async () => {
-      await CommentsApi.initializeStorage();
+      await initializeStorage();
       expect(localStorage.setItem).toHaveBeenCalled();
     });
 
     it('should not initialize storage if already populated', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      await CommentsApi.initializeStorage();
+      await initializeStorage();
       expect(localStorage.setItem).not.toHaveBeenCalled();
     });
   });
@@ -70,13 +70,13 @@ describe('CommentsApi', () => {
   describe('getComments', () => {
     it('should return empty array if no comments exist', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(null);
-      const result = await CommentsApi.getComments();
+      const result = await getComments();
       expect(result).toEqual([]);
     });
 
     it('should return comments from storage', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await CommentsApi.getComments();
+      const result = await getComments();
       expect(result).toEqual([testComment]);
     });
   });
@@ -84,13 +84,13 @@ describe('CommentsApi', () => {
   describe('getCommentById', () => {
     it('should return null if comment does not exist', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await CommentsApi.getCommentById('non-existent-id');
+      const result = await getCommentById('non-existent-id');
       expect(result).toBeNull();
     });
 
     it('should return comment by id', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await CommentsApi.getCommentById('test-comment-id');
+      const result = await getCommentById('test-comment-id');
       expect(result).toEqual(testComment);
     });
   });
@@ -98,13 +98,13 @@ describe('CommentsApi', () => {
   describe('getCommentsByContentItem', () => {
     it('should return empty array if no comments exist for content item', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await CommentsApi.getCommentsByContentItem('non-existent-content-id');
+      const result = await getCommentsByContentItem('non-existent-content-id');
       expect(result).toEqual([]);
     });
 
     it('should return comments for a specific content item', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await CommentsApi.getCommentsByContentItem('test-content-item-id');
+      const result = await getCommentsByContentItem('test-content-item-id');
       expect(result).toEqual([testComment]);
     });
   });
@@ -114,7 +114,7 @@ describe('CommentsApi', () => {
       const approvedComment = { ...testComment, id: 'approved-comment', status: 'approved' as const };
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment, approvedComment]));
       
-      const result = await CommentsApi.getPendingComments();
+      const result = await getPendingComments();
       
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('test-comment-id');
@@ -127,7 +127,7 @@ describe('CommentsApi', () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([]));
       const newComment = { ...testComment, id: undefined as any };
       
-      await CommentsApi.saveComment(newComment);
+      await saveComment(newComment);
       
       expect(localStorage.setItem).toHaveBeenCalled();
       const savedComments = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
@@ -143,7 +143,7 @@ describe('CommentsApi', () => {
         updatedAt: '2023-01-02T00:00:00Z'
       };
       
-      await CommentsApi.saveComment(updatedComment);
+      await saveComment(updatedComment);
       
       expect(localStorage.setItem).toHaveBeenCalled();
       const savedComments = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
@@ -157,17 +157,17 @@ describe('CommentsApi', () => {
     it('should update a comment status to approved', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
       
-      await CommentsApi.approveComment('test-comment-id');
+      await approveComment('test-comment-id');
       
-      expect(CommentsApi.saveComment).toHaveBeenCalled();
-      const savedComment = (CommentsApi.saveComment as any).mock.calls[0][0];
+      expect(saveComment).toHaveBeenCalled();
+      const savedComment = (saveComment as any).mock.calls[0][0];
       expect(savedComment.status).toBe('approved');
     });
 
     it('should throw an error if comment does not exist', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
       
-      await expect(CommentsApi.approveComment('non-existent-id')).rejects.toThrow();
+      await expect(approveComment('non-existent-id')).rejects.toThrow();
     });
   });
 
@@ -183,7 +183,7 @@ describe('CommentsApi', () => {
       
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([parentComment, childComment]));
       
-      const result = await CommentsApi.getThreadedComments('test-content-item-id');
+      const result = await getThreadedComments('test-content-item-id');
       
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('test-comment-id'); // Parent comment first

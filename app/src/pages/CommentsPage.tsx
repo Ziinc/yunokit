@@ -4,55 +4,22 @@ import { MessageCircle, Flag, Shield, MessageSquare, Users, FileText, Loader2 } 
 import { useToast } from "@/hooks/use-toast";
 import { Comment, Report, BannedWord, ForumPost, ChatMessage, ChatChannel, User } from "@/types/comments";
 import CommentsTab from "@/components/Comments/CommentsTab";
-import ReportsTab from "@/components/Comments/ReportsTab";
-import ModerationTab from "@/components/Comments/ModerationTab";
-import ForumTab from "@/components/Comments/ForumTab";
-import ChatTab from "@/components/Comments/ChatTab";
-import UsersTab from "@/components/Comments/UsersTab";
-import { formatDate } from "@/utils/formatDate";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
-import { CommentsApi } from "@/lib/api";
+import { getComments, approveComment, rejectComment, saveComment } from '@/lib/api/CommentsApi';
 
 const CommentsPage: React.FC = () => {
   const { toast } = useToast();
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [replyText, setReplyText] = useState("");
   const [bannedWordText, setBannedWordText] = useState("");
-  const [bannedWordAction, setBannedWordAction] = useState<"flag" | "delete" | "ban">("flag");
+  const [bannedWordAction] = useState<"flag" | "delete" | "ban">("flag");
   const [currentTab, setCurrentTab] = useState("all");
   const [commentSearchQuery, setCommentSearchQuery] = useState("");
-  const [reportsSearchQuery, setReportsSearchQuery] = useState("");
-  const [postsSearchQuery, setPostsSearchQuery] = useState("");
-  const [messageSearchQuery, setMessageSearchQuery] = useState("");
-  const [userSearchQuery, setUserSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   
   // Pagination state for comments
   const [commentsPerPage, setCommentsPerPage] = useState(10);
   const [currentCommentsPage, setCurrentCommentsPage] = useState(1);
   
-  // Pagination state for forum posts
-  const [postsPerPage, setPostsPerPage] = useState(10);
-  const [currentPostsPage, setCurrentPostsPage] = useState(1);
-  
-  // Pagination state for chat messages
-  const [messagesPerPage, setMessagesPerPage] = useState(10);
-  const [currentMessagesPage, setCurrentMessagesPage] = useState(1);
-  
-  // Pagination state for users
-  const [usersPerPage, setUsersPerPage] = useState(10);
-  const [currentUsersPage, setCurrentUsersPage] = useState(1);
-  
-  // Pagination state for reports
-  const [reportsPerPage, setReportsPerPage] = useState(10);
-  const [currentReportsPage, setCurrentReportsPage] = useState(1);
-  
-  // Pagination state for banned words
-  const [bannedWordsPerPage, setBannedWordsPerPage] = useState(10);
-  const [currentBannedWordsPage, setCurrentBannedWordsPage] = useState(1);
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -63,12 +30,12 @@ const CommentsPage: React.FC = () => {
     const loadComments = async () => {
       try {
         setLoading(true);
-        const fetchedComments = await CommentsApi.getComments();
+        const fetchedComments = await getComments();
         setComments(fetchedComments);
 
         // For now, we'll keep using mock data for reports and banned words
         // In a real app, these would come from their own API endpoints
-        setReports([
+        const mockReports: Report[] = [
           {
             id: "r1",
             type: "comment",
@@ -79,23 +46,24 @@ const CommentsPage: React.FC = () => {
               name: "John Smith"
             },
             reason: "This comment contains offensive language",
-            status: "pending",
+            status: "pending" as const,
             createdAt: "2023-09-14T10:30:00Z",
             contentTitle: "Advanced Content Modeling"
-          },
-          // ... other reports
-        ]);
+          }
+        ];
 
-        setBannedWords([
+        const mockBannedWords: BannedWord[] = [
           {
             id: "bw1",
             word: "badword1",
-            action: "flag",
-            severity: "medium",
+            action: "flag" as const,
+            severity: "medium" as const,
             createdAt: "2023-08-10T09:30:00Z"
-          },
-          // ... other banned words
-        ]);
+          }
+        ];
+
+        setReports(mockReports);
+        setBannedWords(mockBannedWords);
       } catch (error) {
         console.error("Error loading comments:", error);
         toast({
@@ -165,10 +133,10 @@ const CommentsPage: React.FC = () => {
 
   const handleApproveComment = async (commentId: string) => {
     try {
-      await CommentsApi.approveComment(commentId);
+      await approveComment(commentId);
       
       const updatedComments = comments.map(comment =>
-        comment.id === commentId ? { ...comment, status: "approved" } : comment
+        comment.id === commentId ? { ...comment, status: "approved" as const } : comment
       );
       
       setComments(updatedComments);
@@ -189,10 +157,10 @@ const CommentsPage: React.FC = () => {
 
   const handleRejectComment = async (commentId: string) => {
     try {
-      await CommentsApi.rejectComment(commentId);
+      await rejectComment(commentId);
       
       const updatedComments = comments.map(comment =>
-        comment.id === commentId ? { ...comment, status: "rejected" } : comment
+        comment.id === commentId ? { ...comment, status: "deleted" as const } : comment
       );
       
       setComments(updatedComments);
@@ -221,9 +189,8 @@ const CommentsPage: React.FC = () => {
 
   const handleResolveReport = (reportId: string) => {
     const updatedReports = reports.map(report =>
-      report.id === reportId ? { ...report, status: "resolved" } : report
+      report.id === reportId ? { ...report, status: "resolved" as const } : report
     );
-    
     setReports(updatedReports);
     
     toast({
@@ -234,9 +201,8 @@ const CommentsPage: React.FC = () => {
 
   const handleDismissReport = (reportId: string) => {
     const updatedReports = reports.map(report =>
-      report.id === reportId ? { ...report, status: "dismissed" } : report
+      report.id === reportId ? { ...report, status: "dismissed" as const } : report
     );
-    
     setReports(updatedReports);
     
     toast({
@@ -302,7 +268,7 @@ const CommentsPage: React.FC = () => {
       };
       
       // Save the comment using CommentsApi
-      const savedComment = await CommentsApi.saveComment(newComment as Comment);
+      const savedComment = await saveComment(newComment);
       
       // Update UI
       setComments([savedComment, ...comments]);
@@ -323,7 +289,10 @@ const CommentsPage: React.FC = () => {
     }
   };
 
-  // Rest of the component functions remain unchanged
+  const handleReply = (comment: Comment) => {
+    setSelectedComment(comment);
+    setReplyText("");
+  };
 
   return (
     <div className="space-y-6">
@@ -367,27 +336,26 @@ const CommentsPage: React.FC = () => {
           ) : (
             <CommentsTab
               comments={paginatedComments}
-              totalPages={totalCommentsPages}
-              currentPage={currentCommentsPage}
-              onPageChange={setCurrentCommentsPage}
-              itemsPerPage={commentsPerPage}
-              onItemsPerPageChange={setCommentsPerPage}
-              pageSizeOptions={[5, 10, 25, 50]}
               onApprove={handleApproveComment}
               onReject={handleRejectComment}
-              onReply={(comment) => {
-                setSelectedComment(comment);
-                setReplyText("");
-              }}
+              onReply={handleReply}
               selectedComment={selectedComment}
               replyText={replyText}
               onReplyTextChange={setReplyText}
               onSubmitReply={handleSubmitReply}
-              onCancelReply={() => setSelectedComment(null)}
+              onCancelReply={() => {
+                setSelectedComment(null);
+                setReplyText("");
+              }}
               searchQuery={commentSearchQuery}
               onSearchQueryChange={setCommentSearchQuery}
               currentTab={currentTab}
               onTabChange={setCurrentTab}
+              currentPage={currentCommentsPage}
+              onPageChange={setCurrentCommentsPage}
+              itemsPerPage={commentsPerPage}
+              onItemsPerPageChange={setCommentsPerPage}
+              pageSizeOptions={[10, 20, 50, 100]}
             />
           )}
         </TabsContent>

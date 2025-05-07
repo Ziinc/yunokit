@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { exchangeCodeForToken, storeTokens } from '@/lib/supabase';
+import { exchangeCodeForToken } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 
 const SettingsSupabaseCallback: React.FC = () => {
@@ -27,8 +27,7 @@ const SettingsSupabaseCallback: React.FC = () => {
       }
 
       try {
-        const tokens = await exchangeCodeForToken(code, state);
-        storeTokens(tokens);
+        await exchangeCodeForToken(code, state);
         
         toast({
           title: 'Connected to Supabase',

@@ -1,4 +1,4 @@
-import { ContentApi } from "./ContentApi";
+import { getSchemas, getContentItems, saveSchemas, saveContentItems } from '@/lib/api/ContentApi';
 import { 
   generateEcommerceTemplate, 
   generateBloggingTemplate, 
@@ -35,8 +35,8 @@ export class TemplateService {
     }
     
     // Get current schemas and content to merge with new ones
-    const currentSchemas = await ContentApi.getSchemas();
-    const currentContent = await ContentApi.getContentItems();
+    const currentSchemas = await getSchemas();
+    const currentContent = await getContentItems();
     
     // Create unique IDs map to avoid conflicts
     const uniqueSchemaIds = new Set(currentSchemas.map(schema => schema.id));
@@ -49,8 +49,8 @@ export class TemplateService {
     });
     
     // Save all schemas and content items
-    await ContentApi.saveSchemas([...currentSchemas, ...templateData.schemas]);
-    await ContentApi.saveContentItems([...currentContent, ...templateData.contentItems]);
+    await saveSchemas([...currentSchemas, ...templateData.schemas]);
+    await saveContentItems([...currentContent, ...templateData.contentItems]);
   }
   
   /**
