@@ -16,4 +16,4 @@ deploy:
 	@echo 'Deploying functions now'
 	@find ./supabase/functions/* -type d ! -name '_*'  | xargs -I {} basename {} | xargs -I {} supabase functions deploy {}
 
-.PHONY: start diff deplo
+.PHONY: start diff deploy
