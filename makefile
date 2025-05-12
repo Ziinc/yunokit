@@ -3,6 +3,14 @@ start:
 	supabase start
 	npm run dev --prefix=app
 
+restart:
+	supabase stop
+	supabase start
+	npm run dev --prefix=app
+
+db.reset:
+	supabase db reset --local
+
 diff:
 	supabase db diff -f $(f) -s public,extensions,supacontent --local
 	
@@ -16,4 +24,4 @@ deploy:
 	@echo 'Deploying functions now'
 	@find ./supabase/functions/* -type d ! -name '_*'  | xargs -I {} basename {} | xargs -I {} supabase functions deploy {}
 
-.PHONY: start diff deploy
+.PHONY: start diff deploy restart types db.reset

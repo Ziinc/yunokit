@@ -103,6 +103,7 @@ export type Database = {
           description: string | null
           id: number
           name: string
+          project_ref: string | null
           user_id: string
         }
         Insert: {
@@ -110,6 +111,7 @@ export type Database = {
           description?: string | null
           id?: number
           name: string
+          project_ref?: string | null
           user_id: string
         }
         Update: {
@@ -117,6 +119,7 @@ export type Database = {
           description?: string | null
           id?: number
           name?: string
+          project_ref?: string | null
           user_id?: string
         }
         Relationships: []
@@ -130,24 +133,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
-      sb_mgmt_api:
-        | {
-            Args: {
-              endpoint: string
-              method?: string
-              body?: Json
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              endpoint: string
-              method?: string
-              body?: Json
-              base_url?: string
-            }
-            Returns: Json
-          }
+      sb_mgmt_api: {
+        Args: {
+          endpoint: string
+          method?: string
+          body?: Json
+          base_url?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
@@ -234,9 +228,6 @@ export type Database = {
           id: string
           schema_id: string | null
           updated_at: string
-          title: string
-          status: 'published' | 'draft'
-          data: Json
         }
         Insert: {
           created_at?: string
@@ -244,9 +235,6 @@ export type Database = {
           id?: string
           schema_id?: string | null
           updated_at?: string
-          title: string
-          status: 'published' | 'draft'
-          data: Json
         }
         Update: {
           created_at?: string
@@ -254,9 +242,6 @@ export type Database = {
           id?: string
           schema_id?: string | null
           updated_at?: string
-          title?: string
-          status?: 'published' | 'draft'
-          data?: Json
         }
         Relationships: [
           {
@@ -273,30 +258,27 @@ export type Database = {
           archived_at: string | null
           created_at: string
           deleted_at: string | null
-          fields: Json
+          fields: Json | null
           id: string
-          name: string
-          type: 'single' | 'collection'
+          type: string
           updated_at: string
         }
         Insert: {
           archived_at?: string | null
           created_at?: string
           deleted_at?: string | null
-          fields: Json
+          fields?: Json | null
           id?: string
-          name: string
-          type: 'single' | 'collection'
+          type: string
           updated_at?: string
         }
         Update: {
           archived_at?: string | null
           created_at?: string
           deleted_at?: string | null
-          fields?: Json
+          fields?: Json | null
           id?: string
-          name?: string
-          type?: 'single' | 'collection'
+          type?: string
           updated_at?: string
         }
         Relationships: []

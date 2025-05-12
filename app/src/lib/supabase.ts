@@ -45,13 +45,32 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
   return response.data["result"] as boolean;
 };
 
+export type SupabaseProject = {
+  id: string;
+  organization_id: string;
+  name: string;
+  region: string;
+  status: string;
+  database: {
+    host: string;
+    version: string;
+    postgres_engine: string;
+    release_channel: string;
+  };
+  created_at: string;
+};
 
-
-export const listProjects = async (): Promise<any> => {
+export const listProjects = async (): Promise<SupabaseProject[]> => {
   const response = await supabase.rpc("sb_mgmt_api", {
     endpoint: "projects",
   });
-  return response.data;
+  console.log("response", response);
+  if (response.error) {
+    throw new Error(response.error.message);
+  } else if (response.data?.error) {
+    throw new Error(response.data.error as string);
+  }
+  return response.data.result as SupabaseProject[];
 };
 
 export const getProjectDetails = async (): Promise<void> => {

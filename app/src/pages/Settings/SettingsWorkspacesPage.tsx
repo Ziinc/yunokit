@@ -6,7 +6,7 @@ import { Loader2, Trash2, Star, StarOff, CheckCircle2, AlertTriangle } from "luc
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { CreateWorkspaceForm } from "@/components/Workspace/CreateWorkspaceForm";
 import { useToast } from "@/hooks/use-toast";
-import { WorkspaceApi } from "@/lib/api/WorkspaceApi";
+import { getWorkspaceLimit, deleteWorkspace } from "@/lib/api/WorkspaceApi";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 
@@ -18,7 +18,7 @@ const SettingsWorkspacesPage: React.FC = () => {
   useEffect(() => {
     const fetchWorkspaceLimit = async () => {
       try {
-        const limit = await WorkspaceApi.getWorkspaceLimit();
+        const limit = await getWorkspaceLimit();
         setWorkspaceLimit(limit);
       } catch (error) {
         console.error("Failed to fetch workspace limit:", error);
@@ -27,9 +27,9 @@ const SettingsWorkspacesPage: React.FC = () => {
     fetchWorkspaceLimit();
   }, []);
 
-  const handleDeleteWorkspace = async (workspaceId: string) => {
+  const handleDeleteWorkspace = async (workspaceId: number) => {
     try {
-      await WorkspaceApi.deleteWorkspace(workspaceId);
+      await deleteWorkspace(workspaceId);
       await refreshWorkspaces();
 
       toast({

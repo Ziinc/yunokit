@@ -1,4 +1,5 @@
 import express from "npm:express";
+import cors from "npm:cors";
 import { OAuth2Client } from "https://deno.land/x/oauth2_client@v1.0.2/mod.ts";
 import { SupabaseManagementAPI } from "https://esm.sh/supabase-management-js@0.1.2";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -19,6 +20,7 @@ const supabase = createClient(
 
 const app = express();
 
+app.use(cors())
 app.use(express.json());
 
 const managementClient = async (req: express.Request) => {
@@ -54,13 +56,10 @@ const managementClient = async (req: express.Request) => {
   return supaManagementClient;
 };
 
-app.options("/connect/*", async (req, res) => {
-  return res.status(200).set(corsHeaders).send();
-});
 
-app.options("/connect/oauth2", async (req, res) => {
-  return res.status(200).set(corsHeaders).send();
-});
+// app.options("/connect/oauth2", async (req, res) => {
+//   return res.status(200).set(corsHeaders).send();
+// });
 
 app.get("/connect/oauth2", async (req, res) => {
   if (req.method === "OPTIONS") {
@@ -106,9 +105,9 @@ app.get("/connect/oauth2", async (req, res) => {
   res.json({ uri: uri.toString() });
 });
 
-app.options("/connect/oauth2/callback", async (req, res) => {
-  return res.status(200).set(corsHeaders).send();
-});
+// app.options("/connect/oauth2/callback", async (req, res) => {
+//   return res.status(200).set(corsHeaders).send();
+// });
 
 app.post("/connect/oauth2/callback", async (req, res) => {
   // Get code verifier from user_data table
@@ -145,6 +144,10 @@ app.post("/connect/oauth2/callback", async (req, res) => {
     .catch(console.error);
   console.log("tokens", tokens);
 
+  if (!tokens.access_token) {
+    return res.status(401).set(corsHeaders).send(tokens.message);
+  }
+
   // Get user ID from auth header
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -163,6 +166,7 @@ app.post("/connect/oauth2/callback", async (req, res) => {
 
   // Store tokens in supabase_connections
   const expiresAt = Date.now() + tokens.expires_in;
+  console.log("expiresAt", expiresAt)
   await supabase.from("supabase_connections").upsert(
     {
       user_id: user.id,

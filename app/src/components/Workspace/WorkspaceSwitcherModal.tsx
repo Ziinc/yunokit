@@ -55,8 +55,8 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
 
   console.log("isConnected", isConnected);
   const { data: projects } = useSWR(
-    "projects",
-    isConnected ? listProjects : null,
+    isConnected ? "projects" : null,
+    listProjects,
     {
       revalidateIfStale: false,
       refreshInterval: 0,
@@ -138,7 +138,6 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
               <Button
                 variant="default"
                 onClick={() => {
-                  onOpenChange(false);
                   initiateOAuthFlow();
                 }}
               >

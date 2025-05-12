@@ -4,7 +4,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus } from "lucide-react";
-import { WorkspaceApi } from "@/lib/api/WorkspaceApi";
+import { createWorkspace } from "@/lib/api/WorkspaceApi";
+import { listProjects, SupabaseProject } from "@/lib/supabase";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import useSWR from "swr";
 
 interface CreateWorkspaceFormProps {
   onSuccess?: () => void;
@@ -19,6 +29,18 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
   const [newWorkspaceDescription, setNewWorkspaceDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
+  const { refreshWorkspaces } = useWorkspace();
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const { data: projects = [], isLoading: isLoadingProjects } = useSWR(
+    "projects",
+    listProjects,
+    {
+      revalidateIfStale: false,
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,21 +53,30 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
       });
       return;
     }
+    if (!selectedProjectId) {
+      toast({
+        title: "Supabase project required",
+        description: "Please select a Supabase project",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsCreating(true);
 
-      const newWorkspace = await WorkspaceApi.createWorkspace({
+      const newWorkspace = await createWorkspace({
         name: newWorkspaceName,
         description: newWorkspaceDescription,
+        project_ref: selectedProjectId,
       });
+
+      await refreshWorkspaces();
 
       toast({
         title: "Workspace created",
         description: "Your new workspace has been created successfully",
       });
-
-      // TODO: Redirect to the new workspace
 
       onSuccess?.();
     } catch (error) {
@@ -82,6 +113,27 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
           onChange={(e) => setNewWorkspaceDescription(e.target.value)}
           disabled={isCreating}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="supabase-project">Supabase Project</Label>
+        <Select
+          value={selectedProjectId}
+          onValueChange={setSelectedProjectId}
+          disabled={isLoadingProjects || isCreating}
+          required
+        >
+          <SelectTrigger id="supabase-project">
+            <SelectValue placeholder={isLoadingProjects ? "Loading projects..." : "Select a project"} />
+          </SelectTrigger>
+          <SelectContent>
+            {projects.map((project) => (
+              <SelectItem key={project.id} value={project.id}>
+                {project.name} ({project.region})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex justify-end gap-2">

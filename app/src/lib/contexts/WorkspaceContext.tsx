@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from "react";
 import useSWR from "swr";
-import { WorkspaceApi, WorkspaceRow } from "../api/WorkspaceApi";
+import { getWorkspaces, WorkspaceRow } from "../api/WorkspaceApi";
+
 interface WorkspaceContextType {
   workspaces: WorkspaceRow[];
   currentWorkspace: WorkspaceRow | null;
@@ -8,6 +9,7 @@ interface WorkspaceContextType {
   error: Error | null;
   setCurrentWorkspace: (workspace: WorkspaceRow | null) => void;
   mutate: () => Promise<WorkspaceRow[] | void>;
+  refreshWorkspaces: () => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
@@ -23,7 +25,11 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
     error,
     isLoading,
     mutate,
-  } = useSWR<WorkspaceRow[]>("workspaces", WorkspaceApi.getWorkspaces);
+  } = useSWR<WorkspaceRow[]>("workspaces", getWorkspaces);
+
+  const refreshWorkspaces = async () => {
+    await mutate();
+  };
 
   return (
     <WorkspaceContext.Provider
@@ -34,6 +40,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         error,
         setCurrentWorkspace,
         mutate,
+        refreshWorkspaces,
       }}
     >
       {children}

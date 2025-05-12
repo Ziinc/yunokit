@@ -14,88 +14,80 @@ const WORKSPACE_LIMITS = {
   enterprise: 10
 };
 
-export class WorkspaceApi {
-  static async getWorkspaces(): Promise<WorkspaceRow[]> {
-    const { data, error } = await (supabase as DbClient)
-      .from('workspaces')
-      .select('*');
-    
-    if (error) throw error;
-    return data || [];
-  }
+export const getWorkspaces = async (): Promise<WorkspaceRow[]> => {
+  const { data, error } = await (supabase as DbClient)
+    .from('workspaces')
+    .select('*');
+  
+  if (error) throw error;
+  return data || [];
+};
 
-  static async getWorkspaceById(id: number): Promise<WorkspaceRow | null> {
-    const { data, error } = await (supabase as DbClient)
-      .from('workspaces')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
-  }
+export const getWorkspaceById = async (id: number): Promise<WorkspaceRow | null> => {
+  const { data, error } = await (supabase as DbClient)
+    .from('workspaces')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
 
-  static async getCurrentUserPlan(): Promise<'free' | 'pro'> {
-    // TODO: Replace with actual API call to get user's plan
-    return 'pro';
-  }
+export const getCurrentUserPlan = async (): Promise<'free' | 'pro'> => {
+  // TODO: Replace with actual API call to get user's plan
+  return 'pro';
+};
 
-  static async getWorkspaceLimit(): Promise<{ currentCount: number; maxWorkspaces: number; canCreate: boolean }> {
-    const workspaces = await this.getWorkspaces();
-    const currentPlan = await this.getCurrentUserPlan();
-    const maxWorkspaces = WORKSPACE_LIMITS[currentPlan];
-    
-    return {
-      currentCount: workspaces.length,
-      maxWorkspaces,
-      canCreate: workspaces.length < maxWorkspaces
-    };
-  }
+export const getWorkspaceLimit = async (): Promise<{ currentCount: number; maxWorkspaces: number; canCreate: boolean }> => {
+  const workspaces = await getWorkspaces();
+  const currentPlan = await getCurrentUserPlan();
+  const maxWorkspaces = WORKSPACE_LIMITS[currentPlan];
+  
+  return {
+    currentCount: workspaces.length,
+    maxWorkspaces,
+    canCreate: workspaces.length < maxWorkspaces
+  };
+};
 
-  static async createWorkspace(workspace: Omit<WorkspaceInsert, 'id' | 'created_at'>): Promise<WorkspaceRow> {
-    // const limit = await this.getWorkspaceLimit();
-    // if (!limit.canCreate) {
-    //   throw new Error(`Workspace limit reached. Maximum allowed: ${limit.maxWorkspaces}`);
-    // }
+export const createWorkspace = async (workspace: Omit<WorkspaceInsert, 'id' | 'created_at'>): Promise<WorkspaceRow> => {
+  const user = await getUser();
+  const newWorkspace: WorkspaceInsert = {
+    name: workspace.name || 'Untitled Workspace',
+    // created_at: new Date().toISOString(),
+    user_id: user.data.user?.id,
+    description: workspace.description || null,
+    project_ref: workspace.project_ref
+  };
 
-    const user = await getUser();
-    console.log('user', user);
-    const newWorkspace: WorkspaceInsert = {
-      name: workspace.name || 'Untitled Workspace',
-      created_at: new Date().toISOString(),
-      user_id: user?.id,
-      description: workspace.description || null
-    };
+  const { data, error } = await (supabase as DbClient)
+    .from('workspaces')
+    .insert(newWorkspace)
+    .select()
+    .single();
 
-    const { data, error } = await (supabase as DbClient)
-      .from('workspaces')
-      .insert(newWorkspace)
-      .select()
-      .single();
+  if (error) throw error;
+  return data;
+};
 
-    console.log('data', data);
-    if (error) throw error;
-    return data;
-  }
+export const updateWorkspace = async (id: number, workspace: Partial<WorkspaceUpdate>): Promise<WorkspaceRow> => {
+  const { data, error } = await (supabase as DbClient)
+    .from('workspaces')
+    .update(workspace)
+    .eq('id', id)
+    .select()
+    .single();
 
-  static async updateWorkspace(id: number, workspace: Partial<WorkspaceUpdate>): Promise<WorkspaceRow> {
-    const { data, error } = await (supabase as DbClient)
-      .from('workspaces')
-      .update(workspace)
-      .eq('id', id)
-      .select()
-      .single();
+  if (error) throw error;
+  return data;
+};
 
-    if (error) throw error;
-    return data;
-  }
+export const deleteWorkspace = async (id: number): Promise<void> => {
+  const { error } = await (supabase as DbClient)
+    .from('workspaces')
+    .delete()
+    .eq('id', id);
 
-  static async deleteWorkspace(id: number): Promise<void> {
-    const { error } = await (supabase as DbClient)
-      .from('workspaces')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  }
-} 
+  if (error) throw error;
+}; 

@@ -15,6 +15,7 @@ import {
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { Button } from "@/components/ui/button";
+import { WorkspaceSwitcherModal } from "@/components/Workspace/WorkspaceSwitcherModal";
 
 interface SidebarProps {}
 
@@ -22,7 +23,6 @@ export const Sidebar: React.FC<SidebarProps> = () => {
   const location = useLocation();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { currentWorkspace, isLoading } = useWorkspace();
-
   const navItems = [
     { name: "Dashboard", path: "/", icon: <Home size={20} /> },
     { name: "Content Manager", path: "/manager", icon: <FileText size={20} /> },
@@ -92,6 +92,10 @@ export const Sidebar: React.FC<SidebarProps> = () => {
           </Link>
         ))}
       </nav>
+      <WorkspaceSwitcherModal 
+        open={isSwitcherOpen}
+        onOpenChange={setIsSwitcherOpen}
+      />
     </div>
   );
 };
