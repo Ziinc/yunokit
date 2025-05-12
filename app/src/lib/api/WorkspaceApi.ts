@@ -17,7 +17,8 @@ const WORKSPACE_LIMITS = {
 export const getWorkspaces = async (): Promise<WorkspaceRow[]> => {
   const { data, error } = await (supabase as DbClient)
     .from('workspaces')
-    .select('*');
+    .select('*')
+    .order('name', { ascending: true });
   
   if (error) throw error;
   return data || [];
