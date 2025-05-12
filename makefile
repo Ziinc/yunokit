@@ -2,6 +2,8 @@
 start:
 	supabase start
 	npm run dev --prefix=app
+stop:
+	supabase stop
 
 restart:
 	supabase stop
@@ -24,4 +26,4 @@ deploy:
 	@echo 'Deploying functions now'
 	@find ./supabase/functions/* -type d ! -name '_*'  | xargs -I {} basename {} | xargs -I {} supabase functions deploy {}
 
-.PHONY: start diff deploy restart types db.reset
+.PHONY: start diff deploy restart types db.reset stop
