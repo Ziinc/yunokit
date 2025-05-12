@@ -52,7 +52,7 @@ export const getWorkspaceLimit = async (): Promise<{ currentCount: number; maxWo
   };
 };
 
-export const createWorkspace = async (workspace: Omit<WorkspaceInsert, 'id' | 'created_at'>): Promise<WorkspaceRow> => {
+export const createWorkspace = async (workspace: Omit<WorkspaceInsert, 'id' | 'created_at' | 'user_id'>): Promise<WorkspaceRow> => {
   const user = await getUser();
   const newWorkspace: WorkspaceInsert = {
     name: workspace.name || 'Untitled Workspace',

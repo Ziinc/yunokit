@@ -29,7 +29,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
   const [newWorkspaceDescription, setNewWorkspaceDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-  const { refreshWorkspaces } = useWorkspace();
+  const { refreshWorkspaces, setCurrentWorkspace } = useWorkspace();
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const { data: projects = [], isLoading: isLoadingProjects } = useSWR(
     "projects",
@@ -76,6 +76,18 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
       toast({
         title: "Workspace created",
         description: "Your new workspace has been created successfully",
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCurrentWorkspace(newWorkspace);
+              onSuccess?.();
+            }}
+          >
+            Switch to workspace
+          </Button>
+        ),
       });
 
       onSuccess?.();
