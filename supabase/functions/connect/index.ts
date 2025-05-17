@@ -189,6 +189,97 @@ app.post("/connect/oauth2/callback", async (req, res) => {
   res.set(corsHeaders).send(projects);
 });
 
+app.post("/connect/refresh", async (req, res) => {
+  // Get user ID from auth header
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).set(corsHeaders).send("No authorization header");
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser(token);
+
+  if (userError || !user) {
+    return res.status(401).set(corsHeaders).send("Invalid token");
+  }
+
+  // Get the user's refresh token
+  const { data: connection, error: connectionError } = await supabase
+    .from("supabase_connections")
+    .select("refresh_token")
+    .eq("user_id", user.id)
+    .single();
+
+  if (connectionError || !connection || !connection.refresh_token) {
+    return res
+      .status(404)
+      .set(corsHeaders)
+      .send("No refresh token found");
+  }
+
+  try {
+    // Request new tokens using the refresh token
+    const tokenResponse = await fetch(config.tokenUri, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+        Authorization: `Basic ${btoa(
+          `${config.clientId}:${config.clientSecret}`
+        )}`,
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: connection.refresh_token,
+      }),
+    });
+
+    const tokens = await tokenResponse.json();
+
+    if (!tokenResponse.ok || !tokens.access_token) {
+      return res
+        .status(401)
+        .set(corsHeaders)
+        .send("Failed to refresh token: " + (tokens.error_description || tokens.message));
+    }
+
+    // Calculate expiration timestamp
+    const expiresAt = Date.now() + (tokens.expires_in * 1000);
+
+    // Update tokens in the database
+    const { error: updateError } = await supabase
+      .from("supabase_connections")
+      .update({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token || connection.refresh_token, // Use new refresh token if provided, otherwise keep the existing one
+        expires_at: expiresAt,
+        created_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      return res
+        .status(500)
+        .set(corsHeaders)
+        .send("Failed to update tokens: " + updateError.message);
+    }
+
+    res.set(corsHeaders).json({
+      success: true,
+      expires_at: expiresAt,
+    });
+  } catch (error) {
+    console.error("Token refresh error:", error);
+    res
+      .status(500)
+      .set(corsHeaders)
+      .send("Token refresh failed: " + (error.message || "Unknown error"));
+  }
+});
+
 app.listen(8000, () => {
   console.log("Server running on port 8000");
 });

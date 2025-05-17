@@ -4,35 +4,73 @@ Supacontent integrates seamlessly with [Supabase](https://supabase.com) to provi
 
 ## Connecting to Supabase
 
-To use Supacontent, you'll need to connect it to a Supabase project. Here's how:
+To connect your Supabase project to Supacontent:
 
-1. Navigate to the **Settings > Supabase** section in your Supacontent workspace
+1. Navigate to the **Settings > Supabase** page in your Supacontent workspace
 2. Click the "Connect Supabase Project" button
 3. You'll be redirected to Supabase to authorize the connection
-4. Select the project you want to connect to
+4. Select the project you want to connect
 5. Confirm the authorization
 
-Once connected, Supacontent will automatically:
-- Set up necessary database tables and schemas
-- Configure row-level security policies
-- Enable real-time subscriptions
-- Set up storage buckets for media
+### What Happens During Connection
+
+When you connect Supacontent to Supabase:
+- Necessary database tables and schemas are automatically set up
+- Row-level security policies are configured
+- Real-time subscriptions are enabled
+- Storage buckets for media are created
+- Access tokens are securely stored for maintaining the connection
+- Your project's schema information is retrieved to enable content management
 
 ## Managing Your Connection
 
 You can manage your Supabase connection from the Settings page:
 
-- View your current connection status
-- Disconnect from a project if needed
+- View your current connection status and project details (name, ID, region)
+- Disconnect your Supabase account
+- Remove project association from a workspace
 - Monitor connection health
 
-### Disconnecting a Project
+### Disconnecting Your Supabase Account
 
-When you disconnect a project:
-- Your Supabase project remains intact
-- No data is deleted from your Supabase database
-- The Supacontent workspace becomes unusable until you connect a new project
-- You'll need to reconnect a project to resume using Supacontent
+When you disconnect your Supabase account:
+- The supabase_connection record for your account is permanently deleted
+- All access and refresh tokens used to connect to your Supabase account are removed
+- This affects all workspaces associated with your account
+- You'll need to reconnect your account to resume using Supacontent with Supabase
+
+To disconnect:
+1. Go to **Settings > Supabase**
+2. Click "Disconnect Account"
+3. Confirm the disconnection in the dialog that appears
+
+### Removing Project Association
+
+You can remove a project's association with your workspace without disconnecting your entire Supabase account:
+
+- This nullifies the project_ref field for your workspace
+- This is non-destructive and all data is still retained on the project
+- No data will be shown in the workspace dashboard until a new project is linked
+- Only affects the current workspace, not your Supabase account access
+
+To remove a project association:
+1. Go to **Settings > Supabase**
+2. Click "Remove Project Association"
+3. Type "delete" to confirm
+4. Confirm the removal
+
+## Querying Content with Supabase
+
+You can query the created content using `supabase-js` for custom integration into your app.
+
+Example `supabase-js` usage:
+
+```js
+const { data, error } = await client
+  .from("content_items")
+  .select()
+  .eq("id", 1);
+```
 
 ## Security
 
@@ -48,11 +86,13 @@ If you encounter issues with your Supabase connection:
 
 1. Check your project's status in the Supabase dashboard
 2. Ensure your project's region is accessible
-3. Try disconnecting and reconnecting
-4. Contact support if issues persist
+3. Verify that the access tokens haven't expired (indicated by a "Token expired" status)
+4. Try disconnecting and reconnecting your account if problems persist
+5. Ensure your Supabase project has the necessary database schema and permissions
+6. Contact support if issues persist
 
 ## Next Steps
 
 - [Setting up authentication](/docs/features/authentication)
 - [Managing content schemas](/docs/features/content-schemas)
-- [Working with media](/docs/features/media-management) 
+- [Working with media](/docs/features/media-management)

@@ -133,6 +133,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      check_token_needs_refresh: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       sb_mgmt_api: {
         Args: {
           endpoint: string

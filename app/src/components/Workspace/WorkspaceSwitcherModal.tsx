@@ -27,7 +27,7 @@ import {
 } from "@/lib/supabase";
 import useSWR from "swr";
 import { WorkspaceRow } from "@/lib/api/WorkspaceApi";
-
+import { checkTokenNeedsRefresh, refreshAccessToken } from "@/lib/supabase";
 interface WorkspaceSwitcherModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,7 +53,18 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
     revalidateOnReconnect: false,
   });
 
+  const {
+    data: isTokenExpired = true,
+  } = useSWR(isConnected ? "valid_access_token" : null, checkTokenNeedsRefresh, {
+    revalidateIfStale: false,
+    refreshInterval: 0,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
+
+
   console.log("isConnected", isConnected);
+  console.log("isTokenExpired", isTokenExpired);
   const { data: projects } = useSWR(
     isConnected ? "projects" : null,
     listProjects,
@@ -83,6 +94,12 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
   useEffect(() => {
     checkConnection();
   }, [searchParams]);
+
+  useEffect(() => {
+    if (isTokenExpired) {
+      refreshAccessToken();
+    }
+  }, [isTokenExpired]);
 
   const handleWorkspaceSelect = (workspace: WorkspaceRow) => {
     setCurrentWorkspace(workspace);

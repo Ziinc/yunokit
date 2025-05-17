@@ -11,10 +11,12 @@ import {
   Plus,
   Loader2,
   Building2,
+  Settings,
 } from "lucide-react";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { WorkspaceSwitcherModal } from "@/components/Workspace/WorkspaceSwitcherModal";
 
 interface SidebarProps {}
@@ -92,6 +94,23 @@ export const Sidebar: React.FC<SidebarProps> = () => {
           </Link>
         ))}
       </nav>
+      
+      <Separator className="mx-4" />
+      <div className="p-4 pt-3">
+        <Link
+          to="/settings"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+            location.pathname.startsWith("/settings")
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted"
+          )}
+        >
+          <Settings size={20} />
+          Settings
+        </Link>
+      </div>
+      
       <WorkspaceSwitcherModal 
         open={isSwitcherOpen}
         onOpenChange={setIsSwitcherOpen}
