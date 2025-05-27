@@ -291,7 +291,7 @@ const SettingsSupabasePage: React.FC = () => {
                       </div>
                       <p className="text-base text-emerald-600 flex items-center gap-1.5">
                         <CheckCircle2 className="h-4 w-4" />
-                        {isConnected ? "Active" : "Inactive"}
+                        {projectDetails.status === "ACTIVE_HEALTHY" ? "Active" : projectDetails.status}
                       </p>
                     </div>
                   </div>
