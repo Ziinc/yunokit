@@ -118,7 +118,7 @@ export type SupabaseProject = {
   organization_id: string;
   name: string;
   region: string;
-  status: string;
+  status: "ACTIVE_HEALTHY" | string
   database: {
     host: string;
     version: string;

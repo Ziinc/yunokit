@@ -169,12 +169,12 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
               <Card
                 key={workspace.id}
                 className={cn(
-                  "cursor-pointer transition-colors hover:bg-accent/5",
+                  "cursor-pointer transition-colors hover:bg-accent/5 relative",
                   workspace.id === currentWorkspace?.id && "border-primary"
                 )}
                 onClick={() => handleWorkspaceSelect(workspace)}
               >
-                <CardHeader>
+                <CardHeader className="pb-12">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{workspace.name}</CardTitle>
                     {workspace.id === currentWorkspace?.id && (
@@ -183,6 +183,25 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
                   </div>
                   <CardDescription>{workspace.description}</CardDescription>
                 </CardHeader>
+                {projects && workspace.project_ref && (
+                  (() => {
+                    const project = projects.find((p) => p.id === workspace.project_ref);
+                    const isHealthy = project?.status === 'ACTIVE_HEALTHY';
+                    return (
+                      <div className="absolute bottom-4 right-4">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
+                          <span
+                            className={
+                              "inline-block w-2 h-2 rounded-full " +
+                              (isHealthy ? "bg-green-500" : "bg-red-500")
+                            }
+                          />
+                          {project?.name || 'Unknown'} {!isHealthy && `(${project?.status})`}
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
               </Card>
             ))}
             <Card
