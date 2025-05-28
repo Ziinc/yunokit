@@ -26,7 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { currentWorkspace, isLoading } = useWorkspace();
   const navItems = [
-    { name: "Dashboard", path: "/", icon: <Home size={20} /> },
+    { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
     { name: "Content Manager", path: "/manager", icon: <FileText size={20} /> },
     { name: "Content Builder", path: "/builder", icon: <Database size={20} /> },
     ...(isFeatureEnabled(FeatureFlags.ASSET_LIBRARY)

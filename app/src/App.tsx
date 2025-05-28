@@ -55,7 +55,8 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/manager" element={<ContentManagerPage />} />
           <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
           <Route path="/manager/json" element={<JsonEditorPage />} />
