@@ -42,7 +42,7 @@ export const exchangeCodeForToken = async (
 
 export const checkTokenNeedsRefresh = async (): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc("check_token_needs_refresh");
+    const { data, error } = await supabase.rpc("check_user_token_needs_refresh");
     
     console.log("data", data);
     if (error) {

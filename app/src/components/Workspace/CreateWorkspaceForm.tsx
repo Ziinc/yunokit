@@ -29,7 +29,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
   const [newWorkspaceDescription, setNewWorkspaceDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
-  const { refreshWorkspaces, setCurrentWorkspace } = useWorkspace();
+  const { refreshWorkspaces, setCurrentWorkspace, workspaces } = useWorkspace();
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const { data: projects = [], isLoading: isLoadingProjects } = useSWR(
     "projects",
@@ -41,6 +41,17 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
       revalidateOnReconnect: false,
     }
   );
+
+  // Filter out projects that are already linked to other workspaces
+  const availableProjects = React.useMemo(() => {
+    if (!projects) return [];
+    
+    const linkedProjectIds = workspaces
+      .filter(w => w.project_ref)
+      .map(w => w.project_ref);
+    
+    return projects.filter(project => !linkedProjectIds.includes(project.id));
+  }, [projects, workspaces]);
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +73,20 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
       return;
     }
 
+    // Additional validation: check if project is already linked
+    const linkedProjectIds = workspaces
+      .filter(w => w.project_ref)
+      .map(w => w.project_ref);
+    
+    if (linkedProjectIds.includes(selectedProjectId)) {
+      toast({
+        title: "Project already linked",
+        description: "This project is already linked to another workspace. Please select a different project.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsCreating(true);
 
@@ -73,21 +98,12 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
 
       await refreshWorkspaces();
 
+      // Automatically switch to the newly created workspace
+      setCurrentWorkspace(newWorkspace);
+
       toast({
         title: "Workspace created",
-        description: "Your new workspace has been created successfully",
-        action: (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setCurrentWorkspace(newWorkspace);
-              onSuccess?.();
-            }}
-          >
-            Switch to workspace
-          </Button>
-        ),
+        description: "Your new workspace has been created and is now active",
       });
 
       onSuccess?.();
@@ -132,20 +148,31 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
         <Select
           value={selectedProjectId}
           onValueChange={setSelectedProjectId}
-          disabled={isLoadingProjects || isCreating}
+          disabled={isLoadingProjects || isCreating || availableProjects.length === 0}
           required
         >
           <SelectTrigger id="supabase-project">
-            <SelectValue placeholder={isLoadingProjects ? "Loading projects..." : "Select a project"} />
+            <SelectValue placeholder={
+              isLoadingProjects 
+                ? "Loading projects..." 
+                : availableProjects.length === 0
+                ? "No available projects"
+                : "Select a project"
+            } />
           </SelectTrigger>
           <SelectContent>
-            {projects.map((project) => (
+            {availableProjects.map((project) => (
               <SelectItem key={project.id} value={project.id}>
                 {project.name} ({project.region})
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {!isLoadingProjects && availableProjects.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            All available projects are already linked to other workspaces.
+          </p>
+        )}
       </div>
 
       <div className="flex justify-end gap-2">
@@ -157,7 +184,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isCreating} className="gap-2">
+        <Button type="submit" disabled={isCreating || availableProjects.length === 0} className="gap-2">
           {isCreating ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />

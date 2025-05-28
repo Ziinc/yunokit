@@ -7,3 +7,7 @@ alwaysApply: true
 - always remove unused imports.
 - Don't explain the effect your actions, only list out what you have done.
 - always verify that the change has been correctly applied.
+- Use the consolidated `radix-ui` package instead of individual `@radix-ui/react-*` packages.
+- Import Radix UI components using destructured imports: `import { Dialog, Button } from "radix-ui"`.
+- For Slot component, use `Slot.Slot` from the radix-ui package.
+- When refactoring Radix UI imports, update all related type references and component usage.

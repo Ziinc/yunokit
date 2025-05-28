@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, Power, PowerOff } from "lucide-react";
+import { Plus, Check, Power, PowerOff, Loader2, Link2, AlertCircle } from "lucide-react";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { CreateWorkspaceForm } from "./CreateWorkspaceForm";
 import { cn } from "@/lib/utils";
@@ -26,8 +26,17 @@ import {
   listProjects,
 } from "@/lib/supabase";
 import useSWR from "swr";
-import { WorkspaceRow } from "@/lib/api/WorkspaceApi";
+import { WorkspaceRow, updateWorkspace } from "@/lib/api/WorkspaceApi";
 import { checkTokenNeedsRefresh, refreshAccessToken } from "@/lib/supabase";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+
 interface WorkspaceSwitcherModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,12 +47,15 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
   onOpenChange,
 }) => {
   const [searchParams] = useSearchParams();
-  const { workspaces, currentWorkspace, setCurrentWorkspace } =
-    useWorkspace();
+  const { workspaces, currentWorkspace, setCurrentWorkspace, refreshWorkspaces } = useWorkspace();
   const [isCreating, setIsCreating] = React.useState(false);
+  const [linkingWorkspaceId, setLinkingWorkspaceId] = React.useState<number | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = React.useState<string>("");
+  const [isLinking, setIsLinking] = React.useState(false);
+  const { toast } = useToast();
 
   const {
-    data: isConnected,
+    data: resp,
     mutate: refreshSbConnection,
     isLoading: isCheckingConnection,
   } = useSWR("sbConnection", checkSupabaseConnection, {
@@ -52,16 +64,17 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
   });
-
-  const {
-    data: isTokenExpired = true,
-  } = useSWR(isConnected ? "valid_access_token" : null, checkTokenNeedsRefresh, {
-    revalidateIfStale: false,
-    refreshInterval: 0,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
-
+  const isConnected = resp?.result;
+  const { data: isTokenExpired = true } = useSWR(
+    isConnected ? "valid_access_token" : null,
+    checkTokenNeedsRefresh,
+    {
+      revalidateIfStale: false,
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
 
   console.log("isConnected", isConnected);
   console.log("isTokenExpired", isTokenExpired);
@@ -76,6 +89,18 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
     }
   );
   console.log("projects", projects);
+  
+  // Filter out projects that are already linked to other workspaces
+  const getAvailableProjects = (excludeWorkspaceId?: number) => {
+    if (!projects) return [];
+    
+    const linkedProjectIds = workspaces
+      .filter(w => w.id !== excludeWorkspaceId && w.project_ref)
+      .map(w => w.project_ref);
+    
+    return projects.filter(project => !linkedProjectIds.includes(project.id));
+  };
+
   const checkConnection = async () => {
     try {
       const code = searchParams.get("code");
@@ -102,13 +127,68 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
   }, [isTokenExpired]);
 
   const handleWorkspaceSelect = (workspace: WorkspaceRow) => {
+    if (!workspace.project_ref) {
+      return;
+    }
     setCurrentWorkspace(workspace);
     onOpenChange(false);
   };
 
+  const handleLinkProject = async () => {
+    if (!linkingWorkspaceId || !selectedProjectId) return;
+
+    // Additional validation: check if project is already linked to another workspace
+    const linkedProjectIds = workspaces
+      .filter(w => w.id !== linkingWorkspaceId && w.project_ref)
+      .map(w => w.project_ref);
+    
+    if (linkedProjectIds.includes(selectedProjectId)) {
+      toast({
+        title: "Project already linked",
+        description: "This project is already linked to another workspace. Please select a different project.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLinking(true);
+      await updateWorkspace(linkingWorkspaceId, { project_ref: selectedProjectId });
+      await refreshWorkspaces();
+      
+      toast({
+        title: "Project linked",
+        description: "Workspace has been linked to the Supabase project",
+      });
+      
+      setLinkingWorkspaceId(null);
+      setSelectedProjectId("");
+    } catch (error) {
+      toast({
+        title: "Failed to link project",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  const handleCancelLink = () => {
+    setLinkingWorkspaceId(null);
+    setSelectedProjectId("");
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && !currentWorkspace && !isCreating) {
+      return;
+    }
+    onOpenChange(newOpen);
+  };
+
   if (isCreating) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Workspace</DialogTitle>
@@ -126,7 +206,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] min-h-[400px]">
         <DialogHeader>
           <DialogTitle>Your Workspaces</DialogTitle>
@@ -139,8 +219,9 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
           </AlertDescription>
         </Alert>
         {isCheckingConnection ? (
-          <div className="flex items-center justify-center py-6">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          <div className="flex items-center justify-center gap-2 py-6">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Checking connection...</span>
           </div>
         ) : !isConnected ? (
           <Alert variant="destructive" className="mb-4">
@@ -165,45 +246,150 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
           </Alert>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 overflow-y-auto">
-            {workspaces.map((workspace) => (
-              <Card
-                key={workspace.id}
-                className={cn(
-                  "cursor-pointer transition-colors hover:bg-accent/5 relative",
-                  workspace.id === currentWorkspace?.id && "border-primary"
-                )}
-                onClick={() => handleWorkspaceSelect(workspace)}
-              >
-                <CardHeader className="pb-12">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{workspace.name}</CardTitle>
-                    {workspace.id === currentWorkspace?.id && (
-                      <Check className="h-5 w-5 text-primary" />
+            {workspaces.map((workspace) => {
+              const hasProject = !!workspace.project_ref;
+              const isLinkingThis = linkingWorkspaceId === workspace.id;
+              
+              return (
+                <Card
+                  key={workspace.id}
+                  className={cn(
+                    "relative transition-colors",
+                    hasProject && !isLinkingThis && "cursor-pointer hover:bg-accent/5",
+                    workspace.id === currentWorkspace?.id && "border-primary",
+                    !hasProject && !isLinkingThis && "border-dashed opacity-75"
+                  )}
+                  onClick={() => hasProject && !isLinkingThis && handleWorkspaceSelect(workspace)}
+                >
+                  <CardHeader className="pb-12">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{workspace.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        {!hasProject && !isLinkingThis && (
+                          <AlertCircle className="h-4 w-4 text-amber-500" />
+                        )}
+                        {workspace.id === currentWorkspace?.id && hasProject && (
+                          <Check className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                    </div>
+                    <CardDescription>{workspace.description}</CardDescription>
+                    
+                    {!hasProject && !isLinkingThis && (
+                      <div className="mt-2">
+                        <p className="text-sm text-amber-600 mb-2">
+                          No project linked - workspace cannot be selected
+                        </p>
+                        {getAvailableProjects(workspace.id).length > 0 ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLinkingWorkspaceId(workspace.id);
+                            }}
+                            className="w-full"
+                          >
+                            <Link2 className="h-4 w-4 mr-2" />
+                            Link Project
+                          </Button>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            No available projects to link
+                          </p>
+                        )}
+                      </div>
                     )}
-                  </div>
-                  <CardDescription>{workspace.description}</CardDescription>
-                </CardHeader>
-                {projects && workspace.project_ref && (
-                  (() => {
-                    const project = projects.find((p) => p.id === workspace.project_ref);
-                    const isHealthy = project?.status === 'ACTIVE_HEALTHY';
-                    return (
-                      <div className="absolute bottom-4 right-4">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
-                          <span
-                            className={
-                              "inline-block w-2 h-2 rounded-full " +
-                              (isHealthy ? "bg-green-500" : "bg-red-500")
-                            }
-                          />
-                          {project?.name || 'Unknown'} {!isHealthy && `(${project?.status})`}
+                    
+                    {isLinkingThis && (
+                      <div className="mt-2 space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Select a Supabase project to link:
+                        </p>
+                        <Select
+                          value={selectedProjectId}
+                          onValueChange={setSelectedProjectId}
+                          disabled={getAvailableProjects(workspace.id).length === 0}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={
+                              getAvailableProjects(workspace.id).length === 0
+                                ? "No available projects"
+                                : "Select project..."
+                            } />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableProjects(workspace.id).map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name} ({project.region})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {getAvailableProjects(workspace.id).length === 0 && (
+                          <p className="text-sm text-amber-600">
+                            All available projects are already linked to other workspaces.
+                          </p>
+                        )}
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLinkProject();
+                            }}
+                            disabled={!selectedProjectId || isLinking || getAvailableProjects(workspace.id).length === 0}
+                            className="flex-1"
+                          >
+                            {isLinking ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              <Link2 className="h-4 w-4 mr-2" />
+                            )}
+                            Link
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelLink();
+                            }}
+                            disabled={isLinking}
+                          >
+                            Cancel
+                          </Button>
                         </div>
                       </div>
-                    );
-                  })()
-                )}
-              </Card>
-            ))}
+                    )}
+                  </CardHeader>
+                  
+                  {projects &&
+                    workspace.project_ref &&
+                    !isLinkingThis &&
+                    (() => {
+                      const project = projects.find(
+                        (p) => p.id === workspace.project_ref
+                      );
+                      const isHealthy = project?.status === "ACTIVE_HEALTHY";
+                      return (
+                        <div className="absolute bottom-4 right-4">
+                          <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
+                            <span
+                              className={
+                                "inline-block w-2 h-2 rounded-full " +
+                                (isHealthy ? "bg-green-500" : "bg-red-500")
+                              }
+                            />
+                            {project?.name || "Unknown"}{" "}
+                            {!isHealthy && `(${project?.status})`}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                </Card>
+              );
+            })}
             <Card
               className="border-dashed cursor-pointer hover:bg-accent/5 w-full aspect-[16/9]"
               onClick={() => setIsCreating(true)}

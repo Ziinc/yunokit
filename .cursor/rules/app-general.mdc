@@ -24,3 +24,9 @@ Use the [App.tsx](mdc:app/src/App.tsx) router logic to determine the correct pat
 
 - Tests should always be written under the `app/tests` directory. 
 - When working on files under `app/src/lib/**`, always ensure that there are appropriate tests written.
+
+## UI Components & Radix UI
+- Use the consolidated `radix-ui` package for all Radix UI components instead of individual `@radix-ui/react-*` packages.
+- Import components using destructured imports: `import { Dialog, DropdownMenu } from "radix-ui"`.
+- For Slot usage in components, use `Slot.Slot` from the radix-ui package.
+- When creating new UI components, follow the existing pattern in `app/src/components/ui/` using the consolidated package.
