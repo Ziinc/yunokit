@@ -75,7 +75,6 @@ let comments: Comment[] = [...mockComments];
 export const initializeStorage = async (): Promise<void> => {
   if (comments.length === 0) {
     comments = [...mockComments];
-    console.log("Initialized comments storage with mock comments");
   }
 };
 

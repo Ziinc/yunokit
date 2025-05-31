@@ -86,6 +86,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
   open,
   onOpenChange,
 }) => {
+  const [isExchangingCode, setIsExchangingCode] = React.useState(false);
   const [searchParams] = useSearchParams();
   const {
     workspaces,
@@ -112,7 +113,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
     revalidateOnReconnect: false,
   });
   const isConnected = resp?.result;
-  const { data: isTokenExpired = true } = useSWR(
+  const { data: isTokenExpired, isLoading: isCheckingTokenExpired } = useSWR(
     isConnected ? "valid_access_token" : null,
     checkTokenNeedsRefresh,
     {
@@ -123,8 +124,6 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
     }
   );
 
-  console.log("isConnected", isConnected);
-  console.log("isTokenExpired", isTokenExpired);
   const { data: projects } = useSWR(
     isConnected ? "projects" : null,
     listProjects,
@@ -135,7 +134,6 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
       revalidateOnReconnect: false,
     }
   );
-  console.log("projects", projects);
 
   // Filter out projects that are already linked to other workspaces
   const getAvailableProjects = (excludeWorkspaceId?: number) => {
@@ -153,8 +151,9 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
       const code = searchParams.get("code");
       const state = searchParams.get("state");
       if (code) {
-        console.log("code", code);
+        setIsExchangingCode(true);
         await exchangeCodeForToken(code, state);
+        setIsExchangingCode(false);
         await refreshSbConnection();
         return;
       }
@@ -168,7 +167,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
   }, [searchParams]);
 
   useEffect(() => {
-    if (isTokenExpired) {
+    if (isTokenExpired === true && isConnected) {
       refreshAccessToken();
     }
   }, [isTokenExpired]);
@@ -277,12 +276,12 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
             </AlertDescription>
           </Alert>
         )}
-        {isCheckingConnection ? (
+        {isCheckingConnection || isCheckingTokenExpired || isExchangingCode ? (
           <div className="flex items-center justify-center gap-2 py-6">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>Checking connection...</span>
           </div>
-        ) : !isConnected ? (
+        ) : isConnected === false ? (
           <div className="flex flex-col items-center space-y-4 py-8">
             <Alert variant="destructive" className="mb-4">
               <AlertDescription className="flex items-center gap-2">

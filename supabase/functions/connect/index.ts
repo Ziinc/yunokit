@@ -110,10 +110,22 @@ app.get("/connect/oauth2", async (req, res) => {
 // });
 
 app.post("/connect/oauth2/callback", async (req, res) => {
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    throw new Error("No authorization header");
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token);
+
   // Get code verifier from user_data table
   const { data: userData, error: fetchError } = await supabase
     .from("user_data")
     .select("code_verifier")
+    .eq("user_id", user.id)
     .single();
 
   if (fetchError || !userData?.code_verifier) {
@@ -142,31 +154,14 @@ app.post("/connect/oauth2/callback", async (req, res) => {
   })
     .then((res) => res.json())
     .catch(console.error);
-  console.log("tokens", tokens);
-
+  
   if (!tokens.access_token) {
     return res.status(401).set(corsHeaders).send(tokens.message);
   }
 
-  // Get user ID from auth header
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).set(corsHeaders).send("No authorization header");
-  }
-
-  const token = authHeader.replace("Bearer ", "");
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser(token);
-
-  if (userError || !user) {
-    return res.status(401).set(corsHeaders).send("Invalid token");
-  }
-
   // Store tokens in supabase_connections
   const expiresAt = Date.now() + tokens.expires_in;
-  console.log("expiresAt", expiresAt)
+  
   await supabase.from("supabase_connections").upsert(
     {
       user_id: user.id,
@@ -185,7 +180,7 @@ app.post("/connect/oauth2/callback", async (req, res) => {
   });
   const projects = await supaManagementClient.getProjects();
 
-  console.log("projects", projects);
+  
   res.set(corsHeaders).send(projects);
 });
 
@@ -281,5 +276,5 @@ app.post("/connect/refresh", async (req, res) => {
 });
 
 app.listen(8000, () => {
-  console.log("Server running on port 8000");
+  // Server started
 });

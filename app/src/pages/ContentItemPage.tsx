@@ -149,7 +149,10 @@ const ContentItemPage: React.FC = () => {
       // In a real app, we would push this to the database
     }
     
-    console.log("Saved content:", content, "with status:", newStatus);
+    toast({
+      title: "Content saved",
+      description: "The content has been saved successfully."
+    });
   };
   
   const handleAddComment = () => {

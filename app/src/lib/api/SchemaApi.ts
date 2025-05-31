@@ -26,7 +26,6 @@ export class SchemaApi {
   static async initializeStorage(): Promise<void> {
     if (schemas.length === 0) {
       schemas = [...exampleSchemas];
-      console.log("Initialized schema storage with example schemas");
     }
   }
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -642,7 +641,6 @@ const subscribeToChat = (conversationId, callback) => {
 
 // Example usage:
 const subscription = subscribeToChat('conversation-123', (newMessage) => {
-  console.log('New message received:', newMessage)
   // Update your UI with the new message
 })
 
@@ -670,7 +668,6 @@ const subscribeToChat = (conversationId, callback) => {
 
 // Example usage:
 const subscription = subscribeToChat('conversation-123', (newMessage) => {
-  console.log('New message received:', newMessage)
   // Update your UI with the new message
 })
 

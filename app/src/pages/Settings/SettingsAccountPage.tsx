@@ -230,8 +230,6 @@ const SettingsAccountPage: React.FC = () => {
     }
   };
 
-  console.log(user);
-
   // If still loading or no user data, show loading state
   if (!user) {
     return (

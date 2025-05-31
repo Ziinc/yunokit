@@ -42,9 +42,8 @@ export const exchangeCodeForToken = async (
 
 export const checkTokenNeedsRefresh = async (): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc("check_user_token_needs_refresh");
+    const { data, error } = await supabase.rpc("check_token_needs_refresh");
     
-    console.log("data", data);
     if (error) {
       console.error("Error checking token refresh needs:", error);
       return false;
@@ -132,13 +131,12 @@ export const listProjects = async (): Promise<SupabaseProject[]> => {
   const response = await supabase.rpc("sb_mgmt_api", {
     endpoint: "projects",
   });
-  console.log("response", response);
   if (response.error) {
     throw new Error(response.error.message);
-  } else if (response.data?.error) {
+  } else if (response.data && typeof response.data === 'object' && 'error' in response.data) {
     throw new Error(response.data.error as string);
   }
-  return response.data.result as SupabaseProject[];
+  return (response.data as { result: SupabaseProject[] }).result;
 };
 
 export const getProjectDetails = async (): Promise<void> => {
@@ -146,24 +144,11 @@ export const getProjectDetails = async (): Promise<void> => {
 };
 
 export const disconnectSupabaseAccount = async (): Promise<void> => {
-  // Delete the supabase_connection record for the current user
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
-  
-  const { error } = await supabase
-    .from("supabase_connections")
-    .delete()
-    .eq("user_id", user.id);
+  const { error } = await supabase.rpc("delete_supabase_connection");
     
   if (error) {
     throw new Error(`Failed to disconnect Supabase account: ${error.message}`);
   }
-  
-  // Remove the connection status from localStorage
-  localStorage.removeItem("supabase_connected");
 };
 
 export const removeProjectReference = async (workspaceId: number): Promise<void> => {

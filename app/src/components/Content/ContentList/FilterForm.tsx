@@ -107,13 +107,6 @@ export const FilterForm: React.FC<FilterFormProps> = ({
         page: initialValues.page || 1,
         perPage: initialValues.perPage || 10
       });
-      
-      console.log("Form reset with new values from URL:", {
-        status: initialValues.status || "all",
-        schemaId: initialValues.schemaId || "all",
-        author: initialValues.author || "all",
-        search: initialValues.search || ""
-      });
     }
   }, [initialValues, form]);
 

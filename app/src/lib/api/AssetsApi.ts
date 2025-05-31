@@ -77,7 +77,6 @@ export class AssetsApi {
   static async initializeStorage(): Promise<void> {
     if (assets.length === 0) {
       assets = [...mockAssets];
-      console.log("Initialized assets storage with mock assets");
     }
   }
 

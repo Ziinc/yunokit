@@ -48,6 +48,7 @@ import { Input } from "@/components/ui/input";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import useSWR from "swr";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 const SettingsSupabasePage: React.FC = () => {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
@@ -57,6 +58,7 @@ const SettingsSupabasePage: React.FC = () => {
   const { toast } = useToast();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { setCurrentWorkspace } = useWorkspace();
 
   // Use SWR for connection status
   const {
@@ -189,6 +191,9 @@ const SettingsSupabasePage: React.FC = () => {
 
       await refreshConnection();
       setShowDisconnectDialog(false);
+      
+      // Clear current workspace to trigger workspace switcher modal
+      setCurrentWorkspace(null);
     } catch (error) {
       console.error("Disconnection error:", error);
       toast({

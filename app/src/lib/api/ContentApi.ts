@@ -35,7 +35,6 @@ const convertSupabaseSchema = (schema: ContentSchemaRow): ContentSchema => ({
 export const initializeStorage = async (): Promise<void> => {
   if (contentItems.length === 0) {
     contentItems = [...mockContentItems];
-    console.log("Initialized content storage with mock content items");
   }
 };
 

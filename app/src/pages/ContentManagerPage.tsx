@@ -233,8 +233,6 @@ const ContentManagerPage: React.FC = () => {
     const sort = queryParams.get("sort") || "title";
     setSortField(sort);
     
-    console.log("Setting filter values from URL:", initialFilters);
-    
     // Update state
     setFilterValues(initialFilters);
     setCurrentPage(initialFilters.page);

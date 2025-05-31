@@ -25,7 +25,6 @@ export class SystemAuthorApi {
   static async initializeStorage(): Promise<void> {
     if (authors.length === 0) {
       authors = [...mockSystemAuthors];
-      console.log("Initialized system authors storage with mock data");
     }
   }
 

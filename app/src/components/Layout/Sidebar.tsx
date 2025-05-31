@@ -12,6 +12,7 @@ import {
   Loader2,
   Building2,
   Settings,
+  ChevronsUpDown,
 } from "lucide-react";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
@@ -68,12 +69,12 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                 <span>Loading...</span>
               </>
             ) : (
-              <span className="truncate">
+              <span className="truncate text-muted-foreground">
                 {currentWorkspace?.name || "Select workspace"}
               </span>
             )}
           </div>
-          <Plus className="h-4 w-4" />
+          <ChevronsUpDown className="h-4 w-4" />
         </Button>
       </div>
 

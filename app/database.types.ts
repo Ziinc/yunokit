@@ -137,6 +137,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      delete_supabase_connection: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sb_mgmt_api: {
         Args: {
           endpoint: string
