@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, Star, StarOff, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { CreateWorkspaceForm } from "@/components/Workspace/CreateWorkspaceForm";
+import { WorkspaceDeleteDialog } from "@/components/Workspace/WorkspaceDeleteDialog";
 import { useToast } from "@/hooks/use-toast";
-import { getWorkspaceLimit, deleteWorkspace } from "@/lib/api/WorkspaceApi";
+import { getWorkspaceLimit, deleteWorkspace, WorkspaceRow } from "@/lib/api/WorkspaceApi";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 
@@ -14,6 +15,15 @@ const SettingsWorkspacesPage: React.FC = () => {
   const { workspaces, isLoading, refreshWorkspaces, currentWorkspace, setCurrentWorkspace } = useWorkspace();
   const { toast } = useToast();
   const [workspaceLimit, setWorkspaceLimit] = useState<{ currentCount: number; maxWorkspaces: number; canCreate: boolean } | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    workspace: WorkspaceRow | null;
+    isDeleting: boolean;
+  }>({
+    open: false,
+    workspace: null,
+    isDeleting: false,
+  });
 
   useEffect(() => {
     const fetchWorkspaceLimit = async () => {
@@ -43,6 +53,50 @@ const SettingsWorkspacesPage: React.FC = () => {
         description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleDeleteClick = (workspace: WorkspaceRow) => {
+    setDeleteDialog({
+      open: true,
+      workspace,
+      isDeleting: false,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog.workspace) return;
+
+    setDeleteDialog(prev => ({ ...prev, isDeleting: true }));
+
+    try {
+      await deleteWorkspace(deleteDialog.workspace.id);
+      await refreshWorkspaces();
+
+      // If deleting current workspace, clear it
+      if (deleteDialog.workspace.id === currentWorkspace?.id) {
+        setCurrentWorkspace(null);
+      }
+
+      toast({
+        title: "Workspace deleted",
+        description: "The workspace has been deleted successfully"
+      });
+
+      setDeleteDialog({
+        open: false,
+        workspace: null,
+        isDeleting: false,
+      });
+    } catch (error) {
+      console.error("Delete workspace error:", error);
+      toast({
+        title: "Failed to delete workspace",
+        description: error instanceof Error ? error.message : "Please try again later",
+        variant: "destructive"
+      });
+      
+      setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
     }
   };
 
@@ -138,7 +192,7 @@ const SettingsWorkspacesPage: React.FC = () => {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={() => handleDeleteWorkspace(workspace.id)}
+                        onClick={() => handleDeleteClick(workspace)}
                         disabled={workspace.id === currentWorkspace?.id}
                         title={workspace.id === currentWorkspace?.id ? "Cannot delete default workspace" : "Delete workspace"}
                       >
@@ -158,6 +212,15 @@ const SettingsWorkspacesPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      {deleteDialog.open && (
+        <WorkspaceDeleteDialog
+          open={deleteDialog.open}
+          onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
+          workspace={deleteDialog.workspace}
+          onConfirm={handleConfirmDelete}
+          isDeleting={deleteDialog.isDeleting}
+        />
+      )}
     </TabsContent>
   );
 };
