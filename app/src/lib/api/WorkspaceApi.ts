@@ -10,7 +10,7 @@ type WorkspaceUpdate = Omit<Database['public']['Tables']['workspaces']['Update']
 
 const WORKSPACE_LIMITS = {
   free: 1,
-  pro: 3,
+  pro: 2, // Pro plan includes 2 workspaces
   enterprise: 10
 };
 
@@ -35,20 +35,30 @@ export const getWorkspaceById = async (id: number): Promise<WorkspaceRow | null>
   return data;
 };
 
-export const getCurrentUserPlan = async (): Promise<'free' | 'pro'> => {
-  // TODO: Replace with actual API call to get user's plan
+export const getCurrentUserPlan = async (): Promise<'free' | 'pro' | 'enterprise'> => {
+  // During alpha phase, everyone gets Pro plan at no cost
   return 'pro';
 };
 
-export const getWorkspaceLimit = async (): Promise<{ currentCount: number; maxWorkspaces: number; canCreate: boolean }> => {
+export const getWorkspaceLimit = async (): Promise<{ 
+  currentCount: number; 
+  includedWorkspaces: number; 
+  additionalWorkspaces: number;
+  planName: string;
+  isAlphaPhase: boolean;
+}> => {
   const workspaces = await getWorkspaces();
   const currentPlan = await getCurrentUserPlan();
-  const maxWorkspaces = WORKSPACE_LIMITS[currentPlan];
+  const includedWorkspaces = WORKSPACE_LIMITS[currentPlan];
+  const currentCount = workspaces.length;
+  const additionalWorkspaces = Math.max(0, currentCount - includedWorkspaces);
   
   return {
-    currentCount: workspaces.length,
-    maxWorkspaces,
-    canCreate: workspaces.length < maxWorkspaces
+    currentCount,
+    includedWorkspaces,
+    additionalWorkspaces,
+    planName: currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1),
+    isAlphaPhase: true // During alpha phase
   };
 };
 

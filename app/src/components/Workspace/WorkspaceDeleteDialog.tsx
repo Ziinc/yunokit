@@ -30,7 +30,7 @@ export const WorkspaceDeleteDialog: React.FC<WorkspaceDeleteDialogProps> = ({
   isDeleting = false,
 }) => {
   const [confirmText, setConfirmText] = useState("");
-  const expectedText = workspace?.name || "";
+  const expectedText = "delete";
   const isConfirmValid = confirmText === expectedText;
 
   const handleConfirm = async () => {

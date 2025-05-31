@@ -7,7 +7,6 @@ import SettingsWorkspacesPage from '../../src/pages/Settings/SettingsWorkspacesP
 // Mock dependencies
 vi.mock('../../src/lib/contexts/WorkspaceContext');
 vi.mock('../../src/lib/api/WorkspaceApi');
-vi.mock('../../src/hooks/use-toast');
 
 const mockWorkspaces = [
   {
@@ -78,23 +77,13 @@ describe('SettingsWorkspacesPage', () => {
     });
   });
 
-  it('should show delete button for non-current workspaces', async () => {
+  it('should show delete button for all workspaces', async () => {
     renderPage();
 
     await waitFor(() => {
-      // Find all delete buttons
-      const deleteButtons = screen.getAllByTitle('Delete workspace');
-      expect(deleteButtons.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('should disable delete button for current workspace', async () => {
-    renderPage();
-
-    await waitFor(() => {
-      // The delete button for current workspace should be disabled
-      const deleteButtons = screen.getAllByTitle('Cannot delete default workspace');
-      expect(deleteButtons.length).toBe(1);
+      // Find all delete buttons - should be one for each workspace
+      const deleteButtons = screen.getAllByText('Delete Workspace');
+      expect(deleteButtons.length).toBe(mockWorkspaces.length);
     });
   });
 
@@ -102,9 +91,9 @@ describe('SettingsWorkspacesPage', () => {
     renderPage();
 
     await waitFor(() => {
-      // Find delete button for secondary workspace (not current)
-      const deleteButton = screen.getByTitle('Delete workspace');
-      fireEvent.click(deleteButton);
+      // Find first delete button
+      const deleteButtons = screen.getAllByText('Delete Workspace');
+      fireEvent.click(deleteButtons[0]);
     });
 
     // Should show delete confirmation dialog
@@ -117,24 +106,24 @@ describe('SettingsWorkspacesPage', () => {
     renderPage();
 
     await waitFor(() => {
-      // Click delete button for secondary workspace
-      const deleteButton = screen.getByTitle('Delete workspace');
-      fireEvent.click(deleteButton);
+      // Click first delete button
+      const deleteButtons = screen.getAllByText('Delete Workspace');
+      fireEvent.click(deleteButtons[0]);
     });
 
     // Should show confirmation dialog
     expect(screen.getByText('Delete Workspace')).toBeTruthy();
 
-    // Type workspace name to confirm
-    const input = screen.getByPlaceholderText('Secondary Workspace');
-    fireEvent.change(input, { target: { value: 'Secondary Workspace' } });
+    // Type "delete" to confirm
+    const input = screen.getByPlaceholderText('delete');
+    fireEvent.change(input, { target: { value: 'delete' } });
 
     // Click delete button in dialog
     const confirmButton = screen.getByText('Delete Workspace');
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockDeleteWorkspace).toHaveBeenCalledWith(2);
+      expect(mockDeleteWorkspace).toHaveBeenCalledWith(1);
       expect(mockRefreshWorkspaces).toHaveBeenCalled();
       expect(mockToast).toHaveBeenCalledWith({
         title: 'Workspace deleted',
@@ -149,14 +138,14 @@ describe('SettingsWorkspacesPage', () => {
     renderPage();
 
     await waitFor(() => {
-      // Click delete button
-      const deleteButton = screen.getByTitle('Delete workspace');
-      fireEvent.click(deleteButton);
+      // Click first delete button
+      const deleteButtons = screen.getAllByText('Delete Workspace');
+      fireEvent.click(deleteButtons[0]);
     });
 
-    // Type workspace name and confirm
-    const input = screen.getByPlaceholderText('Secondary Workspace');
-    fireEvent.change(input, { target: { value: 'Secondary Workspace' } });
+    // Type "delete" and confirm
+    const input = screen.getByPlaceholderText('delete');
+    fireEvent.change(input, { target: { value: 'delete' } });
 
     const confirmButton = screen.getByText('Delete Workspace');
     fireEvent.click(confirmButton);
@@ -171,36 +160,26 @@ describe('SettingsWorkspacesPage', () => {
   });
 
   it('should clear current workspace when deleting current workspace', async () => {
-    // Mock scenario where user tries to delete current workspace
-    // (though button should be disabled, test the logic)
-    const { useWorkspace } = require('../../src/lib/contexts/WorkspaceContext');
-    useWorkspace.mockReturnValue({
-      workspaces: mockWorkspaces,
-      currentWorkspace: mockWorkspaces[1], // Secondary is current
-      isLoading: false,
-      refreshWorkspaces: mockRefreshWorkspaces,
-      setCurrentWorkspace: mockSetCurrentWorkspace,
-    });
-
     mockDeleteWorkspace.mockResolvedValueOnce(undefined);
     renderPage();
 
     await waitFor(() => {
-      // Now primary workspace should have delete button
-      const deleteButton = screen.getByTitle('Delete workspace');
-      fireEvent.click(deleteButton);
+      // Click delete button for current workspace (first one)
+      const deleteButtons = screen.getAllByText('Delete Workspace');
+      fireEvent.click(deleteButtons[0]);
     });
 
     // Confirm deletion
-    const input = screen.getByPlaceholderText('Primary Workspace');
-    fireEvent.change(input, { target: { value: 'Primary Workspace' } });
+    const input = screen.getByPlaceholderText('delete');
+    fireEvent.change(input, { target: { value: 'delete' } });
 
     const confirmButton = screen.getByText('Delete Workspace');
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(mockDeleteWorkspace).toHaveBeenCalledWith(1);
-      // Should not clear current workspace since we're deleting a different one
+      // Should clear current workspace since we're deleting it
+      expect(mockSetCurrentWorkspace).toHaveBeenCalledWith(null);
     });
   });
 

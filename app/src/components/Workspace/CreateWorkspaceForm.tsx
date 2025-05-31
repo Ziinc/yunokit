@@ -98,12 +98,9 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
 
       await refreshWorkspaces();
 
-      // Automatically switch to the newly created workspace
-      setCurrentWorkspace(newWorkspace);
-
       toast({
         title: "Workspace created",
-        description: "Your new workspace has been created and is now active",
+        description: "Your new workspace has been created successfully",
       });
 
       onSuccess?.();
