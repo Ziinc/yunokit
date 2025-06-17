@@ -35,6 +35,7 @@ import {
   exchangeCodeForToken,
   checkSupabaseConnection,
   listProjects,
+  checkApiKey,
 } from "@/lib/supabase";
 import useSWR from "swr";
 import { WorkspaceRow, updateWorkspace } from "@/lib/api/WorkspaceApi";
@@ -177,6 +178,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
       return;
     }
     setCurrentWorkspace(workspace);
+    checkApiKey(workspace.id);
     onOpenChange(false);
   };
 

@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 export const ContentApi = {
-  getContentItems: vi.fn().mockResolvedValue([]),
+  listContentItems: vi.fn().mockResolvedValue([]),
   getSchemas: vi.fn().mockResolvedValue([]),
   createContentItem: vi.fn().mockResolvedValue({}),
   updateContentItem: vi.fn().mockResolvedValue({}),

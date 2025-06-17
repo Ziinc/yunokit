@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { getContentItems, getSchemas, saveContentItem } from '@/lib/api/ContentApi';
+import { listContentItems, saveContentItem } from '@/lib/api/ContentApi';
 import { ContentItem } from "@/lib/contentSchema";
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
 import { toast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isAuthenticated } from "@/lib/api/auth";
+import { dataSbClient } from "@/lib/supabase";
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<"ecommerce" | "blogging" | "tutorials" | null>(null);
@@ -41,10 +42,10 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
       try{
         setIsLoading(true);
-        const items = await getContentItems(currentWorkspace?.id);
-        const schemaData = await getSchemas(currentWorkspace?.id);
+        const {data: items} = await listContentItems(currentWorkspace?.id);
+        // const schemaData = await getSchemas(currentWorkspace?.id);
         setContentItems(items);
-        setSchemas(schemaData);
+        // setSchemas(schemaData);
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {

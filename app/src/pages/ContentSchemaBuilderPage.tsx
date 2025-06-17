@@ -4,7 +4,7 @@ import { Plus, Search, Files, File, Layers, Loader2, Archive, Trash2, Calendar }
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import { ContentSchema, ContentItem } from "@/lib/contentSchema";
-import { SchemaApi } from "@/lib/api";
+import { listSchemas,  saveSchema, deleteSchema } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,6 @@ import { DocsButton } from "@/components/ui/DocsButton";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { DataTable, TableColumn } from "@/components/DataTable";
-import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/utils/formatDate";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
@@ -176,25 +175,26 @@ const ContentSchemaBuilderPage: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { currentWorkspace } = useWorkspace();
 
+  const loadSchemas = async () => {
+    try {
+      setIsLoading(true);
+      const data = await listSchemas(currentWorkspace.id!);
+      setSchemas(data);
+    } catch (error) {
+      console.error("Error loading schemas:", error);
+      toast({
+        title: "Error loading schemas",
+        description: "There was a problem loading your content schemas.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
   // Load schemas from API
   useEffect(() => {
-    const loadSchemas = async () => {
-      try {
-        setIsLoading(true);
-        const data = await SchemaApi.getSchemas(currentWorkspace?.id);
-        setSchemas(data);
-      } catch (error) {
-        console.error("Error loading schemas:", error);
-        toast({
-          title: "Error loading schemas",
-          description: "There was a problem loading your content schemas.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (currentWorkspace) {
       loadSchemas();
     }
@@ -251,7 +251,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const handleCreateSchema = async (schema: ContentSchema) => {
     try {
-      const savedSchema = await SchemaApi.saveSchema(schema);
+      const savedSchema = await saveSchema(schema);
       setSchemas([...schemas, savedSchema]);
       setIsCreating(false);
       toast({
@@ -270,7 +270,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const handleUpdateSchema = async (updatedSchema: ContentSchema) => {
     try {
-      const savedSchema = await SchemaApi.saveSchema(updatedSchema);
+      const savedSchema = await saveSchema(updatedSchema);
       setSchemas(schemas.map(schema => 
         schema.id === savedSchema.id ? savedSchema : schema
       ));
@@ -290,8 +290,8 @@ const ContentSchemaBuilderPage: React.FC = () => {
   };
 
   const handleDeleteSchema = async (schemaId: string) => {
-    try {
-      await SchemaApi.deleteSchema(schemaId);
+    try { 
+      await deleteSchema(schemaId);
       setSchemas(schemas.filter(schema => schema.id !== schemaId));
       toast({
         title: "Schema deleted",
@@ -312,7 +312,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
       const updatedSchemas = await Promise.all(
         selectedSchemas.map(async (schema) => {
           const updated = { ...schema, isArchived: true };
-          return await SchemaApi.saveSchema(updated);
+          return await saveSchema(updated);
         })
       );
       
@@ -339,7 +339,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const handleDeleteSchemas = async () => {
     try {
-      await Promise.all(selectedSchemas.map(schema => SchemaApi.deleteSchema(schema.id)));
+      await Promise.all(selectedSchemas.map(schema => deleteSchema(schema.id)));
       setSchemas(schemas.filter(schema => !selectedSchemas.find(s => s.id === schema.id)));
       setSelectedSchemas([]);
       setShowDeleteDialog(false);

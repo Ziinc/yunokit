@@ -20,8 +20,8 @@ import {
   X,
   Pencil
 } from "lucide-react";
-import { ContentSchema, ContentField, ContentFieldType } from "@/lib/contentSchema";
-import { SchemaApi } from "@/lib/api";
+import { ContentSchema, ContentField } from "@/lib/contentSchema";
+import { listSchemas } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 import {
   DragDropContext,
@@ -66,7 +66,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { getContentItemsBySchema, saveContentItem } from '@/lib/api/ContentApi';
+import { listContentItemsBySchema, saveContentItem } from '@/lib/api/ContentApi';
 import { ContentItem } from "@/lib/contentSchema";
 
 // Field type definitions with their icons and labels
@@ -124,7 +124,7 @@ const SchemaEditorPage: React.FC = () => {
   useEffect(() => {
     const loadSchemas = async () => {
       try {
-        const schemas = await SchemaApi.getSchemas();
+        const schemas = await listSchemas();
         setAvailableSchemas(schemas.filter(s => s.id !== schemaId));
       } catch (error) {
         console.error("Error loading schemas:", error);
@@ -140,7 +140,7 @@ const SchemaEditorPage: React.FC = () => {
       
       try {
         setIsLoading(true);
-        const schemas = await SchemaApi.getSchemas();
+        const schemas = await listSchemas();
         const schema = schemas.find(s => s.id === schemaId);
         if (schema) {
           setSchema(schema);
@@ -166,7 +166,7 @@ const SchemaEditorPage: React.FC = () => {
       if (!schema) return;
       
       try {
-        const items = await getContentItemsBySchema(schema.id);
+        const items = await listContentItemsBySchema(schema.id);
         if (schema.isCollection) {
           setContentCount(items.length);
         } else {

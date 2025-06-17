@@ -19,6 +19,7 @@ diff:
 
 types:
 	supabase gen types typescript --local > app/database.types.ts
+	supabase gen types typescript --local > supabase/functions/_shared/database.types.ts
 
 deploy:
 	@echo 'Deploying DB migrations now'

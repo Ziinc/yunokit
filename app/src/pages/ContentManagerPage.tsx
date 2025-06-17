@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSchema";
-import { getContentItems, getSchemas, deleteContentItem, saveContentItem } from '@/lib/api/ContentApi';
+import { listContentItems, deleteContentItem, saveContentItem } from '@/lib/api/ContentApi';
+import { listSchemas } from '@/lib/api/SchemaApi';
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
 import { DataTable, TableColumn } from "@/components/DataTable";
@@ -155,7 +156,7 @@ const ContentManagerPage: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
-  const [allItems, setAllItems] = useState<ContentItem[]>([]);
+  const [allItems, setAllItems] = useState<ContentItemRow[]>([]);
   const [items, setItems] = useState<ContentItem[]>([]);
   const [schemas, setSchemas] = useState<ContentSchema[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,8 +186,9 @@ const ContentManagerPage: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const contentItems = await getContentItems(currentWorkspace?.id);
-        const schemaData = await getSchemas(currentWorkspace?.id);
+        const contentItems = await listContentItems(currentWorkspace?.id);
+        
+        const schemaData = await listSchemas(currentWorkspace?.id);
         setAllItems(contentItems);
         setSchemas(schemaData);
       } catch (error) {

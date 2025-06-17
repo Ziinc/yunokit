@@ -48,7 +48,7 @@ describe('ContentManagerPage', () => {
     }));
 
     // Setup mock responses
-    (ContentApi.getContentItems as any).mockResolvedValue(mockContentItems);
+    (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
     (ContentApi.getSchemas as any).mockResolvedValue(mockSchemas);
   });
 
@@ -184,7 +184,7 @@ describe('ContentManagerPage - Selection Actions', () => {
     vi.clearAllMocks();
     
     // Setup mock responses
-    (ContentApi.getContentItems as any).mockResolvedValue(mockContentItems);
+    (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
     (ContentApi.getSchemas as any).mockResolvedValue(mockSchemas);
   });
   

@@ -1,4 +1,4 @@
-import { getSchemas, getContentItems, saveSchemas, saveContentItems } from '@/lib/api/ContentApi';
+import { listContentItems, saveContentItems } from '@/lib/api/ContentApi';
 import { 
   generateEcommerceTemplate, 
   generateBloggingTemplate, 
@@ -35,22 +35,22 @@ export class TemplateService {
     }
     
     // Get current schemas and content to merge with new ones
-    const currentSchemas = await getSchemas();
-    const currentContent = await getContentItems();
+    // const currentSchemas = await getSchemas();
+    // const currentContent = await listContentItems();
     
-    // Create unique IDs map to avoid conflicts
-    const uniqueSchemaIds = new Set(currentSchemas.map(schema => schema.id));
-    templateData.schemas.forEach(schema => {
-      if (uniqueSchemaIds.has(schema.id)) {
-        // Add a random suffix to avoid collisions
-        schema.id = `${schema.id}-${Math.random().toString(36).substring(2, 7)}`;
-      }
-      uniqueSchemaIds.add(schema.id);
-    });
+    // // Create unique IDs map to avoid conflicts
+    // const uniqueSchemaIds = new Set(currentSchemas.map(schema => schema.id));
+    // templateData.schemas.forEach(schema => {
+    //   if (uniqueSchemaIds.has(schema.id)) {
+    //     // Add a random suffix to avoid collisions
+    //     schema.id = `${schema.id}-${Math.random().toString(36).substring(2, 7)}`;
+    //   }
+    //   uniqueSchemaIds.add(schema.id);
+    // });
     
-    // Save all schemas and content items
-    await saveSchemas([...currentSchemas, ...templateData.schemas]);
-    await saveContentItems([...currentContent, ...templateData.contentItems]);
+    // // Save all schemas and content items
+    // await saveSchemas([ ...templateData.schemas]);
+    // await saveContentItems([...currentContent, ...templateData.contentItems]);
   }
   
   /**

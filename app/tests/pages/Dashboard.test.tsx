@@ -76,7 +76,7 @@ describe("Dashboard", () => {
 
   describe("Empty States", () => {
     beforeEach(() => {
-      (ContentApi.getContentItems as any).mockResolvedValue([]);
+      (ContentApi.listContentItems as any).mockResolvedValue([]);
     });
 
     test("renders empty state for Last Edited widget", async () => {
@@ -116,7 +116,7 @@ describe("Dashboard", () => {
 
   describe("Content Rendering", () => {
     beforeEach(() => {
-      (ContentApi.getContentItems as any).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
     });
 
     test("renders content items in Last Edited widget", async () => {
@@ -183,7 +183,7 @@ describe("Dashboard", () => {
 
   describe("View More Navigation", () => {
     beforeEach(() => {
-      (ContentApi.getContentItems as any).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
     });
 
     test("navigates to correct route when clicking View More in Last Edited widget", async () => {

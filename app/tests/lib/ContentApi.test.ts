@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { initializeStorage, getContentItems, getContentItemById, saveContentItem, deleteContentItem } from '../../src/lib/api/ContentApi';
+import { initializeStorage, listContentItems, getContentItemById, saveContentItem, deleteContentItem } from '../../src/lib/api/ContentApi';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -61,16 +61,16 @@ describe('ContentApi', () => {
     });
   });
 
-  describe('getContentItems', () => {
+  describe('listContentItems', () => {
     it('should return empty array if no content items exist', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(null);
-      const result = await getContentItems();
+      const result = await listContentItems();
       expect(result).toEqual([]);
     });
 
     it('should return content items from storage', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
-      const result = await getContentItems();
+      const result = await listContentItems();
       expect(result).toEqual([testItem]);
     });
   });

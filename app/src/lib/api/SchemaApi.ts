@@ -1,152 +1,136 @@
 import { ContentSchema, ContentField } from "../contentSchema";
 import { contentSchemas as exampleSchemas } from "../mocks";
 import { supabase } from "../supabase";
-import type { Database } from "../supabase";
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from "../../../database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type DbClient = SupabaseClient<Database>;
-type ContentSchemaRow = Database['public']['Tables']['content_schemas']['Row'];
+export type ContentSchemaRow = Database["supacontent"]["Tables"]["schemas"]["Row"];
 
-// In-memory storage
-let schemas: ContentSchema[] = [...exampleSchemas];
-
-// Helper to convert Supabase schema to our ContentSchema type
-const convertSupabaseSchema = (schema: ContentSchemaRow): ContentSchema => ({
-  id: schema.id,
-  name: schema.name,
-  fields: schema.fields,
-  type: schema.type as 'collection' | 'single'
-});
-
-/**
- * SchemaApi - Provides methods for managing content schemas
- */
-export class SchemaApi {
-  // Initialize storage with example schemas if empty
-  static async initializeStorage(): Promise<void> {
-    if (schemas.length === 0) {
-      schemas = [...exampleSchemas];
+export const listSchemas = async (
+  workspaceId: number
+): Promise<ContentSchema[]> => {
+  const name = new URLSearchParams({
+    workspaceId: workspaceId.toString(),
+  });
+  const { data, error } = await (supabase as DbClient).functions.invoke(
+    `proxy/schemas?${name.toString()}`,
+    {
+      method: "GET",
     }
+  );
+  if (error) throw error;
+  return data;
+};
+
+export const getSchemaById = async (
+  id: string
+): Promise<ContentSchema | null> => {
+  const schemas = await listSchemas();
+  return schemas.find((schema) => schema.id === id) || null;
+};
+
+export const saveSchema = async (
+  schema: ContentSchema
+): Promise<ContentSchema> => {
+  const existingIndex = schemas.findIndex((s) => s.id === schema.id);
+
+  if (existingIndex >= 0) {
+    schemas[existingIndex] = schema;
+  } else {
+    schemas.push(schema);
   }
 
-  static async getSchemas(workspaceId?: string): Promise<ContentSchema[]> {
-    if (supabase.auth) {
-      let query = (supabase as DbClient)
-        .from('content_schemas')
-        .select<'*', ContentSchemaRow>('*');
-      
-      if (workspaceId) {
-        query = query.eq('workspace_id', workspaceId);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []).map(convertSupabaseSchema);
+  return schema;
+};
+
+export const saveSchemas = async (
+  newSchemas: ContentSchema[]
+): Promise<ContentSchema[]> => {
+  schemas = newSchemas;
+  return schemas;
+};
+
+export const deleteSchema = async (id: string): Promise<void> => {
+  schemas = schemas.filter((schema) => schema.id !== id);
+};
+
+export const renameField = async (
+  schemaId: string,
+  fieldId: string,
+  newName: string
+): Promise<ContentSchema> => {
+  const schemaIndex = schemas.findIndex((s) => s.id === schemaId);
+
+  if (schemaIndex === -1) {
+    throw new Error(`Schema with id ${schemaId} not found`);
+  }
+
+  const schema = schemas[schemaIndex];
+  const fieldIndex = schema.fields.findIndex((f) => f.id === fieldId);
+
+  if (fieldIndex === -1) {
+    throw new Error(`Field with id ${fieldId} not found in schema ${schemaId}`);
+  }
+
+  const updatedField = { ...schema.fields[fieldIndex], name: newName };
+  const updatedFields = [...schema.fields];
+  updatedFields[fieldIndex] = updatedField;
+  const updatedSchema = { ...schema, fields: updatedFields };
+
+  schemas[schemaIndex] = updatedSchema;
+  return updatedSchema;
+};
+
+export const reorderFields = async (
+  schemaId: string,
+  fieldIds: string[]
+): Promise<ContentSchema> => {
+  const schemaIndex = schemas.findIndex((s) => s.id === schemaId);
+
+  if (schemaIndex === -1) {
+    throw new Error(`Schema with id ${schemaId} not found`);
+  }
+
+  const schema = schemas[schemaIndex];
+  const fieldsMap = new Map(schema.fields.map((field) => [field.id, field]));
+
+  const reorderedFields = fieldIds.map((id) => {
+    const field = fieldsMap.get(id);
+    if (!field) {
+      throw new Error(`Field with id ${id} not found in schema ${schemaId}`);
     }
+    return field;
+  });
 
-    return schemas;
+  const updatedSchema = { ...schema, fields: reorderedFields };
+  schemas[schemaIndex] = updatedSchema;
+  return updatedSchema;
+};
+
+export const updateField = async (
+  schemaId: string,
+  fieldId: string,
+  updates: Partial<ContentField>
+): Promise<ContentSchema> => {
+  const schemaIndex = schemas.findIndex((s) => s.id === schemaId);
+
+  if (schemaIndex === -1) {
+    throw new Error(`Schema with id ${schemaId} not found`);
   }
 
-  static async getSchemaById(id: string): Promise<ContentSchema | null> {
-    const schemas = await this.getSchemas();
-    return schemas.find(schema => schema.id === id) || null;
+  const schema = schemas[schemaIndex];
+  const fieldIndex = schema.fields.findIndex((f) => f.id === fieldId);
+
+  if (fieldIndex === -1) {
+    throw new Error(`Field with id ${fieldId} not found in schema ${schemaId}`);
   }
 
-  static async saveSchema(schema: ContentSchema): Promise<ContentSchema> {
-    const existingIndex = schemas.findIndex(s => s.id === schema.id);
-    
-    if (existingIndex >= 0) {
-      schemas[existingIndex] = schema;
-    } else {
-      schemas.push(schema);
-    }
-    
-    return schema;
-  }
+  const updatedField = { ...schema.fields[fieldIndex], ...updates };
+  const updatedFields = [...schema.fields];
+  updatedFields[fieldIndex] = updatedField;
+  const updatedSchema = { ...schema, fields: updatedFields };
 
-  static async saveSchemas(newSchemas: ContentSchema[]): Promise<ContentSchema[]> {
-    schemas = newSchemas;
-    return schemas;
-  }
-
-  static async deleteSchema(id: string): Promise<void> {
-    schemas = schemas.filter(schema => schema.id !== id);
-  }
-
-  static async renameField(schemaId: string, fieldId: string, newName: string): Promise<ContentSchema> {
-    const schemaIndex = schemas.findIndex(s => s.id === schemaId);
-    
-    if (schemaIndex === -1) {
-      throw new Error(`Schema with id ${schemaId} not found`);
-    }
-
-    const schema = schemas[schemaIndex];
-    const fieldIndex = schema.fields.findIndex(f => f.id === fieldId);
-    
-    if (fieldIndex === -1) {
-      throw new Error(`Field with id ${fieldId} not found in schema ${schemaId}`);
-    }
-
-    // Create updated field and schema
-    const updatedField = { ...schema.fields[fieldIndex], name: newName };
-    const updatedFields = [...schema.fields];
-    updatedFields[fieldIndex] = updatedField;
-    const updatedSchema = { ...schema, fields: updatedFields };
-
-    // Save the updated schema
-    schemas[schemaIndex] = updatedSchema;
-    return updatedSchema;
-  }
-
-  static async reorderFields(schemaId: string, fieldIds: string[]): Promise<ContentSchema> {
-    const schemaIndex = schemas.findIndex(s => s.id === schemaId);
-    
-    if (schemaIndex === -1) {
-      throw new Error(`Schema with id ${schemaId} not found`);
-    }
-
-    const schema = schemas[schemaIndex];
-    
-    // Create a map of fields by ID for quick lookup
-    const fieldsMap = new Map(schema.fields.map(field => [field.id, field]));
-    
-    // Reorder fields based on the provided field IDs
-    const reorderedFields = fieldIds.map(id => {
-      const field = fieldsMap.get(id);
-      if (!field) {
-        throw new Error(`Field with id ${id} not found in schema ${schemaId}`);
-      }
-      return field;
-    });
-
-    // Update and save the schema
-    const updatedSchema = { ...schema, fields: reorderedFields };
-    schemas[schemaIndex] = updatedSchema;
-    return updatedSchema;
-  }
-
-  static async updateField(schemaId: string, fieldId: string, updates: Partial<ContentField>): Promise<ContentSchema> {
-    const schemaIndex = schemas.findIndex(s => s.id === schemaId);
-    
-    if (schemaIndex === -1) {
-      throw new Error(`Schema with id ${schemaId} not found`);
-    }
-
-    const schema = schemas[schemaIndex];
-    const fieldIndex = schema.fields.findIndex(f => f.id === fieldId);
-    
-    if (fieldIndex === -1) {
-      throw new Error(`Field with id ${fieldId} not found in schema ${schemaId}`);
-    }
-
-    // Create updated field and schema
-    const updatedField = { ...schema.fields[fieldIndex], ...updates };
-    const updatedFields = [...schema.fields];
-    updatedFields[fieldIndex] = updatedField;
-    const updatedSchema = { ...schema, fields: updatedFields };
-
-    // Save the updated schema
-    schemas[schemaIndex] = updatedSchema;
-    return updatedSchema;
-  }
-} 
+  schemas[schemaIndex] = updatedSchema;
+  return updatedSchema;
+};

@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { SchemaApi } from './SchemaApi';
 import { ContentSchema } from '../contentSchema';
 
 // Mock localStorage

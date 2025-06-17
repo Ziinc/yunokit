@@ -1,4 +1,3 @@
-import { simulateNetworkDelay } from "@/lib/utils";
 
 export interface SupabaseProject {
   id: string;

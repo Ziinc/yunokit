@@ -4,7 +4,7 @@ import { OAuth2Client } from "https://deno.land/x/oauth2_client@v1.0.2/mod.ts";
 import { SupabaseManagementAPI } from "https://esm.sh/supabase-management-js@0.1.2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
+const SUPACONTENT_API_KEY = "supacontent_api_key";
 const config = {
   clientId: Deno.env.get("SB_OAUTH_CLIENT_ID")!,
   clientSecret: Deno.env.get("SB_OAUTH_CLIENT_SECRET")!,
@@ -20,7 +20,7 @@ const supabase = createClient(
 
 const app = express();
 
-app.use(cors())
+app.use(cors());
 app.use(express.json());
 
 const managementClient = async (req: express.Request) => {
@@ -55,7 +55,6 @@ const managementClient = async (req: express.Request) => {
   });
   return supaManagementClient;
 };
-
 
 // app.options("/connect/oauth2", async (req, res) => {
 //   return res.status(200).set(corsHeaders).send();
@@ -110,7 +109,6 @@ app.get("/connect/oauth2", async (req, res) => {
 // });
 
 app.post("/connect/oauth2/callback", async (req, res) => {
-
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     throw new Error("No authorization header");
@@ -154,14 +152,14 @@ app.post("/connect/oauth2/callback", async (req, res) => {
   })
     .then((res) => res.json())
     .catch(console.error);
-  
+
   if (!tokens.access_token) {
     return res.status(401).set(corsHeaders).send(tokens.message);
   }
 
   // Store tokens in supabase_connections
   const expiresAt = Date.now() + tokens.expires_in;
-  
+
   await supabase.from("supabase_connections").upsert(
     {
       user_id: user.id,
@@ -180,7 +178,6 @@ app.post("/connect/oauth2/callback", async (req, res) => {
   });
   const projects = await supaManagementClient.getProjects();
 
-  
   res.set(corsHeaders).send(projects);
 });
 
@@ -209,12 +206,10 @@ app.post("/connect/refresh", async (req, res) => {
     .single();
 
   if (connectionError || !connection || !connection.refresh_token) {
-    return res
-      .status(404)
-      .set(corsHeaders)
-      .send("No refresh token found");
+    return res.status(404).set(corsHeaders).send("No refresh token found");
   }
 
+  let tokens: any;
   try {
     // Request new tokens using the refresh token
     const tokenResponse = await fetch(config.tokenUri, {
@@ -232,17 +227,20 @@ app.post("/connect/refresh", async (req, res) => {
       }),
     });
 
-    const tokens = await tokenResponse.json();
+    tokens = await tokenResponse.json();
 
     if (!tokenResponse.ok || !tokens.access_token) {
       return res
         .status(401)
         .set(corsHeaders)
-        .send("Failed to refresh token: " + (tokens.error_description || tokens.message));
+        .send(
+          "Failed to refresh token: " +
+            (tokens.error_description || tokens.message)
+        );
     }
 
     // Calculate expiration timestamp
-    const expiresAt = Date.now() + (tokens.expires_in * 1000);
+    const expiresAt = Date.now() + tokens.expires_in * 1000;
 
     // Update tokens in the database
     const { error: updateError } = await supabase
@@ -261,11 +259,6 @@ app.post("/connect/refresh", async (req, res) => {
         .set(corsHeaders)
         .send("Failed to update tokens: " + updateError.message);
     }
-
-    res.set(corsHeaders).json({
-      success: true,
-      expires_at: expiresAt,
-    });
   } catch (error) {
     console.error("Token refresh error:", error);
     res
@@ -273,7 +266,132 @@ app.post("/connect/refresh", async (req, res) => {
       .set(corsHeaders)
       .send("Token refresh failed: " + (error.message || "Unknown error"));
   }
+
+  res.set(corsHeaders).json({
+    success: true,
+  });
 });
+
+app.post("/connect/workspace/:workspaceId", async (req, res) => {
+  // Get user ID from auth header
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).set(corsHeaders).send("No authorization header");
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser(token);
+
+  if (userError || !user) {
+    return res.status(401).set(corsHeaders).send("Invalid token");
+  }
+
+  const { data: connection } = await supabase
+    .from("supabase_connections")
+    .select("access_token")
+    .eq("user_id", user.id)
+    .single();
+
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("*")
+    .eq("id", req.params.workspaceId)
+    .eq("user_id", user.id)
+    .single();
+
+  console.log({ workspace });
+
+  if (!workspace) {
+    return res.status(404).set(corsHeaders).send("Unauthorized");
+  }
+  const dataUrl = `https://${workspace.project_ref}.supabase.co/rest/v1`;
+  if (workspace.api_key) {
+    // verify that api key is valid with an OPTIONS request against the data url
+
+    const optionsResult = await fetch(dataUrl, {
+      method: "OPTIONS",
+      headers: {
+        Authorization: `Bearer ${workspace.api_key}`,
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("options", { optionsResult });
+    if (optionsResult.ok) {
+      return res.status(200).set(corsHeaders).send({
+        success: true,
+      });
+    }
+  }
+
+  const result = await fetch(
+    `https://api.supabase.com/v1/projects/${workspace.project_ref}/api-keys?reveal=true`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${connection.access_token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  const payload = await result.json();
+  console.log({ payload });
+  const apiKey = payload.find(
+    (key: any) => key.name === "SUPACONTENT_API_KEY"
+  );
+  const serviceRoleKey = payload.find(
+    (key: any) => key.name === "service_role"
+  );
+
+  // stores api_key in the database if present
+  if (apiKey && !workspace.api_key) {
+    await supabase
+      .from("workspaces")
+      .update({ api_key: apiKey.api_key })
+      .eq("id", workspace.id);
+  } else if (!apiKey) {
+    // create the api key
+    const result = await fetch(
+      `https://api.supabase.com/v1/projects/${workspace.project_ref}/api-keys`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${connection.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: SUPACONTENT_API_KEY,
+          type: "secret",
+        }),
+      }
+    );
+    const data = await result.json();
+    if (result.ok) {
+      // create the secret role key
+      const result = await fetch(
+        `https://api.supabase.com/v1/projects/${workspace.project_ref}/api-keys`,
+      );
+
+      await supabase
+      .from("workspaces")
+      .update({ api_key: data.api_key })
+      .eq("id", workspace.id);
+
+    } else {
+      // store the secret role key in the database
+      console.log("storing secret role key", { serviceRoleKey });
+      await supabase
+        .from("workspaces")
+        .update({ api_key: serviceRoleKey.api_key })
+        .eq("id", workspace.id);
+    }
+  }
+
+  res.set(corsHeaders).send({ success: true });
+});
+
 
 app.listen(8000, () => {
   // Server started
