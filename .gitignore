@@ -18,3 +18,4 @@ dist
 **/.env.local
 supabase/.env
 supabase/functions/.env
+supabase/migrations/*.sql

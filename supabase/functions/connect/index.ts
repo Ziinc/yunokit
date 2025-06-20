@@ -302,7 +302,6 @@ app.post("/connect/workspace/:workspaceId", async (req, res) => {
     .eq("user_id", user.id)
     .single();
 
-  console.log({ workspace });
 
   if (!workspace) {
     return res.status(404).set(corsHeaders).send("Unauthorized");
@@ -318,7 +317,6 @@ app.post("/connect/workspace/:workspaceId", async (req, res) => {
         "Content-Type": "application/json",
       },
     });
-    console.log("options", { optionsResult });
     if (optionsResult.ok) {
       return res.status(200).set(corsHeaders).send({
         success: true,

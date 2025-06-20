@@ -1,21 +1,66 @@
+VERSION := $(shell node -p "require('./app/package.json').version")
 
 start:
-	supabase start
-	npm run dev --prefix=app
+	@cleanup() { rm -f supabase/migrations/*.sql 2>/dev/null || true; }; \
+	trap cleanup EXIT INT TERM; \
+	cp -f supabase/migrations/app/*.sql supabase/migrations/ 2>/dev/null || true; \
+	supabase start; \
+	npm run dev --prefix=app & \
+	wait $$!; \
+	cleanup
 stop:
 	supabase stop
 
 restart:
-	supabase stop
-	supabase start
-	npm run dev --prefix=app
+	$(MAKE) stop
+	$(MAKE) start
 
 db.reset:
 	supabase db reset --local
 
+check-version:
+	@echo 'Checking if version has been bumped for migration changes...'; \
+	if ! git rev-parse --verify main >/dev/null 2>&1; then \
+		echo 'Warning: main branch not found, skipping version check'; \
+		exit 0; \
+	fi; \
+	migration_changes=$$(git diff --name-only main...HEAD | grep -E '^supabase/migrations/(app|supacontent)/.*\.sql$$' || true); \
+	if [ -n "$$migration_changes" ]; then \
+		echo 'Migration files changed:'; \
+		echo "$$migration_changes"; \
+		current_version=$$(node -p "require('./app/package.json').version"); \
+		main_version=$$(git show main:app/package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version" 2>/dev/null || echo "unknown"); \
+		if [ "$$current_version" = "$$main_version" ]; then \
+			echo "ERROR: Migration files have been modified but version has not been bumped."; \
+			echo "Current version: $$current_version"; \
+			echo "Please update the version in app/package.json"; \
+			exit 1; \
+		else \
+			echo "Version check passed: $$main_version -> $$current_version"; \
+		fi; \
+	else \
+		echo 'No migration files changed, version check not required'; \
+	fi
+
 diff:
-	supabase db diff -f $(f) -s public,extensions,supacontent --local
-	
+	@cleanup() { rm -f supabase/migrations/*.sql 2>/dev/null || true; }; \
+	trap cleanup EXIT INT TERM; \
+	cleanup; \
+
+	echo 'Generating for supacontent schema'; \
+	cp -f supabase/migrations/supacontent/*.sql supabase/migrations/ 2>/dev/null || true; \
+	supabase db diff -f $(f) -s supacontent --local; \
+	latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
+	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/supacontent/$$(basename $$latest_migration)" ]; then \
+		mv "$$latest_migration" supabase/migrations/supacontent/; \
+	fi; \
+	rm -f supabase/migrations/*.sql; \
+	cp -f supabase/migrations/app/*.sql supabase/migrations/ 2>/dev/null || true; \
+	supabase db diff -f $(f) -s public,extensions --local; \
+	latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
+	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/app/$$(basename $$latest_migration)" ]; then \
+		mv "$$latest_migration" supabase/migrations/app/; \
+	fi; \
 
 types:
 	supabase gen types typescript --local > app/database.types.ts
@@ -27,4 +72,5 @@ deploy:
 	@echo 'Deploying functions now'
 	@find ./supabase/functions/* -type d ! -name '_*'  | xargs -I {} basename {} | xargs -I {} supabase functions deploy {}
 
-.PHONY: start diff deploy restart types db.reset stop
+.PHONY: start diff deploy restart types db.reset stop check-version
+

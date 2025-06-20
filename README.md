@@ -24,4 +24,5 @@ The Strapi alternative Content Management System for Supabase apps.
 ```bash
 npm i
 npm start
+make diff f=my_migration
 ```

@@ -1,5 +1,9 @@
 create schema if not exists "supacontent";
 
+create type "supacontent"."schema_type" as enum ('single', 'collection');
+
+create type "supacontent"."supacontent.schema_type" as enum ('single', 'double');
+
 create table "supacontent"."authors" (
     "id" uuid not null default gen_random_uuid(),
     "sc_user_id" uuid,
@@ -41,7 +45,8 @@ create table "supacontent"."schemas" (
     "updated_at" timestamp with time zone not null default now(),
     "deleted_at" timestamp with time zone,
     "archived_at" timestamp with time zone,
-    "fields" jsonb
+    "fields" jsonb,
+    "type" text not null
 );
 
 
@@ -82,5 +87,9 @@ alter table "supacontent"."contents" validate constraint "contents_schema_id_fke
 alter table "supacontent"."schemas" add constraint "schemas_fields_check" CHECK ((jsonb_typeof(fields) = 'array'::text)) not valid;
 
 alter table "supacontent"."schemas" validate constraint "schemas_fields_check";
+
+alter table "supacontent"."schemas" add constraint "schemas_type_check" CHECK ((type = ANY (ARRAY['single'::text, 'collection'::text]))) not valid;
+
+alter table "supacontent"."schemas" validate constraint "schemas_type_check";
 
 
