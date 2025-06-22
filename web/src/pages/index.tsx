@@ -8,7 +8,7 @@ import { Sparkles, Zap, Users, Database, Wand2, Clock, ArrowRight } from 'lucide
 // Reusing testimonials from sign-in page for consistency
 const testimonials = [
   {
-    quote: "Finally! I no longer wake up to 3am Slack messages asking me to update a typo. SupaContent gave our marketing team superpowers and gave me back my sanity.",
+    quote: "Finally! I no longer wake up to 3am Slack messages asking me to update a typo. YunoContent gave our marketing team superpowers and gave me back my sanity.",
     author: "Developer Who Can Sleep Again",
     role: "Senior Engineer"
   },
@@ -18,7 +18,7 @@ const testimonials = [
     role: "Tech Lead"
   },
   {
-    quote: "The marketing department and I haven't had a single emergency meeting since implementing SupaContent. They're happier, I'm happier, and our website is updated faster than ever.",
+    quote: "The marketing department and I haven't had a single emergency meeting since implementing YunoContent. They're happier, I'm happier, and our website is updated faster than ever.",
     author: "CTO Who Recovered Their Calendar",
     role: "Chief Technology Officer"
   }
@@ -118,7 +118,7 @@ function FeatureSection() {
     <section className="py-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Why Choose SupaContent?</h2>
+          <h2 className="text-3xl font-bold mb-4">Why Choose YunoContent?</h2>
           <p className="text-xl text-gray-600">The Strapi-alternative that transforms your Supabase database into a powerful, intuitive CMS.</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">

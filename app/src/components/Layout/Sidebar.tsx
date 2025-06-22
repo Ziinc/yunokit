@@ -50,8 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = () => {
       <div className="p-4 border-b">
         <Link to="/" className="block mb-4">
           <img
-            src="/supacontent-logo.png"
-            alt="SupaContent Logo"
+            src="/logo.png"
+            alt="Yunokit Logo"
             className="h-8 w-auto mx-auto"
           />
         </Link>

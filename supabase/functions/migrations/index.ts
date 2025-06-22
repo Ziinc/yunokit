@@ -7,7 +7,7 @@ import type { Database } from "../_shared/database.types.ts";
 export const dataSbClient = (url: string, apiKey: string) =>
   createClient<Database>(url, apiKey, {
     db: {
-      schema: "supacontent",
+      schema: "yunocontent",
     },
   });
 
@@ -59,7 +59,7 @@ app.use("/migrations", async (req: any, res: any, next: any) => {
     workspace.api_key,
     {
       db: {
-        schema: "supacontent",
+        schema: "yunocontent",
       },
     }
   );

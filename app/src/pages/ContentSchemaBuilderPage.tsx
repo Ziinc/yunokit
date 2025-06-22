@@ -376,7 +376,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold tracking-tight">Content Schema Builder</h1>
-            <DocsButton href="https://docs.supacontent.tznc.net/schema-builder" />
+            <DocsButton href="https://yunokit.com/docs/schema-builder" />
           </div>
           <p className="text-muted-foreground mt-1">
             Manage your content schemas for your content items

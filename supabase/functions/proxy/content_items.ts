@@ -49,7 +49,7 @@ export const getContentItem = async (
 
 export const createContentItem = async (
   client: SupabaseClient,
-  contentItem: TablesInsert<{ schema: "supacontent" }, "contents">
+  contentItem: TablesInsert<{ schema: "yunocontent" }, "contents">
 ) => {
   return await client
     .from("contents")
@@ -61,7 +61,7 @@ export const createContentItem = async (
 export const updateContentItem = async (
   client: SupabaseClient,
   contentItemId: string,
-  contentItem: TablesUpdate<{ schema: "supacontent" }, "contents">
+  contentItem: TablesUpdate<{ schema: "yunocontent" }, "contents">
 ) => {
   return await client
     .from("contents")

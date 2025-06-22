@@ -5,7 +5,7 @@ import type { Database } from "../../../database.types";
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 type DbClient = SupabaseClient<Database>;
-export type ContentItemRow = Database['supacontent']['Tables']['contents']['Row'];
+export type ContentItemRow = Database['yunocontent']['Tables']['contents']['Row'];
 
 // In-memory storage
 let contentItems: ContentItem[] = [...mockContentItems];

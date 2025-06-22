@@ -158,7 +158,7 @@ export type Database = {
       [_ in never]: never
     }
   }
-  supacontent: {
+  yunocontent: {
     Tables: {
       authors: {
         Row: {
@@ -300,7 +300,7 @@ export type Database = {
     }
     Enums: {
       schema_type: "single" | "collection"
-      "supacontent.schema_type": "single" | "double"
+      "yunocontent.schema_type": "single" | "double"
     }
     CompositeTypes: {
       [_ in never]: never

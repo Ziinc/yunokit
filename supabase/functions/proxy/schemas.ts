@@ -37,7 +37,7 @@ export const getSchema = async (
 
 export const createSchema = async (
   client: SupabaseClient,
-  schema: TablesInsert<{ schema: "supacontent" }, "schemas">
+  schema: TablesInsert<{ schema: "yunocontent" }, "schemas">
 ) => {
   return await client
     .from("schemas")
@@ -49,7 +49,7 @@ export const createSchema = async (
 export const updateSchema = async (
   client: SupabaseClient,
   schemaId: string,
-  schema: TablesUpdate<{ schema: "supacontent" }, "schemas">
+  schema: TablesUpdate<{ schema: "yunocontent" }, "schemas">
 ) => {
   return await client
     .from("schemas")

@@ -4,7 +4,7 @@ import { OAuth2Client } from "https://deno.land/x/oauth2_client@v1.0.2/mod.ts";
 import { SupabaseManagementAPI } from "https://esm.sh/supabase-management-js@0.1.2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-const SUPACONTENT_API_KEY = "supacontent_api_key";
+const SUPACONTENT_API_KEY = "yunocontent_api_key";
 const config = {
   clientId: Deno.env.get("SB_OAUTH_CLIENT_ID")!,
   clientSecret: Deno.env.get("SB_OAUTH_CLIENT_SECRET")!,

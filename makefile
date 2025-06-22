@@ -24,7 +24,7 @@ check-version:
 		echo 'Warning: main branch not found, skipping version check'; \
 		exit 0; \
 	fi; \
-	migration_changes=$$(git diff --name-only main...HEAD | grep -E '^supabase/migrations/(app|supacontent)/.*\.sql$$' || true); \
+	migration_changes=$$(git diff --name-only main...HEAD | grep -E '^supabase/migrations/(app|yunocontent)/.*\.sql$$' || true); \
 	if [ -n "$$migration_changes" ]; then \
 		echo 'Migration files changed:'; \
 		echo "$$migration_changes"; \
@@ -47,12 +47,12 @@ diff:
 	trap cleanup EXIT INT TERM; \
 	cleanup; \
 
-	echo 'Generating for supacontent schema'; \
-	cp -f supabase/migrations/supacontent/*.sql supabase/migrations/ 2>/dev/null || true; \
-	supabase db diff -f $(f) -s supacontent --local; \
+	echo 'Generating for yunocontent schema'; \
+	cp -f supabase/migrations/yunocontent/*.sql supabase/migrations/ 2>/dev/null || true; \
+	supabase db diff -f $(f) -s yunocontent --local; \
 	latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
-	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/supacontent/$$(basename $$latest_migration)" ]; then \
-		mv "$$latest_migration" supabase/migrations/supacontent/; \
+	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/yunocontent/$$(basename $$latest_migration)" ]; then \
+		mv "$$latest_migration" supabase/migrations/yunocontent/; \
 	fi; \
 	rm -f supabase/migrations/*.sql; \
 	cp -f supabase/migrations/app/*.sql supabase/migrations/ 2>/dev/null || true; \

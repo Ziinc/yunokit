@@ -4,6 +4,6 @@ import type { Database } from "../_shared/database.types.ts";
 export const dataSbClient = (url: string, apiKey: string) =>
   createClient<Database>(url, apiKey, {
     db: {
-      schema: "supacontent",
+      schema: "yunocontent",
     },
   });

@@ -1,10 +1,10 @@
-# SupaContent
+# Yunokit
 
 
 <p align="center" width="100%"> 
 
 
-![](./shared/static/supacontent-logo.png)
+![](./shared/static/logo.png)
 
 </p>
 

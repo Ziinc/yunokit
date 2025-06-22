@@ -7,7 +7,7 @@ interface DocsButtonProps {
 }
 
 export const DocsButton: React.FC<DocsButtonProps> = ({ 
-  href = "https://docs.supacontent.tznc.net" 
+  href = "https://yunokit.com/docs" 
 }) => {
   return (
     <Button 

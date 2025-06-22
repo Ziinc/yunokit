@@ -50,7 +50,7 @@ const SignInPage: React.FC = () => {
   const testimonials = [
     {
       quote:
-        "Finally! I no longer wake up to 3am Slack messages asking me to update a typo. SupaContent gave our marketing team superpowers and gave me back my sanity.",
+        "Finally! I no longer wake up to 3am Slack messages asking me to update a typo. Yunokit gave our marketing team superpowers and gave me back my sanity.",
       author: "Developer Who Can Sleep Again",
     },
     {
@@ -60,12 +60,12 @@ const SignInPage: React.FC = () => {
     },
     {
       quote:
-        "My design team used to joke that I was their personal HTML servant. With SupaContent, they're now independent content creators and I'm back to solving real engineering problems.",
+        "My design team used to joke that I was their personal HTML servant. With Yunokit, they're now independent content creators and I'm back to solving real engineering problems.",
       author: "Lead Developer at AgencyX",
     },
     {
       quote:
-        "The marketing department and I haven't had a single emergency meeting since implementing SupaContent. They're happier, I'm happier, and our website is updated faster than ever.",
+        "The marketing department and I haven't had a single emergency meeting since implementing Yunokit. They're happier, I'm happier, and our website is updated faster than ever.",
       author: "CTO Who Recovered Their Calendar",
     },
     {
@@ -352,8 +352,8 @@ const SignInPage: React.FC = () => {
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 w-48 h-12 flex items-center justify-center">
               <img
-                src="/supacontent-logo.png"
-                alt="SupaContent Logo"
+                src="/branding.png"
+                alt="Yunokit Logo"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -703,7 +703,7 @@ const SignInPage: React.FC = () => {
                   <p className="text-xs text-muted-foreground">
                     By signing in, you agree to our{" "}
                     <a
-                      href="https://supacontent.tznc.net/terms"
+                      href="https://yunokit.com/terms"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
@@ -712,7 +712,7 @@ const SignInPage: React.FC = () => {
                     </a>{" "}
                     and{" "}
                     <a
-                      href="https://supacontent.tznc.net/privacy"
+                      href="https://yunokit.com/privacy"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"

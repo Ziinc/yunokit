@@ -25,7 +25,7 @@ const AuthCallbackPage: React.FC = () => {
           // Authentication successful
           toast({
             title: "Sign in successful",
-            description: "You are now signed in to SupaContent"
+            description: "You are now signed in to Yunokit"
           });
 
           // Redirect to home or protected page

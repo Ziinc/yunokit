@@ -371,7 +371,7 @@ const SettingsSupabasePage: React.FC = () => {
                     <Separator className="my-2" />
                     <div className="space-y-2 pt-1">
                       <p className="text-sm text-muted-foreground">
-                        Authorize SupaContent to access your Supabase projects
+                        Authorize YunoKit to access your Supabase projects
                         via the Supabase management API
                       </p>
                       <Button

@@ -27,7 +27,7 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Content Manager</h1>
-          <DocsButton href="https://docs.supacontent.tznc.net/content-management" />
+          <DocsButton href="https://yunokit.com/docs/content-management" />
         </div>
         <p className="text-muted-foreground mt-1">
           Create, edit and manage your content items

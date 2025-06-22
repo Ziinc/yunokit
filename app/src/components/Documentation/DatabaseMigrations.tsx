@@ -23,7 +23,7 @@ export const DatabaseMigrations: React.FC = () => {
           <h3 className="text-lg font-medium">What are Database Migrations?</h3>
           <p>
             Database migrations are version-controlled changes to your database schema that allow you to evolve your data 
-            structure over time. In SupaContent, migrations help you safely manage schema changes across environments.
+            structure over time. In YunoContent, migrations help you safely manage schema changes across environments.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">

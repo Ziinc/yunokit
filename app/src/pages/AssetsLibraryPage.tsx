@@ -277,7 +277,7 @@ const AssetsLibraryPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Assets Library</h1>
-          <DocsButton href="https://docs.supacontent.tznc.net/assets" />
+          <DocsButton href="https://yunokit.com/docs/assets" />
         </div>
         <Button className="gap-2" onClick={() => setUploadDialogOpen(true)}>
           <Upload size={16} />

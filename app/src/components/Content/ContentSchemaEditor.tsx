@@ -171,7 +171,7 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
             <CardTitle className="text-2xl font-bold">
               {initialSchema ? "Edit Content Schema" : "Create Content Schema"}
             </CardTitle>
-            <DocsButton href="https://docs.supacontent.tznc.net/schemas" />
+            <DocsButton href="https://yunokit.com/docs/schemas" />
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

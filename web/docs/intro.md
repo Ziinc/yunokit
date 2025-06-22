@@ -27,16 +27,16 @@ Supacontent is a Content Management System with a batteries-included admin dashb
 1. Pull and run the docker image.
 
 ```bash
-docker pull ziinc/supacontent:latest
-docker run -d --name supacontent -p 8000:8000 ziinc/supacontent:latest
+docker pull ziinc/yunocontent:latest
+docker run -d --name yunocontent -p 8000:8000 ziinc/yunocontent:latest
 ```
 
-2. Update your project's `config.toml` to include `supacontent` under the list of api schemas.
+2. Update your project's `config.toml` to include `yunocontent` under the list of api schemas.
 
 ```toml
 # supabase/config.toml
 [api]
-schemas = ["supacontent", ...]
+schemas = ["yunocontent", ...]
 ```
 
 Then start your local project:

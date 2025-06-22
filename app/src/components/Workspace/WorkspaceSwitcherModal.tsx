@@ -273,7 +273,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
           <Alert className="mb-4">
             <AlertDescription>
               A workspace links to a Supabase project under the{" "}
-              <code>supacontent</code> schema. This is where your content and
+              <code>yunoacode</code> schema. This is where your content and
               settings will be stored.
             </AlertDescription>
           </Alert>

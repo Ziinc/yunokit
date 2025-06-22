@@ -11,14 +11,14 @@ export const dataSbClient = createClient<Database>(
   supabaseAnonKey,
   {
     db: {
-      schema: "supacontent",
+      schema: "yunocontent",
     },
   }
 );
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
-    "Supabase credentials missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables."
+    "Yunokit credentials missing. Please set VITE_YUNOKIT_URL and VITE_YUNOKIT_ANON_KEY environment variables."
   );
 }
 

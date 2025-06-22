@@ -43,8 +43,11 @@ const Dashboard: React.FC = () => {
       try{
         setIsLoading(true);
         const {data: items} = await listContentItems(currentWorkspace?.id);
+        console.log(items)
         // const schemaData = await getSchemas(currentWorkspace?.id);
-        setContentItems(items);
+        if (items) {
+          setContentItems(items);
+        }
         // setSchemas(schemaData);
       } catch (error) {
         console.error("Error loading data:", error);

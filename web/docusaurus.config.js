@@ -13,7 +13,7 @@ const darkCodeTheme = themes.dracula;
 const config = {
   title: "Supacontent",
   tagline: "Dinosaurs are cool",
-  url: "https://www.supacontent.com",
+  url: "https://www.yunocontent.com",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -54,8 +54,8 @@ const config = {
     ({
       navbar: {
         logo: {
-          alt: "supacontent",
-          src: "supacontent-logo.png",
+          alt: "yunocontent",
+          src: "logo.png",
         },
         items: [
           {
@@ -70,7 +70,7 @@ const config = {
             label: "Pricing",
           },
           {
-            href: "https://github.com/Ziinc/supacontent",
+            href: "https://github.com/Ziinc/yunocontent",
             label: "GitHub",
             position: "right",
           },
@@ -92,7 +92,7 @@ const config = {
               },
               {
                 label: "Github",
-                href: "https://github.com/Ziinc/supacontent",
+                href: "https://github.com/Ziinc/yunocontent",
               },
             ],
           },

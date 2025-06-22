@@ -5,7 +5,7 @@ import type { Database } from "../../../database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type DbClient = SupabaseClient<Database>;
-export type ContentSchemaRow = Database["supacontent"]["Tables"]["schemas"]["Row"];
+export type ContentSchemaRow = Database["yunocontent"]["Tables"]["schemas"]["Row"];
 
 export const listSchemas = async (
   workspaceId: number

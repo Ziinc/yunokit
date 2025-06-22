@@ -65,7 +65,7 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
   req.workspace = workspace;
   req.dataClient = createClient(`https://${workspace.project_ref}.supabase.co`, workspace.api_key, {
     db: {
-      schema: "supacontent",
+      schema: "yunocontent",
     },
   });
 
