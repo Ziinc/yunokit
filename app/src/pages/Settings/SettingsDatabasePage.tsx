@@ -12,15 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Database,
-  ArrowUp,
-  ArrowDown,
   AlertCircle,
   Check,
   RefreshCw,
-  Code,
-  ExternalLink,
   Eye,
-  EyeOff,
   Play,
   Square,
   Power,
@@ -29,9 +24,9 @@ import {
   Server,
   Globe,
   CheckCircle2,
-  Loader2,
+  ChevronRight,
 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import {
   Collapsible,
@@ -57,6 +52,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import {
   listMigrations,
@@ -65,7 +61,6 @@ import {
 } from "@/lib/api/MigrationsApi";
 import {
   initiateOAuthFlow,
-  getProjectDetails,
   disconnectSupabaseAccount,
   removeProjectReference,
   checkSupabaseConnection,
@@ -74,7 +69,7 @@ import {
   refreshAccessToken,
   exchangeCodeForToken,
 } from "@/lib/supabase";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import useSWR from "swr";
 import Prism from "prismjs";
 import "prismjs/themes/prism-okaidia.css";
@@ -89,9 +84,8 @@ interface MigrationListItemProps {
 const MigrationListItem: React.FC<MigrationListItemProps> = ({
   migration,
   onViewSql,
-  isLoading,
 }) => {
-  const [showSql, setShowSql] = useState(false);
+  const [showSql] = useState(false);
 
   useEffect(() => {
     if (showSql) {
@@ -164,12 +158,34 @@ const MigrationListItem: React.FC<MigrationListItemProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onViewSql(migration)}
-              className="gap-1"
+              className="gap-1 h-7 px-2 text-xs"
             >
-              <Eye size={12} />
+              <Eye size={10} />
               <span>View SQL</span>
             </Button>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const MigrationSkeleton: React.FC = () => {
+  return (
+    <Card className="mb-4">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-5 w-16" />
+            <div>
+              <Skeleton className="h-4 w-32 mb-1" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-6 w-16" />
+        </div>
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-7 w-20" />
         </div>
       </CardContent>
     </Card>
@@ -186,6 +202,7 @@ const SettingsDatabasePage: React.FC = () => {
   const [selectedMigration, setSelectedMigration] = useState<Migration | null>(
     null
   );
+  const [isAppliedMigrationsOpen, setIsAppliedMigrationsOpen] = useState(false);
 
   // Supabase-related state
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
@@ -298,6 +315,7 @@ const SettingsDatabasePage: React.FC = () => {
 
     try {
       setIsLoading(true);
+      setIsAppliedMigrationsOpen(false);
       const migrationsList = await listMigrations(currentWorkspace.id);
       setMigrations(migrationsList);
     } catch (error) {
@@ -335,7 +353,7 @@ const SettingsDatabasePage: React.FC = () => {
           title: "All migrations applied",
           description: `Successfully applied ${pendingMigrations.length} pending migrations`,
         });
-      }  
+      }
 
       await loadMigrations();
     } catch (error) {
@@ -640,7 +658,7 @@ const SettingsDatabasePage: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-medium flex items-center gap-2">
-                      Migrations ({pendingMigrations.length} pending)
+                      Migrations
                     </h3>
                     <p className="text-muted-foreground text-sm">
                       Manage your database schema migrations
@@ -682,6 +700,8 @@ const SettingsDatabasePage: React.FC = () => {
                       <span>Loading migrations...</span>
                     </CardContent>
                   </Card>
+                ) : isLoading && !isInitialLoading ? (
+                  <MigrationSkeleton />
                 ) : (
                   <>
                     {pendingMigrations.length > 0 && (
@@ -698,30 +718,70 @@ const SettingsDatabasePage: React.FC = () => {
                     )}
 
                     {appliedMigrations.length > 0 && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Check size={20} className="text-green-500" />
-                            <span>
-                              Applied Migrations ({appliedMigrations.length})
-                            </span>
-                          </CardTitle>
-                          <CardDescription>
-                            These migrations have been successfully applied to
-                            your database
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-0">
-                          {appliedMigrations.map((migration) => (
-                            <MigrationListItem
-                              key={migration.version}
-                              migration={migration}
-                              onViewSql={handleViewSql}
-                              isLoading={isLoading}
-                            />
-                          ))}
-                        </CardContent>
-                      </Card>
+                      <>
+                        {pendingMigrations.length === 0 ? (
+                          <Collapsible
+                            open={isAppliedMigrationsOpen}
+                            onOpenChange={setIsAppliedMigrationsOpen}
+                          >
+                            <CollapsibleTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-between"
+                              >
+                                <span className="flex items-center gap-2">
+                                  Applied Migrations ({appliedMigrations.length}
+                                  )
+                                </span>
+                                <ChevronRight
+                                  className={`h-4 w-4 transition-transform duration-200 ${
+                                    isAppliedMigrationsOpen ? "rotate-90" : ""
+                                  }`}
+                                />
+                              </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-4">
+                              <div className="bg-muted/30 rounded-lg p-4 ml-4 border-l-2 border-muted-foreground/20">
+                                <div className="space-y-0">
+                                  {appliedMigrations.map((migration) => (
+                                    <MigrationListItem
+                                      key={migration.version}
+                                      migration={migration}
+                                      onViewSql={handleViewSql}
+                                      isLoading={isLoading}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        ) : (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <span>
+                                  Applied Migrations ({appliedMigrations.length}
+                                  )
+                                </span>
+                              </CardTitle>
+                              <CardDescription>
+                                These migrations have been successfully applied
+                                to your database
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-0">
+                              {appliedMigrations.map((migration) => (
+                                <MigrationListItem
+                                  key={migration.version}
+                                  migration={migration}
+                                  onViewSql={handleViewSql}
+                                  isLoading={isLoading}
+                                />
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                      </>
                     )}
 
                     {migrations.length === 0 && (
@@ -799,8 +859,8 @@ const SettingsDatabasePage: React.FC = () => {
           </DialogHeader>
           <div className="overflow-y-auto max-h-[60vh]">
             {selectedMigration && (
-              <pre className="text-xs bg-black text-white p-4 rounded overflow-x-auto">
-                <code className="language-sql">{selectedMigration.sql_up}</code>
+              <pre className="text-xs bg-[#272822] text-[#f8f8f2] p-4 rounded overflow-x-auto">
+                <code className="language-sql">{selectedMigration.sql}</code>
               </pre>
             )}
           </div>
