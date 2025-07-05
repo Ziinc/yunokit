@@ -1,9 +1,15 @@
 VERSION := $(shell node -p "require('./app/package.json').version")
 
 start:
-	@cleanup() { rm -f supabase/migrations/*.sql 2>/dev/null || true; }; \
+	@cleanup() { \
+		rm -f supabase/migrations/*.sql 2>/dev/null || true; \
+		rm -f supabase/functions/migrations/yunocontent/*.sql 2>/dev/null || true; \
+		rm -f supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; \
+	}; \
 	trap cleanup EXIT INT TERM; \
 	cp -f supabase/migrations/app/*.sql supabase/migrations/ 2>/dev/null || true; \
+	mkdir -p supabase/functions/migrations/yunocontent && cp -f supabase/migrations/yunocontent/*.sql supabase/functions/migrations/yunocontent/ 2>/dev/null || true; \
+	ls supabase/migrations/yunocontent/*.sql 2>/dev/null | xargs -n1 basename | sort > supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; \
 	supabase start; \
 	npm run dev --prefix=app & \
 	wait $$!; \

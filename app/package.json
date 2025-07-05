@@ -6,7 +6,7 @@
   "featureFlags": {
     "approvalFlows": false,
     "community": false,
-    "crossProjectDataMigrations": false,
+    "crossProjectDataMigrations": true,
     "systemAuthors": false,
     "search": false,
     "assetLibrary": false,
@@ -31,7 +31,6 @@
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@monaco-editor/react": "^4.7.0",
-    "radix-ui": "^1.4.2",
     "@supabase/supabase-js": "^2.49.1",
     "@tanstack/react-query": "^5.56.2",
     "@testing-library/react": "^16.3.0",
@@ -53,6 +52,7 @@
     "lucide-react": "^0.462.0",
     "markdown-it": "^14.1.0",
     "prismjs": "^1.30.0",
+    "radix-ui": "^1.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.0",
@@ -85,6 +85,7 @@
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
+    "vite-plugin-compile-time": "^0.4.6",
     "vitest": "^1.4.0"
   }
 }

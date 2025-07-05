@@ -43,7 +43,6 @@ const Dashboard: React.FC = () => {
       try{
         setIsLoading(true);
         const {data: items} = await listContentItems(currentWorkspace?.id);
-        console.log(items)
         // const schemaData = await getSchemas(currentWorkspace?.id);
         if (items) {
           setContentItems(items);

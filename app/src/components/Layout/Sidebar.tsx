@@ -6,7 +6,6 @@ import {
   Home,
   Database,
   Image,
-  Code,
   MessageCircle,
   Plus,
   Loader2,
@@ -42,7 +41,6 @@ export const Sidebar: React.FC<SidebarProps> = () => {
           },
         ]
       : []),
-    { name: "Developer", path: "/developer", icon: <Code size={20} /> },
   ].filter(Boolean);
 
   return (
@@ -50,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
       <div className="p-4 border-b">
         <Link to="/" className="block mb-4">
           <img
-            src="/logo.png"
+            src="/branding.png"
             alt="Yunokit Logo"
             className="h-8 w-auto mx-auto"
           />

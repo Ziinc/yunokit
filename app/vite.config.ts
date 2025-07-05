@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import compileTime from "vite-plugin-compile-time"
 /// <reference types="vitest" />
 
 // https://vitejs.dev/config/
@@ -14,6 +15,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
+    compileTime()
   ].filter(Boolean),
   resolve: {
     alias: {

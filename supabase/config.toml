@@ -60,3 +60,6 @@ enable_confirmations = false
 enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_CLIENT_SECRET)"
+
+[functions.migrations]
+static_files = [ "./functions/migrations/yunocontent/*.sql", "./functions/migrations/yunocontent/*.txt"]

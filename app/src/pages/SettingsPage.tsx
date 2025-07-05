@@ -20,14 +20,14 @@ const SettingsPage: React.FC = () => {
           <TabsTrigger value="account" asChild>
             <Link to="/settings/account">Account</Link>
           </TabsTrigger>
-          <TabsTrigger value="supabase" asChild>
-            <Link to="/settings/supabase">Supabase</Link>
-          </TabsTrigger>
           <TabsTrigger value="workspaces" asChild>
             <Link to="/settings/workspaces">Workspaces</Link>
           </TabsTrigger>
           <TabsTrigger value="members" asChild>
             <Link to="/settings/members">Members</Link>
+          </TabsTrigger>
+          <TabsTrigger value="database" asChild>
+            <Link to="/settings/database">Database</Link>
           </TabsTrigger>
           <TabsTrigger value="billing" asChild>
             <Link to="/settings/billing">Billing</Link>

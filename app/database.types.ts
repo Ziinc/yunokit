@@ -261,6 +261,39 @@ export type Database = {
           },
         ]
       }
+      migrations: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          sql_up: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          sql_up: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          sql_up?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       schemas: {
         Row: {
           archived_at: string | null
@@ -290,6 +323,69 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_tags: {
+        Row: {
+          content_id: string
+          created_at: string
+          id: number
+          tag_id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          id?: number
+          tag_id: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          id?: number
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_tags_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "contents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

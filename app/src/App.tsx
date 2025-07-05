@@ -16,12 +16,12 @@ import SettingsAccountPage from "./pages/Settings/SettingsAccountPage";
 import SettingsSupabasePage from "./pages/Settings/SettingsSupabasePage";
 import SettingsWorkspacesPage from "./pages/Settings/SettingsWorkspacesPage";
 import SettingsMembersPage from "./pages/Settings/SettingsMembersPage";
+import SettingsDatabasePage from "./pages/Settings/SettingsDatabasePage";
 import SettingsBillingPage from "./pages/Settings/SettingsBillingPage";
 import AssetsLibraryPage from "./pages/AssetsLibraryPage";
 import SignInPage from "./pages/SignInPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import DeveloperPage from "./pages/DeveloperPage";
 import ContentSearchPage from "./pages/ContentSearchPage";
 import CommentsPage from "./pages/CommentsPage";
 import { AppLayout } from "./components/Layout/AppLayout";
@@ -76,21 +76,11 @@ const AppContent: React.FC = () => {
           <Route path="/settings" element={<SettingsPage />}>
             <Route index element={<Navigate to="account" replace />} />
             <Route path="account" element={<SettingsAccountPage />} />
-            <Route path="supabase" element={<SettingsSupabasePage />} />
-            <Route
-              path="supabase/callback"
-              element={<SettingsSupabaseCallback />}
-            />
             <Route path="workspaces" element={<SettingsWorkspacesPage />} />
             <Route path="members" element={<SettingsMembersPage />} />
+            <Route path="database" element={<SettingsDatabasePage />} />
             <Route path="billing" element={<SettingsBillingPage />} />
           </Route>
-          <Route
-            path="/developer"
-            element={<Navigate to="/developer/api-docs" replace />}
-          />
-          <Route path="/developer/api-docs" element={<DeveloperPage />} />
-          <Route path="/developer/migrations" element={<DeveloperPage />} />
           <Route path="/search" element={<ContentSearchPage />} />
           <Route path="/comments" element={<CommentsPage />} />
         </Route>

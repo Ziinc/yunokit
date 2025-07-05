@@ -4,25 +4,40 @@
 <p align="center" width="100%"> 
 
 
-![](./shared/static/logo.png)
+![](./shared/static/branding.png)
 
 </p>
 
+> _Be supa content with your content_
+>
+> _Ziinc, 2022, Bali unofficial offsite, where the first iteration of this app was written for the LW Hackathon_
+
+Yunokit is a suite of integrations for Supabase apps.
+
+- Content Management System
 
 
-> _Be supa content with your content - Ziinc, 2022, Bali unofficial offsite_
+## Developer
 
-The Strapi alternative Content Management System for Supabase apps.
+Repo structure:
 
+- app: webapp for Yunokit
+- design: design assets
+- shared: shared logic and assets between webapp and docapp
+- web: documentation and static content app
+- supabase: db schema, migrations
+  - supabase/schemas/app.sql: schema for app db
+  - supabase/schemas/yuno\*.sql: schema for respective Yunokit module
 
-### Developer
+- All developer documentation should be written in /web
 
-- `lib` - the core library
-- `cli` - the command line interface
-- `web` - docs site
 
 ```bash
-npm i
-npm start
+make start
+make stop
+make restart
+make types
+make deploy
+# generate a migration
 make diff f=my_migration
 ```

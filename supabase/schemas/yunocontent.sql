@@ -32,6 +32,12 @@ SET default_tablespace = '';
 SET default_table_access_method = "heap";
 
 
+CREATE TABLE IF NOT EXISTS "yunocontent"."schema_migrations" (
+    "version" bigint NOT NULL,
+    "inserted_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
 CREATE TABLE IF NOT EXISTS "yunocontent"."authors" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "sc_user_id" "uuid",

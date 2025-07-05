@@ -1,9 +1,13 @@
+import fs from "node:fs";
 import express from "npm:express";
 import cors from "npm:cors";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import type { Database } from "../_shared/database.types.ts";
 
+type ConnectionRow =
+  Database["public"]["Tables"]["supabase_connections"]["Row"];
+type WorkspaceRow = Database["public"]["Tables"]["workspaces"]["Row"];
 export const dataSbClient = (url: string, apiKey: string) =>
   createClient<Database>(url, apiKey, {
     db: {
@@ -21,10 +25,125 @@ const supabase = createClient(
   }
 );
 
+interface MigrationFile {
+  version: string;
+  sql: string;
+}
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Helper function to read migration files from directory
+async function readMigrationFiles(): Promise<MigrationFile[]> {
+  const migrations: MigrationFile[] = [];
+
+  try {
+    const index = await Deno.readTextFile("./yunocontent/index.txt");
+    const files = index
+      .split("\n")
+      .map((file) => file.trim())
+      .filter((file) => file !== "");
+
+    console.log('files', files)
+    // Read migration files from supabase/migrations directoryfor await (const dirEntry of Deno.readDir("/")) {
+    for await (const file of files) {
+      const filePath = `./yunocontent/${file}`;
+      const content = await Deno.readTextFile(filePath);
+      const match = file.match(/^(\d{14})_(.+)\.sql$/);
+      console.log('match', match)
+      if (match) {
+        migrations.push({
+          version: match[1],
+          sql: content,
+        });
+      }
+    }
+    return migrations;
+  } catch (error) {
+    console.error("Error reading migration files:", error);
+  }
+
+  return migrations.sort((a, b) => a.version.localeCompare(b.version));
+}
+
+async function executeSql(
+  connection: ConnectionRow,
+  workspace: WorkspaceRow,
+  sql: string
+) {
+  // Execute SQL via Supabase Management API
+  const response = await fetch(
+    `https://api.supabase.com/v1/projects/${workspace.project_ref}/database/query`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${connection.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: sql,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Database query failed: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  return result;
+}
+
+async function addSchemaToPostgrest(
+  connection: ConnectionRow,
+  workspace: WorkspaceRow
+) {
+  // Execute SQL via Supabase Management API
+  // Get current PostgREST config first
+  const configResponse = await fetch(
+    `https://api.supabase.com/v1/projects/${workspace.project_ref}/postgrest`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${connection.access_token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!configResponse.ok) {
+    throw new Error(
+      `Failed to get PostgREST config: ${configResponse.statusText}`
+    );
+  }
+
+  const currentConfig = await configResponse.json();
+  if (currentConfig.db_schema.includes("yunocontent")) {
+    return;
+  }
+  const response = await fetch(
+    `https://api.supabase.com/v1/projects/${workspace.project_ref}/postgrest`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${connection.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        db_schema: currentConfig.db_schema + ",yunocontent",
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Database query failed: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  return result;
+}
 
 app.use("/migrations", async (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
@@ -38,6 +157,21 @@ app.use("/migrations", async (req: any, res: any, next: any) => {
   if (userError || !user) {
     return res.status(401).set(corsHeaders).send("Unauthorized");
   }
+
+  const { data: connection, error: connectionError } = await supabase
+    .from("supabase_connections")
+    .select("access_token")
+    .eq("user_id", user.user.id)
+    .single();
+
+  if (connectionError || !connection) {
+    return res
+      .status(401)
+      .set(corsHeaders)
+      .send("No valid Supabase connection");
+  }
+
+  req.supabaseConnection = connection;
 
   // check if user owns the workspace
   const { data: workspace, error: workspaceError } = await supabase
@@ -67,26 +201,102 @@ app.use("/migrations", async (req: any, res: any, next: any) => {
   next();
 });
 
-app.get("/migrations/check", async (req: any, res: any) => {
-  // TODO: Implement migration status check logic
-  res.set({ ...corsHeaders }).json({ message: "Migration check endpoint" });
+const getPendingMigrations = async (
+  connection: ConnectionRow,
+  workspace: WorkspaceRow
+): Promise<MigrationFile[]> => {
+  // Ensure yunocontent schema exists
+  await executeSql(
+    connection,
+    workspace,
+    `
+    CREATE SCHEMA IF NOT EXISTS yunocontent;
+    CREATE TABLE IF NOT EXISTS yunocontent.schema_migrations (
+      version bigint NOT NULL, 
+      inserted_at timestamp with time zone DEFAULT now() NOT NULL
+    );
+    `
+  );
+
+  await addSchemaToPostgrest(connection, workspace);
+
+  // Fetch applied migrations
+  const { data: appliedMigrations } = await executeSql(
+    connection,
+    workspace,
+    `SELECT * FROM yunocontent.schema_migrations ORDER BY version ASC`
+  );
+
+  // Read migration files
+  const migrations = await readMigrationFiles();
+
+  // Compare and return pending migrations
+  const appliedVersions = new Set(
+    appliedMigrations?.map((m) => m.version) || []
+  );
+
+  return migrations.filter((m) => !appliedVersions.has(m.version));
+};
+
+// Get a list of migration versions that are pending
+app.get("/migrations/pending", async (req: any, res: any) => {
+  try {
+    const pendingMigrations = await getPendingMigrations(
+      req.supabaseConnection,
+      req.workspace
+    );
+
+    console.log("pendingMigrations", pendingMigrations.length);
+    res
+      .set(corsHeaders)
+      .json({ versions: pendingMigrations.map((m) => m.version) });
+  } catch (error) {
+    res.status(500).set(corsHeaders).json({ error: error.message });
+  }
 });
 
-app.post("/migrations/up", async (req: any, res: any) => {
-  // TODO: Implement migration up logic
-  res.set({ ...corsHeaders }).json({ message: "Migration up endpoint" });
-});
+// Run all pending migrations
+app.post("/migrations", async (req: any, res: any) => {
+  try {
+    const pendingMigrations = await getPendingMigrations(
+      req.supabaseConnection,
+      req.workspace
+    );
 
-// run a migration up to a certain version
-app.post("/migrations/up/:id", async (req: any, res: any) => {
-    // TODO: Implement migration up logic
-    res.set({ ...corsHeaders }).json({ message: "Migration up endpoint" });
-  });
-  
+    console.log("pendingMigrations", pendingMigrations.length);
+    const results = [];
 
-app.post("/migrations/down", async (req: any, res: any) => {
-  // TODO: Implement migration down logic
-  res.set({ ...corsHeaders }).json({ message: "Migration down endpoint" });
+    for (const migration of pendingMigrations) {
+      // Execute the migration SQL
+      const sqlResult = await executeSql(
+        req.supabaseConnection,
+        req.workspace,
+        migration.sql + `; INSERT INTO yunocontent.schema_migrations (version) VALUES (${migration.version});`
+      );
+
+      // if (sqlResult.success) {
+      //   // Record the migration as applied
+      //   const { error: insertError } = await req.dataClient
+      //     .from("schema_migrations")
+      //     .insert({
+      //       version: migration.version,
+      //       inserted_at: new Date().toISOString(),
+      //     });
+
+      //   if (insertError) {
+      //     throw new Error("Failed to record migration: " + insertError.message);
+      //   }
+      // }
+      if (sqlResult.error) {
+        throw new Error("Failed to execute migration: " + sqlResult.error);
+      }
+      console.log("Applied migration " + migration.version + " successfully");
+    }
+
+    res.set(corsHeaders).json({ result: "success" });
+  } catch (error) {
+    res.status(500).set(corsHeaders).json({ error: error.message });
+  }
 });
 
 app.listen(8000, () => {
