@@ -63,9 +63,9 @@ const AppContent: React.FC = () => {
             element={<ContentItemPage />}
           />
           <Route path="/builder" element={<ContentSchemaBuilderPage />} />
-          <Route path="/builder/:schemaId/new" element={<ContentItemPage />} />
+          <Route path="/builder/schemas/:schemaId/new" element={<ContentItemPage />} />
           <Route
-            path="/builder/:schemaId/edit"
+            path="/builder/schemas/:schemaId"
             element={<SchemaEditorPage />}
           />
           <Route path="/profile" element={<ProfilePage />} />

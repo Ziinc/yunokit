@@ -161,6 +161,153 @@ export type Database = {
       [_ in never]: never
     }
   }
+  yunocontent: {
+    Tables: {
+      authors: {
+        Row: {
+          description: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          metadata: Json | null
+          pseudonym: string | null
+          sc_user_id: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          description?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          metadata?: Json | null
+          pseudonym?: string | null
+          sc_user_id?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          description?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          metadata?: Json | null
+          pseudonym?: string | null
+          sc_user_id?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      content_authors: {
+        Row: {
+          author_id: string
+          content_id: string
+          id: number
+        }
+        Insert: {
+          author_id: string
+          content_id: string
+          id?: number
+        }
+        Update: {
+          author_id?: string
+          content_id?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_authors_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_items: {
+        Row: {
+          created_at: string
+          data: Json | null
+          deleted_at: string | null
+          id: number
+          published_at: string | null
+          title: string | null
+          uid: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          deleted_at?: string | null
+          id?: number
+          published_at?: string | null
+          title?: string | null
+          uid?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          deleted_at?: string | null
+          id?: number
+          published_at?: string | null
+          title?: string | null
+          uid?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      schemas: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          fields: Json | null
+          id: string
+          name: string | null
+          type: Database["yunocontent"]["Enums"]["schema_type"] | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          fields?: Json | null
+          id?: string
+          name?: string | null
+          type?: Database["yunocontent"]["Enums"]["schema_type"] | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          fields?: Json | null
+          id?: string
+          name?: string | null
+          type?: Database["yunocontent"]["Enums"]["schema_type"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      schema_type: "single" | "collection"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
 type DefaultSchema = Database[Extract<keyof Database, "public">]
@@ -271,6 +418,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {},
+  },
+  yunocontent: {
+    Enums: {
+      schema_type: ["single", "collection"],
+    },
   },
 } as const
 

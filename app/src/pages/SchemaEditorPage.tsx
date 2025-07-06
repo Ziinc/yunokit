@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  ArrowLeft, 
-  Plus, 
-  Type, 
-  Hash, 
-  Calendar, 
-  ToggleLeft, 
-  List, 
+import {
+  ArrowLeft,
+  Plus,
+  Type,
+  Hash,
+  Calendar,
+  ToggleLeft,
+  List,
   Link as LinkIcon,
   Image,
   FileText,
@@ -18,16 +18,16 @@ import {
   AlertCircle,
   Table,
   X,
-  Pencil
+  Pencil,
 } from "lucide-react";
 import { ContentSchema, ContentField } from "@/lib/contentSchema";
-import { listSchemas } from "@/lib/api/SchemaApi";
+import { listSchemas, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 import {
   DragDropContext,
   Draggable,
   Droppable,
-  DropResult
+  DropResult,
 } from "@hello-pangea/dnd";
 import {
   Dialog,
@@ -66,20 +66,42 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { listContentItemsBySchema, saveContentItem } from '@/lib/api/ContentApi';
+import {
+  listContentItemsBySchema,
+  saveContentItem,
+} from "@/lib/api/ContentApi";
 import { ContentItem } from "@/lib/contentSchema";
+import useSWR from "swr";
+import { getSchema, updateSchema } from "@/lib/api/SchemaApi";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 // Field type definitions with their icons and labels
 const FIELD_TYPES = {
-  text: { icon: Type, label: "Text", defaultValue: "" },
-  number: { icon: Hash, label: "Number", defaultValue: 0 },
-  date: { icon: Calendar, label: "Date", defaultValue: new Date().toISOString() },
-  boolean: { icon: ToggleLeft, label: "Boolean", defaultValue: false },
-  enum: { icon: List, label: "Enum", defaultValue: "" },
-  relation: { icon: LinkIcon, label: "Relation", defaultValue: null },
-  image: { icon: Image, label: "Image", defaultValue: null },
-  markdown: { icon: FileText, label: "Markdown", defaultValue: "" },
-  json: { icon: Code, label: "JSON", defaultValue: {} }
+  [SchemaFieldType.TEXT]: { icon: Type, label: "Text", defaultValue: "" },
+  [SchemaFieldType.NUMBER]: { icon: Hash, label: "Number", defaultValue: 0 },
+  [SchemaFieldType.DATE]: {
+    icon: Calendar,
+    label: "Date",
+    defaultValue: new Date().toISOString(),
+  },
+  [SchemaFieldType.BOOLEAN]: {
+    icon: ToggleLeft,
+    label: "Boolean",
+    defaultValue: false,
+  },
+  [SchemaFieldType.ENUM]: { icon: List, label: "Enum", defaultValue: "" },
+  [SchemaFieldType.RELATION]: {
+    icon: LinkIcon,
+    label: "Relation",
+    defaultValue: null,
+  },
+  [SchemaFieldType.IMAGE]: { icon: Image, label: "Image", defaultValue: null },
+  [SchemaFieldType.MARKDOWN]: {
+    icon: FileText,
+    label: "Markdown",
+    defaultValue: "",
+  },
+  [SchemaFieldType.JSON]: { icon: Code, label: "JSON", defaultValue: {} },
 } as const;
 
 interface FieldMigrationOptions {
@@ -99,186 +121,166 @@ const SchemaEditorPage: React.FC = () => {
   const { schemaId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [schema, setSchema] = useState<ContentSchema | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [showAddField, setShowAddField] = useState(false);
   const [showDeleteField, setShowDeleteField] = useState(false);
-  const [selectedField, setSelectedField] = useState<ContentField | null>(null);
+  const [selectedField, setSelectedField] = useState<SchemaField | null>(null);
   const [showRenameField, setShowRenameField] = useState(false);
   const [newFieldName, setNewFieldName] = useState("");
-  const [migrationOptions, setMigrationOptions] = useState<FieldMigrationOptions>({
-    action: "delete"
-  });
-  const [newField, setNewField] = useState<NewFieldData>({
-    name: "",
-    type: "text",
+  const [migrationOptions, setMigrationOptions] =
+    useState<FieldMigrationOptions>({
+      action: "delete",
+    });
+  const [newField, setNewField] = useState<SchemaField>({
+    id: "",
+    label: "",
+    description: "",
+    type: SchemaFieldType.TEXT,
     required: false,
-    defaultValue: "",
+    default_value: "",
+    relation_schema_id: null,
+    options: null,
   });
   const [newOption, setNewOption] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<ContentSchema[]>([]);
   const [contentCount, setContentCount] = useState<number>(0);
-  const [singleContentItem, setSingleContentItem] = useState<ContentItem | null>(null);
+  const [singleContentItem, setSingleContentItem] =
+    useState<ContentItem | null>(null);
 
-  // Load schemas for relation fields
-  useEffect(() => {
-    const loadSchemas = async () => {
-      try {
-        const schemas = await listSchemas();
-        setAvailableSchemas(schemas.filter(s => s.id !== schemaId));
-      } catch (error) {
-        console.error("Error loading schemas:", error);
-      }
-    };
-    loadSchemas();
-  }, [schemaId]);
+  const { currentWorkspace } = useWorkspace();
 
-  // Load schema
-  useEffect(() => {
-    const loadSchema = async () => {
-      if (!schemaId) return;
-      
-      try {
-        setIsLoading(true);
-        const schemas = await listSchemas();
-        const schema = schemas.find(s => s.id === schemaId);
-        if (schema) {
-          setSchema(schema);
-        }
-      } catch (error) {
-        console.error("Error loading schema:", error);
-        toast({
-          title: "Error loading schema",
-          description: "There was a problem loading the schema.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const {
+    data: schemaResponse,
+    error: schemaError,
+    isLoading: isLoading,
+    mutate: mutateSchema,
+  } = useSWR(
+    currentWorkspace && schemaId ? `schema-${schemaId}` : null,
+    () => getSchema(schemaId!, currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
 
-    loadSchema();
-  }, [schemaId, toast]);
+  const schema = schemaResponse?.data;
 
-  // Load content count or single content item
-  useEffect(() => {
-    const loadContentData = async () => {
-      if (!schema) return;
-      
-      try {
-        const items = await listContentItemsBySchema(schema.id);
-        if (schema.isCollection) {
-          setContentCount(items.length);
-        } else {
-          setSingleContentItem(items[0] || null);
-        }
-      } catch (error) {
-        console.error("Error loading content data:", error);
-      }
-    };
-
-    loadContentData();
-  }, [schema]);
-
+  console.log('schema', schema);
   const handleDragEnd = async (result: DropResult) => {
     if (!schema || !result.destination) return;
 
     try {
-      // Get the new order of field IDs after drag and drop
-      const fieldIds = Array.from(schema.fields.map(f => f.id));
-      const [movedId] = fieldIds.splice(result.source.index, 1);
-      fieldIds.splice(result.destination.index, 0, movedId);
+      // Get the current fields array
+      let fields = Array.from(schema.fields || []);
+      const [movedField] = fields.splice(result.source.index, 1);
+      fields.splice(result.destination.index, 0, movedField);
 
       // Create new fields array in the new order
-      const reorderedFields = fieldIds.map(id => schema.fields.find(f => f.id === id)!);
-      
+      const reorderedFields = fields;
+
       // Update UI optimistically
-      setSchema({
-        ...schema,
-        fields: reorderedFields
-      });
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: {
+            ...schema,
+            fields: reorderedFields,
+          },
+        },
+        false
+      );
 
       // Call the API to reorder fields
-      const updatedSchema = await SchemaApi.reorderFields(schema.id, fieldIds);
-      setSchema(updatedSchema);
+      const updatedSchemaResponse = await updateSchema(
+        {
+          id: schema.id,
+          fields: reorderedFields,
+        },
+        currentWorkspace!.id
+      );
+
+      if (updatedSchemaResponse.data) {
+        mutateSchema({
+          ...schemaResponse,
+          data: updatedSchemaResponse.data,
+        });
+      }
     } catch (error) {
       console.error("Error reordering fields:", error);
-      // Revert to original order on error
-      setSchema(schema);
       toast({
         title: "Error reordering fields",
         description: "There was a problem saving the new field order.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const handleAddField = async () => {
-    if (!schema || !newField.name.trim()) return;
+    if (!schema || !newField.label.trim()) return;
 
     try {
-      const field: ContentField = {
+      const field: SchemaField = {
         id: crypto.randomUUID(),
-        name: newField.name,
-        type: newField.type,
+        label: newField.label,
+        description: newField.description,
+        options: newField.options,
+        type: newField.type as SchemaFieldType,
         required: newField.required,
-        defaultValue: newField.defaultValue,
-        ...(newField.type === "relation" && {
-          relationSchemaId: newField.relationSchemaId
-        })
+        default_value: newField.default_value,
+        relation_schema_id: newField.relation_schema_id,
       };
 
       const updatedSchema = {
         ...schema,
-        fields: [...schema.fields, field]
+        fields: [...(schema.fields || []), field],
       };
 
-      await SchemaApi.saveSchema(updatedSchema);
-      setSchema(updatedSchema);
+      await updateSchema(updatedSchema, currentWorkspace!.id);
       setShowAddField(false);
       setNewField({
-        name: "",
-        type: "text",
+        id: "",
+        label: "",
+        description: "",
+        type: SchemaFieldType.TEXT,
         required: false,
-        defaultValue: "",
+        default_value: "",
+        relation_schema_id: null,
+        options: null,
       });
-      
+
       toast({
         title: "Field added",
-        description: `${field.name} field has been added successfully.`
+        description: `${field.label} field has been added successfully.`,
       });
     } catch (error) {
       console.error("Error adding field:", error);
       toast({
         title: "Error adding field",
         description: "There was a problem adding the field.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
-  const handleDeleteField = async (field: ContentField) => {
+  const handleDeleteField = async (field: SchemaField) => {
     if (!schema) return;
 
     try {
-      const updatedFields = schema.fields.filter(f => f.id !== field.id);
+      const updatedFields = schema.fields.filter((f) => f !== field);
       const updatedSchema = { ...schema, fields: updatedFields };
-
-      await SchemaApi.saveSchema(updatedSchema);
-      setSchema(updatedSchema);
+      await updateSchema(updatedSchema, currentWorkspace!.id);
       setShowDeleteField(false);
       setSelectedField(null);
-      
+
       toast({
         title: "Field deleted",
-        description: `${field.name} field has been deleted successfully.`
+        description: `${field.label} field has been deleted successfully.`,
       });
     } catch (error) {
       console.error("Error deleting field:", error);
       toast({
         title: "Error deleting field",
         description: "There was a problem deleting the field.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -287,22 +289,29 @@ const SchemaEditorPage: React.FC = () => {
     if (!schema || !selectedField || !newFieldName.trim()) return;
 
     try {
-      const updatedSchema = await SchemaApi.renameField(schema.id, selectedField.id, newFieldName.trim());
-      setSchema(updatedSchema);
+      const updatedSchema = await updateSchema(
+        {
+          id: schema.id,
+          fields: schema.fields.map((f) =>
+            f === selectedField ? { ...f, label: newFieldName.trim() } : f
+          ),
+        },
+        currentWorkspace!.id
+      );
       setShowRenameField(false);
       setSelectedField(null);
       setNewFieldName("");
-      
+
       toast({
         title: "Field renamed",
-        description: `Field has been renamed to "${newFieldName}" successfully.`
+        description: `Field has been renamed to "${newFieldName}" successfully.`,
       });
     } catch (error) {
       console.error("Error renaming field:", error);
       toast({
         title: "Error renaming field",
         description: "There was a problem renaming the field.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -313,8 +322,10 @@ const SchemaEditorPage: React.FC = () => {
       case "markdown":
         return (
           <Input
-            value={newField.defaultValue}
-            onChange={(e) => setNewField({ ...newField, defaultValue: e.target.value })}
+            value={newField.default_value as string}
+            onChange={(e) =>
+              setNewField({ ...newField, default_value: e.target.value })
+            }
             placeholder="Enter default text..."
           />
         );
@@ -322,8 +333,13 @@ const SchemaEditorPage: React.FC = () => {
         return (
           <Input
             type="number"
-            value={newField.defaultValue}
-            onChange={(e) => setNewField({ ...newField, defaultValue: parseFloat(e.target.value) || 0 })}
+            value={newField.default_value as number}
+            onChange={(e) =>
+              setNewField({
+                ...newField,
+                default_value: parseFloat(e.target.value) || 0,
+              })
+            }
             placeholder="Enter default number..."
           />
         );
@@ -331,22 +347,31 @@ const SchemaEditorPage: React.FC = () => {
         return (
           <Input
             type="datetime-local"
-            value={newField.defaultValue.split(".")[0]} // Remove milliseconds
-            onChange={(e) => setNewField({ ...newField, defaultValue: new Date(e.target.value).toISOString() })}
+            value={(newField.default_value as string).split(".")[0]} // Remove milliseconds
+            onChange={(e) =>
+              setNewField({
+                ...newField,
+                default_value: new Date(e.target.value).toISOString(),
+              })
+            }
           />
         );
       case "boolean":
         return (
           <Switch
-            checked={newField.defaultValue}
-            onCheckedChange={(checked) => setNewField({ ...newField, defaultValue: checked })}
+            checked={newField.default_value as boolean}
+            onCheckedChange={(checked) =>
+              setNewField({ ...newField, default_value: checked })
+            }
           />
         );
       case "enum":
         return (
           <Select
-            value={newField.defaultValue}
-            onValueChange={(value) => setNewField({ ...newField, defaultValue: value })}
+            value={newField.default_value as string}
+            onValueChange={(value) =>
+              setNewField({ ...newField, default_value: value })
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select default value" />
@@ -363,13 +388,17 @@ const SchemaEditorPage: React.FC = () => {
       case "json":
         return (
           <Textarea
-            value={typeof newField.defaultValue === 'string' ? newField.defaultValue : JSON.stringify(newField.defaultValue, null, 2)}
+            value={
+              typeof newField.default_value === "string"
+                ? newField.default_value
+                : JSON.stringify(newField.default_value, null, 2)
+            }
             onChange={(e) => {
               try {
                 const parsed = JSON.parse(e.target.value);
-                setNewField({ ...newField, defaultValue: parsed });
+                setNewField({ ...newField, default_value: parsed });
               } catch {
-                setNewField({ ...newField, defaultValue: e.target.value });
+                setNewField({ ...newField, default_value: e.target.value });
               }
             }}
             placeholder="Enter default JSON..."
@@ -379,8 +408,10 @@ const SchemaEditorPage: React.FC = () => {
       case "relation":
         return (
           <Select
-            value={newField.relationSchemaId}
-            onValueChange={(value) => setNewField({ ...newField, relationSchemaId: value })}
+            value={newField.relation_schema_id}
+            onValueChange={(value) =>
+              setNewField({ ...newField, relation_schema_id: value })
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a schema" />
@@ -401,31 +432,31 @@ const SchemaEditorPage: React.FC = () => {
 
   const handleCreateSingleContent = async () => {
     if (!schema) return;
-    
+
     try {
       const newItem: ContentItem = {
         id: crypto.randomUUID(),
         schemaId: schema.id,
         title: schema.name,
-        status: 'draft',
+        status: "draft",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        data: {}
+        data: {},
       };
-      
+
       await saveContentItem(newItem);
       setSingleContentItem(newItem);
-      
+
       toast({
         title: "Content created",
-        description: "Single content item has been created successfully."
+        description: "Single content item has been created successfully.",
       });
     } catch (error) {
       console.error("Error creating content:", error);
       toast({
         title: "Error creating content",
         description: "There was a problem creating the content item.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -440,7 +471,8 @@ const SchemaEditorPage: React.FC = () => {
         <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
         <h1 className="mt-4 text-2xl font-bold">Schema Not Found</h1>
         <p className="mt-2 text-muted-foreground">
-          The schema you're looking for doesn't exist or you don't have access to it.
+          The schema you're looking for doesn't exist or you don't have access
+          to it.
         </p>
         <Button onClick={() => navigate(-1)} className="mt-6">
           Go Back
@@ -464,14 +496,16 @@ const SchemaEditorPage: React.FC = () => {
               Back
             </Button>
             <h1 className="text-2xl font-bold">{schema.name}</h1>
-            <Badge variant={schema.isCollection ? "default" : "outline"}>
-              {schema.isCollection ? "Collection" : "Single"}
+            <Badge
+              variant={schema.type === "collection" ? "default" : "outline"}
+            >
+              {schema.type === "collection" ? "Collection" : "Single"}
             </Badge>
             <Badge variant="secondary" className="ml-2">
               <Table className="h-4 w-4 mr-1" />
-              {schema.fields.length} Fields
+              {(schema.fields || []).length} Fields
             </Badge>
-            {schema.isCollection ? (
+            {schema.type === "collection" ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -488,7 +522,11 @@ const SchemaEditorPage: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 className="ml-2"
-                onClick={singleContentItem ? () => navigate(`/content/${singleContentItem.id}`) : handleCreateSingleContent}
+                onClick={
+                  singleContentItem
+                    ? () => navigate(`/content/${singleContentItem.id}`)
+                    : handleCreateSingleContent
+                }
               >
                 {singleContentItem ? (
                   <Badge variant="secondary">View Content</Badge>
@@ -519,8 +557,10 @@ const SchemaEditorPage: React.FC = () => {
                 <Label htmlFor="name">Field Name</Label>
                 <Input
                   id="name"
-                  value={newField.name}
-                  onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+                  value={newField.label}
+                  onChange={(e) =>
+                    setNewField({ ...newField, label: e.target.value })
+                  }
                   placeholder="Enter field name..."
                 />
               </div>
@@ -528,19 +568,28 @@ const SchemaEditorPage: React.FC = () => {
               <div className="space-y-2">
                 <Label>Field Type</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(FIELD_TYPES).map(([type, { icon: Icon, label }]) => (
-                    <Button
-                      key={type}
-                      variant={newField.type === type ? "default" : "outline"}
-                      className={`justify-start text-left ${newField.type === type ? "" : "border-dashed"}`}
-                      onClick={() => setNewField({ ...newField, type: type as keyof typeof FIELD_TYPES })}
-                    >
-                      <div className="flex items-center">
-                        <Icon size={16} />
-                        <span className="ml-2">{label}</span>
-                      </div>
-                    </Button>
-                  ))}
+                  {Object.entries(FIELD_TYPES).map(
+                    ([type, { icon: Icon, label }]) => (
+                      <Button
+                        key={type}
+                        variant={newField.type === type ? "default" : "outline"}
+                        className={`justify-start text-left ${
+                          newField.type === type ? "" : "border-dashed"
+                        }`}
+                        onClick={() =>
+                          setNewField({
+                            ...newField,
+                            type: type as keyof typeof FIELD_TYPES,
+                          })
+                        }
+                      >
+                        <div className="flex items-center">
+                          <Icon size={16} />
+                          <span className="ml-2">{label}</span>
+                        </div>
+                      </Button>
+                    )
+                  )}
                 </div>
               </div>
 
@@ -557,8 +606,12 @@ const SchemaEditorPage: React.FC = () => {
                           e.preventDefault();
                           setNewField({
                             ...newField,
-                            options: [...(newField.options || []), newOption.trim()],
-                            defaultValue: newField.defaultValue || newOption.trim()
+                            options: [
+                              ...(newField.options || []),
+                              newOption.trim(),
+                            ],
+                            default_value:
+                              newField.default_value || newOption.trim(),
                           });
                           setNewOption("");
                         }
@@ -570,8 +623,12 @@ const SchemaEditorPage: React.FC = () => {
                         if (newOption.trim()) {
                           setNewField({
                             ...newField,
-                            options: [...(newField.options || []), newOption.trim()],
-                            defaultValue: newField.defaultValue || newOption.trim()
+                            options: [
+                              ...(newField.options || []),
+                              newOption.trim(),
+                            ],
+                            default_value:
+                              newField.default_value || newOption.trim(),
                           });
                           setNewOption("");
                         }
@@ -590,8 +647,13 @@ const SchemaEditorPage: React.FC = () => {
                           onClick={() => {
                             setNewField({
                               ...newField,
-                              options: newField.options?.filter((o) => o !== option),
-                              defaultValue: newField.defaultValue === option ? "" : newField.defaultValue
+                              options: newField.options?.filter(
+                                (o) => o !== option
+                              ),
+                              default_value:
+                                newField.default_value === option
+                                  ? ""
+                                  : newField.default_value,
                             });
                           }}
                         >
@@ -608,8 +670,10 @@ const SchemaEditorPage: React.FC = () => {
                 <div className="space-y-2">
                   <Label>Related Schema</Label>
                   <Select
-                    value={newField.relationSchemaId}
-                    onValueChange={(value) => setNewField({ ...newField, relationSchemaId: value })}
+                    value={newField.relation_schema_id}
+                    onValueChange={(value) =>
+                      setNewField({ ...newField, relation_schema_id: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a schema" />
@@ -634,7 +698,9 @@ const SchemaEditorPage: React.FC = () => {
                 <Switch
                   id="required"
                   checked={newField.required || false}
-                  onCheckedChange={(checked) => setNewField({ ...newField, required: checked })}
+                  onCheckedChange={(checked) =>
+                    setNewField({ ...newField, required: checked })
+                  }
                 />
                 <Label htmlFor="required">Required Field</Label>
               </div>
@@ -657,12 +723,17 @@ const SchemaEditorPage: React.FC = () => {
               ref={provided.innerRef}
               className="space-y-4"
             >
-              {schema?.fields.map((field, index) => {
-                const fieldType = FIELD_TYPES[field.type as keyof typeof FIELD_TYPES];
+              {(schema?.fields || []).map((field, index) => {
+                const fieldType =
+                  FIELD_TYPES[field.type as keyof typeof FIELD_TYPES];
                 const Icon = fieldType?.icon || Type;
 
                 return (
-                  <Draggable key={field.id} draggableId={field.id} index={index}>
+                  <Draggable
+                    key={field.id}
+                    draggableId={field.id}
+                    index={index}
+                  >
                     {(provided) => (
                       <Card
                         ref={provided.innerRef}
@@ -678,7 +749,10 @@ const SchemaEditorPage: React.FC = () => {
                                   {...provided.dragHandleProps}
                                 >
                                   <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                  <Icon size={20} className="text-muted-foreground" />
+                                  <Icon
+                                    size={20}
+                                    className="text-muted-foreground"
+                                  />
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -692,11 +766,16 @@ const SchemaEditorPage: React.FC = () => {
                                 {field.required && (
                                   <Badge variant="secondary">Required</Badge>
                                 )}
-                                {field.type === "relation" && field.relationSchemaId && (
-                                  <Badge variant="outline">
-                                    {availableSchemas.find(s => s.id === field.relationSchemaId)?.name}
-                                  </Badge>
-                                )}
+                                {field.type === "relation" &&
+                                  field.relation_schema_id && (
+                                    <Badge variant="outline">
+                                      {
+                                        availableSchemas.find(
+                                            (s) => s.id === field.relation_schema_id
+                                        )?.name
+                                      }
+                                    </Badge>
+                                  )}
                               </div>
                             </div>
                           </div>
@@ -708,11 +787,14 @@ const SchemaEditorPage: React.FC = () => {
                                   size="icon"
                                   onClick={() => {
                                     setSelectedField(field);
-                                    setNewFieldName(field.name);
+                                    setNewFieldName(field.label);
                                     setShowRenameField(true);
                                   }}
                                 >
-                                  <Type size={16} className="text-muted-foreground" />
+                                  <Type
+                                    size={16}
+                                    className="text-muted-foreground"
+                                  />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -754,14 +836,15 @@ const SchemaEditorPage: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Field</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the "{selectedField?.name}" field? This action cannot be undone.
-              Choose how to handle the existing data:
+              Are you sure you want to delete the "{selectedField?.label}"
+              field? This action cannot be undone. Choose how to handle the
+              existing data:
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4 space-y-4">
             <Select
               value={migrationOptions.action}
-              onValueChange={(value: "delete" | "keep") => 
+              onValueChange={(value: "delete" | "keep") =>
                 setMigrationOptions({ ...migrationOptions, action: value })
               }
             >
@@ -777,13 +860,14 @@ const SchemaEditorPage: React.FC = () => {
             <div className="text-sm text-muted-foreground space-y-2">
               {migrationOptions.action === "delete" ? (
                 <p>
-                  This will permanently delete the field and all its data from existing content items.
-                  This cannot be undone.
+                  This will permanently delete the field and all its data from
+                  existing content items. This cannot be undone.
                 </p>
               ) : (
                 <p>
-                  This will hide the field from the schema but keep its data in existing content items.
-                  You can add the field back later to restore access to the data.
+                  This will hide the field from the schema but keep its data in
+                  existing content items. You can add the field back later to
+                  restore access to the data.
                 </p>
               )}
             </div>
@@ -828,4 +912,4 @@ const SchemaEditorPage: React.FC = () => {
   );
 };
 
-export default SchemaEditorPage; 
+export default SchemaEditorPage;

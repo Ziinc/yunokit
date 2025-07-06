@@ -32,7 +32,7 @@ alter table if exists "yunocontent"."schemas" alter column "type" set data type 
 
 drop type if exists "yunocontent"."yunocontent.schema_type";
 
-create unique index if not exists "yunocontent"."content_items_pkey" on "yunocontent"."content_items" using btree (id);
+create unique index if not exists "content_items_pkey" on "yunocontent"."content_items" using btree (id);
 
 alter table if exists "yunocontent"."content_items" add constraint "content_items_pkey" PRIMARY KEY using index "content_items_pkey";
 

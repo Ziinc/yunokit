@@ -3,9 +3,32 @@ import { supabase } from "../supabase";
 import type { Database } from "../../../database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-type DbClient = SupabaseClient<Database>;
-export type ContentSchemaRow =
-  Database["yunocontent"]["Tables"]["schemas"]["Row"];
+type SchemaRow = Database["yunocontent"]["Tables"]["schemas"]["Row"]
+export interface ContentSchemaRow extends  Omit<SchemaRow, "fields"> {
+  fields: SchemaField[] | []
+}
+
+export enum SchemaFieldType{
+  TEXT = "text",
+  NUMBER = "number",
+  DATE = "date",
+  BOOLEAN = "boolean",
+  ENUM = "enum",
+  RELATION = "relation",
+  IMAGE = "image",
+  MARKDOWN = "markdown",
+  JSON = "json",
+} 
+export interface SchemaField { 
+  id: string
+  label: string
+  description: string | null
+  type: SchemaFieldType
+  required: boolean
+  default_value: string | boolean | number | null | Record<string, string>
+  options: string[]
+  relation_schema_id: string | null
+} 
 
 export const listSchemas = async (workspaceId: number) => {
   const qp = new URLSearchParams({
@@ -21,7 +44,7 @@ export const listSchemas = async (workspaceId: number) => {
   
 };
 
-export const getSchemaById = async (
+export const getSchema = async (
   id: string | number,
   workspaceId: number
 )=> {
@@ -29,7 +52,7 @@ export const getSchemaById = async (
     workspaceId: workspaceId.toString(),
   });
   
-  return await supabase.functions.invoke<ContentSchemaRow[]>(
+  return await supabase.functions.invoke<ContentSchemaRow>(
     `proxy/schemas/${id}?${qp.toString()}`,
     {
       method: "GET",
@@ -64,7 +87,7 @@ export const updateSchema = async (
   });
 
   return await supabase.functions.invoke<ContentSchemaRow>(
-    `proxy/schemas?${qp.toString()}`,
+    `proxy/schemas/${schema.id}?${qp.toString()}`,
     {
       method: "PUT",
       body: schema, 

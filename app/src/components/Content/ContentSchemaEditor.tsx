@@ -11,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { DocsButton } from "@/components/ui/DocsButton";
+import { ContentSchemaRow, SchemaField, SchemaFieldType  } from "@/lib/api/SchemaApi";
 
 interface ContentSchemaEditorProps {
-  initialSchema?: ContentSchema;
-  onSave: (schema: ContentSchema) => void;
+  initialSchema?: ContentSchemaRow;
+  onSave: (schema: Partial<ContentSchemaRow>) => void;
 }
 
 export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
@@ -22,59 +23,51 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
   onSave,
 }) => {
   const { toast } = useToast();
-  const [schema, setSchema] = useState<ContentSchema>(
+  const [schema, setSchema] = useState<Partial<ContentSchemaRow>>(
     initialSchema || {
-      id: crypto.randomUUID(),
       name: "",
       description: "",
       fields: [],
-      isCollection: false,
+      type: "single" as const,
     }
   );
 
   const [newFieldDialogOpen, setNewFieldDialogOpen] = useState(false);
-  const [newField, setNewField] = useState<ContentField>({
-    id: "",
-    name: "",
-    type: "markdown",
+  const [newField, setNewField] = useState<SchemaField>({
+    label: "",
+    type: SchemaFieldType.TEXT,
     required: false,
     options: [],
+    description: "",
+    default_value: null,
+    relation_schema_id: null,
   });
   
   const [newOption, setNewOption] = useState("");
 
   const getFieldTypeIcon = (type: ContentFieldType) => {
     switch (type) {
-      case "markdown":
+      case SchemaFieldType.MARKDOWN:
         return <FileText size={18} className="text-cms-purple" />;
-      case "json":
+      case SchemaFieldType.JSON:
         return <FileJson size={18} className="text-cms-blue" />;
-      case "block":
-        return <Blocks size={18} className="text-cms-orange" />;
-      case "boolean":
+      case SchemaFieldType.BOOLEAN:
         return <Check size={18} className="text-green-500" />;
-      case "enum":
+      case SchemaFieldType.ENUM:
         return <List size={18} className="text-amber-500" />;
-      case "multiselect":
-        return <ListChecks size={18} className="text-cyan-500" />;
       default:
         return <FileText size={18} />;
     }
   };
 
   const addField = () => {
-    if (!newField.name) {
+    if (!newField.label) {
       toast({
-        title: "Field name required",
-        description: "Please provide a name for the field",
+        title: "Field label required",
+        description: "Please provide a label for the field",
         variant: "destructive",
       });
       return;
-    }
-
-    if (!newField.id) {
-      // Generate ID from name
-      newField.id = newField.name.toLowerCase().replace(/\s+/g, "-");
     }
 
     setSchema({
@@ -84,25 +77,27 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
 
     // Reset new field
     setNewField({
-      id: "",
-      name: "",
-      type: "markdown",
+      label: "",
+      type: SchemaFieldType.TEXT,
       required: false,
       options: [],
+      description: "",
+      default_value: null,
+      relation_schema_id: null,
     });
 
     setNewFieldDialogOpen(false);
     
     toast({
       title: "Field added",
-      description: `Added ${newField.name} field to ${schema.name}`,
+      description: `Added ${newField.label} field to ${schema.name}`,
     });
   };
 
-  const removeField = (id: string) => {
+  const removeField = (field: SchemaField) => {
     setSchema({
       ...schema,
-      fields: schema.fields.filter((field) => field.id !== id),
+      fields: schema.fields.filter((f) => f !== field),
     });
     
     toast({
@@ -121,20 +116,13 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
       return;
     }
 
-    if (schema.fields.length === 0) {
-      toast({
-        title: "Fields required",
-        description: "Please add at least one field to the schema",
-        variant: "destructive",
-      });
-      return;
-    }
-
     onSave(schema);
     
     toast({
-      title: "Schema saved",
-      description: `${schema.name} schema has been saved successfully`,
+      title: "Schema created",
+      description: schema.fields.length === 0 
+        ? `${schema.name} schema has been created successfully. Don't forget to add fields to make it useful!`
+        : `${schema.name} schema has been saved successfully`,
     });
   };
 
@@ -199,12 +187,15 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
             <div className="flex items-center space-x-2">
               <Switch
                 id="isCollection"
-                checked={schema.isCollection}
-                onCheckedChange={(checked) => setSchema({ ...schema, isCollection: checked })}
+                checked={schema.type === "collection"}
+                onCheckedChange={(checked) => setSchema({ 
+                  ...schema, 
+                  type: checked ? "collection" : "single"
+                })}
               />
               <Label htmlFor="isCollection">Collection Type</Label>
               <p className="text-sm text-muted-foreground ml-2">
-                {schema.isCollection 
+                {schema.type === "collection" 
                   ? "Will contain multiple content items" 
                   : "Will contain a single content item"}
               </p>
@@ -232,8 +223,8 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                       <Label htmlFor="fieldName">Field Name</Label>
                       <Input
                         id="fieldName"
-                        value={newField.name}
-                        onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+                        value={newField.label}
+                        onChange={(e) => setNewField({ ...newField, label: e.target.value })}
                         placeholder="e.g., Title, Content, IsPublished"
                       />
                     </div>
@@ -241,12 +232,12 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                     <div className="space-y-2">
                       <Label>Field Type</Label>
                       <div className="grid grid-cols-2 gap-2">
-                        {(["markdown", "json", "block", "boolean", "enum", "multiselect"] as ContentFieldType[]).map((type) => (
+                        {(["text", "number", "date", "boolean", "enum", "relation", "image", "markdown", "json"] as ContentFieldType[]).map((type) => (
                           <Button
                             key={type}
                             variant={newField.type === type ? "default" : "outline"}
                             className={`justify-start text-left ${newField.type === type ? "" : "border-dashed"}`}
-                            onClick={() => setNewField({ ...newField, type })}
+                            onClick={() => setNewField({ ...newField, type: type as SchemaFieldType })}
                           >
                             <div className="flex items-center">
                               {getFieldTypeIcon(type)}
@@ -276,7 +267,7 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                       />
                     </div>
                     
-                    {(newField.type === "enum" || newField.type === "multiselect") && (
+                    {newField.type === "enum" && (
                       <div className="space-y-3">
                         <Label>Options</Label>
                         <div className="flex gap-2">
