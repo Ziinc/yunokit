@@ -1,7 +1,5 @@
-import { mockSystemAuthors } from "../mocks";
-
 // In-memory storage
-let authors: SystemAuthor[] = [...mockSystemAuthors];
+let authors: SystemAuthor[] = [];
 
 // Helper to simulate network delay for a more realistic experience
 const simulateNetworkDelay = async (minMs: number = 300, maxMs: number = 1200): Promise<void> => {
@@ -21,11 +19,9 @@ export interface SystemAuthor {
  * SystemAuthorApi - Provides methods for managing system authors
  */
 export class SystemAuthorApi {
-  // Initialize storage with example system authors if empty
+  // Initialize storage - no longer uses mocks
   static async initializeStorage(): Promise<void> {
-    if (authors.length === 0) {
-      authors = [...mockSystemAuthors];
-    }
+    // Storage is now initialized empty
   }
 
   // Get all system authors

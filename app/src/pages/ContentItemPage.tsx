@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
-import { exampleSchemas, mockContentItems, ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
+import { exampleSchemas, ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, ArrowDown, ArrowUp, Plus, Reply, ArrowRight } from "lucide-react";
+import { ArrowLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, Reply, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const ContentItemPage: React.FC = () => {
   const { schemaId, contentId } = useParams<{ schemaId: string; contentId?: string }>();
@@ -28,7 +27,7 @@ const ContentItemPage: React.FC = () => {
   
   // Find content item if contentId is provided
   const [contentItem, setContentItem] = useState<ContentItem | undefined>(
-    contentId ? mockContentItems.find(item => item.id === contentId) : undefined
+    undefined
   );
   
   // Helper function to get content data (handles both content and data fields)

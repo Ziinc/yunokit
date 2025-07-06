@@ -1,4 +1,3 @@
-
 export interface SupabaseProject {
   id: string;
   name: string;
@@ -30,56 +29,17 @@ export class SupabaseConnectionApi {
     currentProject = null;
   }
 
-  // Mock OAuth2 flow
+  // OAuth2 flow - implement actual OAuth when needed
   static async initiateOAuth(): Promise<{ url: string; state: string }> {
-    const state = Math.random().toString(36).substring(7);
-    const mockUrl = `https://supabase.com/oauth/authorize?state=${state}&client_id=mock&redirect_uri=http://localhost:3000/settings`;
-    return { url: mockUrl, state };
+    throw new Error('OAuth flow not implemented - connect directly with project credentials');
   }
 
   static async handleOAuthCallback(params: URLSearchParams): Promise<SupabaseProject> {
-    const state = params.get('state');
-    const code = params.get('code');
-
-    if (!state || !code) {
-      throw new Error('Invalid OAuth callback parameters');
-    }
-
-    // Mock successful connection
-    const project: SupabaseProject = {
-      id: crypto.randomUUID(),
-      name: "My Supabase Project",
-      region: "us-east-1",
-      isConnected: true,
-      connectionUrl: "https://xxxxx.supabase.co",
-      connectionKey: "mock-key-xxxxx"
-    };
-
-    await this.saveConnection(project);
-    return project;
+    throw new Error('OAuth callback not implemented - connect directly with project credentials');
   }
 
-  // Mock available projects (only used in OAuth flow)
+  // Available projects - implement actual API call when needed
   static async getAvailableProjects(): Promise<SupabaseProject[]> {
-    return [
-      {
-        id: crypto.randomUUID(),
-        name: "My Project",
-        region: "us-east-1",
-        isConnected: false
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Team Project",
-        region: "eu-west-1",
-        isConnected: false
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Development",
-        region: "ap-southeast-1",
-        isConnected: false
-      }
-    ];
+    throw new Error('Project listing not implemented - connect directly with project credentials');
   }
 } 

@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { mockContentItems } from "@/lib/contentSchema";
+import { listContentItemsBySchema } from "@/lib/api/ContentApi";
+import { ContentItem } from "@/lib/contentSchema";
 
 interface RelationFieldProps {
   id: string;
@@ -27,18 +28,54 @@ export const RelationField: React.FC<RelationFieldProps> = ({
   isMultiple = false,
 }) => {
   const [open, setOpen] = useState(false);
+  const [availableItems, setAvailableItems] = useState<ContentItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<ContentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Filter content items by schema
-  const availableItems = mockContentItems.filter(item => 
-    item.schemaId === relationSchemaId && 
-    item.status === 'published' && 
-    !value.includes(item.id)
-  );
-  
-  // Get selected items details
-  const selectedItems = mockContentItems.filter(item => 
-    value.includes(item.id)
-  );
+  // Load available items when component mounts or relationSchemaId changes
+  useEffect(() => {
+    const loadAvailableItems = async () => {
+      if (!relationSchemaId) return;
+      
+      setIsLoading(true);
+      try {
+        const items = await listContentItemsBySchema(relationSchemaId);
+        // Filter out already selected items and only show published items
+        const filteredItems = items.filter(item => 
+          item.status === 'published' && !value.includes(item.id)
+        );
+        setAvailableItems(filteredItems);
+      } catch (error) {
+        console.error('Error loading relation items:', error);
+        setAvailableItems([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAvailableItems();
+  }, [relationSchemaId, value]);
+
+  // Load selected items details when value changes
+  useEffect(() => {
+    const loadSelectedItems = async () => {
+      if (value.length === 0) {
+        setSelectedItems([]);
+        return;
+      }
+
+      try {
+        const items = await listContentItemsBySchema(relationSchemaId);
+        const selected = items.filter(item => value.includes(item.id));
+        setSelectedItems(selected);
+      } catch (error) {
+        console.error('Error loading selected items:', error);
+        setSelectedItems([]);
+      }
+    };
+
+    loadSelectedItems();
+  }, [value, relationSchemaId]);
   
   const handleSelect = (itemId: string) => {
     if (isMultiple) {
@@ -93,8 +130,9 @@ export const RelationField: React.FC<RelationFieldProps> = ({
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between"
+            disabled={isLoading}
           >
-            {isMultiple ? "Select items..." : selectedItems.length > 0 ? selectedItems[0].title : "Select an item..."}
+            {isLoading ? "Loading..." : isMultiple ? "Select items..." : selectedItems.length > 0 ? selectedItems[0].title : "Select an item..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>

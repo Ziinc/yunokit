@@ -25,8 +25,11 @@ export interface ContentField {
 export interface ContentSchema {
   id: string;
   name: string;
-  fields: any[];
+  description?: string;
+  isCollection?: boolean;
+  schemaType?: 'collection' | 'single';
   type: 'collection' | 'single';
+  fields: any[];
 }
 
 // Add content item status type
@@ -37,9 +40,13 @@ export interface ContentItem {
   id: string;
   title: string;
   schemaId: string;
-  status: 'published' | 'draft';
+  status: 'published' | 'draft' | 'pending_review';
   createdAt: string;
   updatedAt: string;
+  publishedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  icon?: string;
   data: Record<string, any>;
 }
 
@@ -63,6 +70,7 @@ export const exampleSchemas: ContentSchema[] = [
     description: 'A blog post with markdown content',
     isCollection: true,
     schemaType: 'collection',
+    type: 'collection',
     fields: [
       {
         id: 'title',
@@ -101,6 +109,7 @@ export const exampleSchemas: ContentSchema[] = [
     description: 'Author profile information',
     isCollection: true,
     schemaType: 'collection',
+    type: 'collection',
     fields: [
       {
         id: 'name',
@@ -131,6 +140,7 @@ export const exampleSchemas: ContentSchema[] = [
     description: 'A collection of products with JSON data',
     isCollection: true,
     schemaType: 'collection',
+    type: 'collection',
     fields: [
       {
         id: 'name',
@@ -164,6 +174,7 @@ export const exampleSchemas: ContentSchema[] = [
     description: 'A flexible page builder with block content',
     isCollection: false,
     schemaType: 'single',
+    type: 'single',
     fields: [
       {
         id: 'title',
@@ -193,75 +204,6 @@ export const exampleSchemas: ContentSchema[] = [
         id: 'thumbnail',
         name: 'Thumbnail',
         type: 'image',
-      }
-    ]
-  }
-];
-
-// Mock content items
-export const mockContentItems: ContentItem[] = [
-  {
-    id: '1',
-    schemaId: 'blog-post',
-    title: 'Getting Started with React',
-    content: {
-      title: 'Getting Started with React',
-      content: '# Introduction to React\n\nReact is a JavaScript library for building user interfaces...',
-      featured: true,
-      category: 'Technology',
-      tags: ['React', 'JavaScript'],
-    },
-    status: 'published',
-    createdAt: '2023-10-15T08:00:00Z',
-    updatedAt: '2023-10-15T10:30:00Z',
-    publishedAt: '2023-10-16T09:00:00Z',
-    createdBy: 'alex@example.com',
-    updatedBy: 'alex@example.com',
-    publishedBy: 'sarah@example.com',
-  },
-  {
-    id: '2',
-    schemaId: 'blog-post',
-    title: 'Advanced TypeScript Tips',
-    content: {
-      title: 'Advanced TypeScript Tips',
-      content: '# TypeScript Pro Tips\n\nHere are some advanced techniques...',
-      featured: false,
-      category: 'Technology',
-      tags: ['TypeScript', 'JavaScript'],
-    },
-    status: 'draft',
-    createdAt: '2023-10-17T14:20:00Z',
-    updatedAt: '2023-10-17T16:45:00Z',
-    createdBy: 'alex@example.com',
-    updatedBy: 'alex@example.com',
-  },
-  {
-    id: '3',
-    schemaId: 'blog-post',
-    title: 'UI Design Principles',
-    content: {
-      title: 'UI Design Principles',
-      content: '# Fundamental UI Design Principles\n\nConsistency, feedback, and simplicity...',
-      featured: true,
-      category: 'Design',
-      tags: ['UI/UX', 'Design'],
-    },
-    status: 'pending_review',
-    createdAt: '2023-10-18T09:15:00Z',
-    updatedAt: '2023-10-18T11:30:00Z',
-    createdBy: 'sarah@example.com',
-    updatedBy: 'sarah@example.com',
-    comments: [
-      {
-        id: 'c1',
-        contentItemId: '3',
-        userId: 'user123',
-        userName: 'Alex',
-        text: 'The design principles section needs more examples.',
-        createdAt: '2023-10-18T12:00:00Z',
-        fieldId: 'content',
-        resolved: false
       }
     ]
   }

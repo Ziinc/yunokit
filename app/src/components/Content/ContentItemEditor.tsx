@@ -16,6 +16,7 @@ import { Check, MessageSquare, Send, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import markdownit from 'markdown-it';
 
 interface ContentItemEditorProps {
   schema: ContentSchema;
@@ -236,7 +237,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
                   <div 
                     className="prose dark:prose-invert max-w-none p-4"
                     dangerouslySetInnerHTML={{ 
-                      __html: window.markdownit().render(content[field.id] || "") 
+                      __html: markdownit().render(content[field.id] || "") 
                     }} 
                   />
                 </TabsContent>
@@ -490,7 +491,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
                         <div 
                           className="prose dark:prose-invert max-w-none"
                           dangerouslySetInnerHTML={{ 
-                            __html: window.markdownit().render(content[field.id] || "") 
+                            __html: markdownit().render(content[field.id] || "") 
                           }} 
                         />
                       )}

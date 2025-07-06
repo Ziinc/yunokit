@@ -1,5 +1,25 @@
-import { mockWorkspaces } from '../../src/lib/mocks/workspaces';
 import { vi } from 'vitest';
+
+// Mock workspace data for tests
+const mockWorkspaces = [
+  {
+    id: "primary",
+    name: "Primary Workspace",
+    description: "Main workspace for your content",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    userId: "user-1",
+    members: [
+      {
+        id: "member-1",
+        userId: "user-1",
+        role: "owner",
+        email: "owner@example.com",
+        name: "John Owner"
+      }
+    ]
+  }
+];
 
 export const mockWorkspaceApi = {
   getWorkspaces: vi.fn().mockResolvedValue(mockWorkspaces),

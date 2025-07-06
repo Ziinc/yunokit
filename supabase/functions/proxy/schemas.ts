@@ -13,15 +13,20 @@ export const listSchemas = async (
     orderDirection: "asc" | "desc";
   }
 ) => {
-  let query = client.from("schemas");
+  let query = client.from("schemas").select("*");
 
   // Apply sorting
   query = query.order(options.orderBy, { ascending: options.orderDirection === "asc" });
 
   // Apply pagination
-  query = query.range(options.offset, options.offset + options.limit - 1);
+  const offset = options.offset || 0;
+  const limit = options.limit || 50;
+  query = query.range(offset, offset + limit - 1).limit(limit);
 
-  return await query.select("*");
+  const { data, error } = await query;
+  if (error) throw error;
+  console.log("data", data);
+  return data;
 };
 
 export const getSchema = async (

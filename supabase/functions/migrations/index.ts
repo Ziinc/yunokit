@@ -74,12 +74,18 @@ async function executeSql(
   sql: string
 ) {
   // Execute SQL via Supabase Management API
+  let url = `https://api.supabase.com/v1/projects/${workspace.project_ref}/database/query`;
+  let accessToken = connection.access_token;
+  if (Deno.env.get("USE_SUPABASE_LOCAL") === "true") {
+    url = `http://127.0.0.1:54323/api/platform/pg-meta/default/query`
+    accessToken = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  }
   const response = await fetch(
-    `https://api.supabase.com/v1/projects/${workspace.project_ref}/database/query`,
+    url,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${connection.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -188,15 +194,28 @@ app.use("/migrations", async (req: any, res: any, next: any) => {
   // Attach user and workspace to request for use in route handlers
   req.user = user.user;
   req.workspace = workspace;
-  req.dataClient = createClient(
-    `https://${workspace.project_ref}.supabase.co`,
-    workspace.api_key,
-    {
-      db: {
-        schema: "yunocontent",
-      },
-    }
-  );
+  
+  if (Deno.env.get("USE_SUPABASE_LOCAL") === "true") {
+    req.dataClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      {
+        db: {
+          schema: "yunocontent",
+        },
+      }
+    );
+  } else {
+    req.dataClient = createClient(
+      `https://${workspace.project_ref}.supabase.co`,
+      workspace.api_key,
+      {
+        db: {
+          schema: "yunocontent",
+        },
+      }
+    );
+  }
 
   next();
 });

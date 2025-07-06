@@ -13,7 +13,6 @@ import ContentItemPage from "./pages/ContentItemPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import SettingsAccountPage from "./pages/Settings/SettingsAccountPage";
-import SettingsSupabasePage from "./pages/Settings/SettingsSupabasePage";
 import SettingsWorkspacesPage from "./pages/Settings/SettingsWorkspacesPage";
 import SettingsMembersPage from "./pages/Settings/SettingsMembersPage";
 import SettingsDatabasePage from "./pages/Settings/SettingsDatabasePage";
@@ -30,9 +29,7 @@ import { SearchProvider } from "@/contexts/SearchContext";
 import { WorkspaceProvider } from "@/lib/contexts/WorkspaceContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "./components/ProtectedRoute";
-import SettingsSupabaseCallback from "./pages/Settings/SettingsSupabaseCallback";
 import Dashboard from "./pages/Dashboard";
-import "./utils/markdownIt";
 
 const AppContent: React.FC = () => {
   return (

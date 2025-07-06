@@ -1,4 +1,4 @@
-interface Asset {
+export interface Asset {
   id: string;
   fileName: string;
   fileSize: number;
@@ -12,72 +12,16 @@ interface Asset {
   alt?: string;
 }
 
-// Sample mock assets
-const mockAssets: Asset[] = [
-  {
-    id: crypto.randomUUID(),
-    fileName: 'product-image-1.jpg',
-    fileSize: 1024 * 1024 * 2.5, // 2.5MB
-    mimeType: 'image/jpeg',
-    url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    description: 'Wireless headphones product image',
-    tags: ['product', 'headphones', 'electronics'],
-    alt: 'Red wireless headphones on a yellow background'
-  },
-  {
-    id: crypto.randomUUID(),
-    fileName: 'blog-cover-1.jpg',
-    fileSize: 1024 * 1024 * 1.8, // 1.8MB
-    mimeType: 'image/jpeg',
-    url: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=200',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    description: 'Person typing on laptop',
-    tags: ['blog', 'work', 'laptop'],
-    alt: 'Person typing on laptop with coffee'
-  },
-  {
-    id: crypto.randomUUID(),
-    fileName: 'tutorial-cover.jpg',
-    fileSize: 1024 * 1024 * 1.2, // 1.2MB
-    mimeType: 'image/jpeg',
-    url: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=200',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    description: 'Person writing in notebook',
-    tags: ['tutorial', 'education', 'notebook'],
-    alt: 'Person writing in notebook with coffee'
-  },
-  {
-    id: crypto.randomUUID(),
-    fileName: 'sample-document.pdf',
-    fileSize: 1024 * 1024 * 0.5, // 0.5MB
-    mimeType: 'application/pdf',
-    url: 'https://example.com/sample-document.pdf',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    description: 'Sample PDF document',
-    tags: ['document', 'pdf']
-  }
-];
-
 // In-memory storage
-let assets: Asset[] = [...mockAssets];
+let assets: Asset[] = [];
 
 /**
  * AssetsApi - Provides methods for managing assets
  */
 export class AssetsApi {
-  // Initialize storage with example assets if empty
+  // Initialize storage - no longer uses mocks
   static async initializeStorage(): Promise<void> {
-    if (assets.length === 0) {
-      assets = [...mockAssets];
-    }
+    // Storage is now initialized empty
   }
 
   // Asset Operations
@@ -185,7 +129,4 @@ export class AssetsApi {
       (asset.tags && asset.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
     );
   }
-}
-
-// Export the Asset interface
-export type { Asset }; 
+} 

@@ -63,17 +63,33 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
   // Attach user and workspace to request for use in route handlers
   req.user = user.user;
   req.workspace = workspace;
-  req.dataClient = createClient(`https://${workspace.project_ref}.supabase.co`, workspace.api_key, {
-    db: {
-      schema: "yunocontent",
-    },
-  });
+  if (Deno.env.get("USE_SUPABASE_LOCAL") === "true") {
+    req.dataClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      {
+        db: {
+          schema: "yunocontent",
+        },
+      }
+    );
+  } else {
+    req.dataClient = createClient(
+      `https://${workspace.project_ref}.supabase.co`,
+      workspace.api_key,
+      {
+        db: {
+          schema: "yunocontent",
+        },
+      }
+    );
+  }
 
   next();
 });
 
 app.get("/proxy/contents", async (req: any, res: any) => {
-  const  result = await listContentItems(req.dataClient);
+  const result = await listContentItems(req.dataClient);
   console.log("result", result);
   res.set({ ...corsHeaders }).json(result.data);
 });
@@ -100,7 +116,6 @@ app.delete("/proxy/contents/:id", async (req: any, res: any) => {
 });
 
 app.get("/proxy/schemas", async (req: any, res: any) => {
-  console.log("schemas", req.query);
   const data = await listSchemas(req.dataClient, req.query);
 
   res.set({ ...corsHeaders });

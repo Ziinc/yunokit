@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentItemStatus } from "@/lib/contentSchema";
 import { useSearch } from "@/contexts/SearchContext";
-import { mockContentItems, contentSchemas } from "@/lib/mocks";
+import { listContentItems } from "@/lib/api/ContentApi";
+import { listSchemas } from "@/lib/api/SchemaApi";
 import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 
 const ContentSearchPage: React.FC = () => {
@@ -32,31 +33,59 @@ const ContentSearchPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
-  useEffect(() => {
-    if (!initialQuery) return;
-    
+  const performSearch = async (query: string) => {
     setIsLoading(true);
     
-    setTimeout(() => {
-      // Filter mockContentItems based on search query
-      const results = mockContentItems.filter(item => 
-        item.title.toLowerCase().includes(initialQuery.toLowerCase()) ||
-        (item.tags && item.tags.some(tag => tag.toLowerCase().includes(initialQuery.toLowerCase())))
-      );
+    try {
+      // Get all content items
+      const allItems = await listContentItems();
+      
+      // Filter items based on search query
+      const results = allItems.filter(item => {
+        const searchTerm = query.toLowerCase();
+        
+        // Search in title
+        if (item.title.toLowerCase().includes(searchTerm)) {
+          return true;
+        }
+        
+        // Search in data fields
+        if (item.data) {
+          const dataString = JSON.stringify(item.data).toLowerCase();
+          if (dataString.includes(searchTerm)) {
+            return true;
+          }
+        }
+        
+        return false;
+      });
       
       setSearchResults(results);
       
-      // Extract unique schema types from results
+      // Get available schemas from the results and from the API
+      const schemas = await listSchemas();
       const schemaIds = [...new Set(results.map(item => item.schemaId))];
-      // Create schema objects with names for display
-      const schemas = schemaIds.map(id => {
-        const schema = contentSchemas.find(s => s.id === id);
-        return schema || { id, name: id.charAt(0).toUpperCase() + id.slice(1) };
+      const availableSchemaList = schemaIds.map(id => {
+        const schema = schemas.find(s => s.id === id);
+        return schema ? { id: schema.id, name: schema.name } : { id, name: id.charAt(0).toUpperCase() + id.slice(1) };
       });
-      setAvailableSchemas(schemas);
+      setAvailableSchemas(availableSchemaList);
       
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search Error",
+        description: "Failed to search content items",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+  
+  useEffect(() => {
+    if (!initialQuery) return;
+    performSearch(initialQuery);
   }, [initialQuery]);
   
   const applyFilters = () => {
@@ -122,20 +151,39 @@ const ContentSearchPage: React.FC = () => {
     });
   };
 
-  // Helper function to get content fields (supporting both data and content)
+  // Helper function to get content fields from data
   const getContentField = (item: ContentItem, field: string) => {
     if (item.data && item.data[field] !== undefined) {
       return item.data[field];
     }
-    if (item.content && item.content[field] !== undefined) {
-      return item.content[field];
-    }
     return undefined;
   };
 
-  // Helper to get the last updated date, regardless of source
-  const getLastUpdated = (item: ContentItem) => {
-    return item.lastUpdated || item.updatedAt;
+  // Helper to get tags from data
+  const getTags = (item: ContentItem): string[] => {
+    const tags = getContentField(item, 'tags');
+    if (Array.isArray(tags)) {
+      return tags;
+    }
+    return [];
+  };
+
+  // Helper to get author info from data or use createdBy
+  const getAuthorInfo = (item: ContentItem) => {
+    const authorData = getContentField(item, 'author');
+    if (authorData && typeof authorData === 'object' && authorData.name) {
+      return authorData;
+    }
+    
+    // Fallback to createdBy
+    if (item.createdBy) {
+      return {
+        name: item.createdBy,
+        avatar: "/placeholder.svg"
+      };
+    }
+    
+    return null;
   };
 
   // Get paginated results
@@ -291,78 +339,76 @@ const ContentSearchPage: React.FC = () => {
                 </div>
               ) : (
                 <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "space-y-4"}>
-                  {paginatedResults.map((item) => (
-                    <div 
-                      key={item.id}
-                      className={`border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
-                        viewMode === "list" ? "flex items-start space-x-4" : ""
-                      }`}
-                      onClick={() => navigate(`/manager/${item.schemaId}/${item.id}`)}
-                    >
-                      {viewMode === "list" && (
-                        <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-md bg-primary/10">
-                          {item.schemaId === "blog-post" && <Search size={20} className="text-primary" />}
-                          {item.schemaId === "product-catalog" && <Tag size={20} className="text-primary" />}
-                          {item.schemaId === "page-builder" && <List size={20} className="text-primary" />}
-                        </div>
-                      )}
-                      
-                      <div className={viewMode === "list" ? "flex-1" : ""}>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className={`font-medium ${viewMode === "grid" ? "mt-2" : ""}`}>{item.title}</h3>
-                            <p className="text-sm text-muted-foreground mt-1 capitalize">{item.schemaId}</p>
+                  {paginatedResults.map((item) => {
+                    const tags = getTags(item);
+                    const author = getAuthorInfo(item);
+                    
+                    return (
+                      <div 
+                        key={item.id}
+                        className={`border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
+                          viewMode === "list" ? "flex items-start space-x-4" : ""
+                        }`}
+                        onClick={() => navigate(`/manager/${item.schemaId}/${item.id}`)}
+                      >
+                        {viewMode === "list" && (
+                          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-md bg-primary/10">
+                            {item.schemaId === "blog-post" && <Search size={20} className="text-primary" />}
+                            {item.schemaId === "product-catalog" && <Tag size={20} className="text-primary" />}
+                            {item.schemaId === "page-builder" && <List size={20} className="text-primary" />}
                           </div>
-                          <Badge 
-                            variant={
-                              item.status === "published" ? "default" : 
-                              item.status === "draft" ? "secondary" : "outline"
-                            }
-                            className="capitalize"
-                          >
-                            {item.status}
-                          </Badge>
-                        </div>
+                        )}
                         
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {item.tags && item.tags.map(tag => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
+                        <div className={viewMode === "list" ? "flex-1" : ""}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className={`font-medium ${viewMode === "grid" ? "mt-2" : ""}`}>{item.title}</h3>
+                              <p className="text-sm text-muted-foreground mt-1 capitalize">{item.schemaId}</p>
+                            </div>
+                            <Badge 
+                              variant={
+                                item.status === "published" ? "default" : 
+                                item.status === "draft" ? "secondary" : "outline"
+                              }
+                              className="capitalize"
+                            >
+                              {item.status}
                             </Badge>
-                          ))}
-                          {!item.tags && getContentField(item, 'tags') && 
-                            getContentField(item, 'tags').map((tag: string) => (
+                          </div>
+                          
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {tags.map(tag => (
                               <Badge key={tag} variant="outline" className="text-xs">
                                 {tag}
                               </Badge>
-                            ))
-                          }
-                        </div>
-                        
-                        <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            {item.author && (
-                              <>
-                                <img 
-                                  src={item.author.avatar} 
-                                  alt={item.author.name}
-                                  className="w-5 h-5 rounded-full"
-                                />
-                                <span>{item.author.name}</span>
-                              </>
-                            )}
-                            {!item.author && item.updatedBy && (
-                              <span>{item.updatedBy}</span>
-                            )}
+                            ))}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock size={14} />
-                            <span>{formatDate(getLastUpdated(item))}</span>
+                          
+                          <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              {author && (
+                                <>
+                                  <img 
+                                    src={author.avatar} 
+                                    alt={author.name}
+                                    className="w-5 h-5 rounded-full"
+                                  />
+                                  <span>{author.name}</span>
+                                </>
+                              )}
+                              {!author && item.updatedBy && (
+                                <span>{item.updatedBy}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock size={14} />
+                              <span>{formatDate(item.updatedAt)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

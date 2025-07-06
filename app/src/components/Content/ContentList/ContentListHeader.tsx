@@ -18,7 +18,7 @@ interface ContentListHeaderProps {
 
 export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
   handleCreateNew,
-  schemas,
+  schemas  = [],
 }) => {
   const navigate = useNavigate();
 

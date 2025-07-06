@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSchema";
 import { listContentItems, deleteContentItem, saveContentItem } from '@/lib/api/ContentApi';
-import { listSchemas } from '@/lib/api/SchemaApi';
+import { ContentSchemaRow, listSchemas } from '@/lib/api/SchemaApi';
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
 import { DataTable, TableColumn } from "@/components/DataTable";
@@ -34,31 +34,23 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { downloadContent } from "@/lib/download";
 import { ContentStatusBadge } from "@/components/Content/ContentList/ContentStatusBadge";
 import { formatDate } from "@/utils/formatDate";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+import useSWR from "swr";
+import type { ContentItemRow } from '@/lib/api/ContentApi';
+
 
 // Content Table Configuration
 const ContentTable: React.FC<{
-  items: ContentItem[];
-  schemas: ContentSchema[];
+  items: ContentItemRow[];
+  schemas: ContentSchemaRow[];
   onRowClick: (item: ContentItem) => void;
   currentPage: number;
   totalPages: number;
@@ -156,10 +148,6 @@ const ContentManagerPage: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
-  const [allItems, setAllItems] = useState<ContentItemRow[]>([]);
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [schemas, setSchemas] = useState<ContentSchema[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("title");
   const [selectedItems, setSelectedItems] = useState<ContentItem[]>([]);
@@ -168,6 +156,28 @@ const ContentManagerPage: React.FC = () => {
   const [newAuthors, setNewAuthors] = useState<Author[]>([]);
   const [isChangingAuthor, setIsChangingAuthor] = useState(false);
   const { currentWorkspace } = useWorkspace();
+  
+  const { data: contentResponse, error: contentError, isLoading: contentLoading, mutate: mutateContent } = useSWR(
+    currentWorkspace ? `content-${currentWorkspace.id}` : null,
+    () => listContentItems(currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+  const allItems = contentResponse?.data || [];
+  
+  const { data: schemasResponse, error: schemasError, isLoading: schemasLoading } = useSWR(
+    currentWorkspace ? `schemas-${currentWorkspace.id}` : null,
+    () => listSchemas(currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+  const schemas = schemasResponse?.data || [];
+
+  const isLoading = contentLoading || schemasLoading;
   
   const [filterValues, setFilterValues] = useState<FilterValues>({
     status: "",
@@ -181,127 +191,119 @@ const ContentManagerPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const selectedSchemaId = searchParams.get('schema-id');
   
-  // Load data
+  // Handle errors
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const contentItems = await listContentItems(currentWorkspace?.id);
-        
-        const schemaData = await listSchemas(currentWorkspace?.id);
-        setAllItems(contentItems);
-        setSchemas(schemaData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-        toast({
-          title: "Error loading data",
-          description: "There was a problem loading your content.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (currentWorkspace) {
-      loadData();
-    }
-  }, [currentWorkspace, toast]);
-  
-  // Parse and apply filters from URL query parameters
-  useEffect(() => {
-    // Skip if data isn't loaded yet
-    if (isLoading || allItems.length === 0) return;
-    
-    const queryParams = new URLSearchParams(location.search);
-    
-    // Get and validate status from URL
-    let status = queryParams.get("status") || "all";
-    if (status !== "published" && status !== "draft" && status !== "pending_review" && status !== "all") {
-      status = "all";
-    }
-    
-    // Set up initial filters
-    const initialFilters: FilterValues = {
-      status: status,
-      schemaId: queryParams.get("schema-id") || "all",
-      author: queryParams.get("author") || "all",
-      search: queryParams.get("search") || "",
-      page: Number(queryParams.get("page")) || 1,
-      perPage: Number(queryParams.get("perPage")) || 10,
-    };
-    
-    // Handle sort parameter
-    const sort = queryParams.get("sort") || "title";
-    setSortField(sort);
-    
-    // Update state
-    setFilterValues(initialFilters);
-    setCurrentPage(initialFilters.page);
-    setItemsPerPage(initialFilters.perPage || 10);
-    
-    // Apply the filters from URL
-    applyFilters(initialFilters, sort);
-  }, [location.search, isLoading, allItems]);
-  
-  const totalItems = items.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const uniqueAuthors = getUniqueAuthors(allItems);
-  const displayedItems = paginateItems(items, currentPage, itemsPerPage);
-  
-  const applyFilters = (values: FilterValues, sortBy?: string | null) => {
-    let filteredItems = [...allItems];
-    
-    if (values.schemaId && values.schemaId !== "all") {
-      filteredItems = filteredItems.filter(item => item.schemaId === values.schemaId);
-    }
-    
-    // Only apply status filter if not "all"
-    if (values.status && values.status !== "all") {
-      filteredItems = filteredItems.filter(item => item.status === values.status);
-    }
-    
-    // Fix author filtering to check both createdBy and updatedBy
-    if (values.author && values.author !== "all") {
-      filteredItems = filteredItems.filter(item => {
-        const createdBy = item.createdBy || '';
-        const updatedBy = item.updatedBy || '';
-        return createdBy === values.author || updatedBy === values.author;
+    if (contentError) {
+      console.error("Error loading content:", contentError);
+      toast({
+        title: "Error loading content",
+        description: "There was a problem loading your content.",
+        variant: "destructive"
       });
     }
-    
-    // Fix search filtering to be case-insensitive
-    if (values.search) {
-      const searchTerm = values.search.toLowerCase();
-      filteredItems = filteredItems.filter(item => 
-        item.title.toLowerCase().includes(searchTerm)
-      );
+    if (schemasError) {
+      console.error("Error loading schemas:", schemasError);
+      toast({
+        title: "Error loading schemas",
+        description: "There was a problem loading your schemas.",
+        variant: "destructive"
+      });
     }
+  }, [contentError, schemasError, toast]);
+  
+  // Parse and apply filters from URL query parameters
+  // useEffect(() => {
+  //   // Skip if data isn't loaded yet
+  //   if (isLoading) return;
     
-    // Apply sorting based on the sortBy field
-    if (sortBy === 'updatedAt') {
-      filteredItems.sort((a, b) => 
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      ); 
-    } else if (sortBy === 'createdAt') {
-      filteredItems.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    } else {
-      // Default sort by title (alphabetically)
-      filteredItems.sort((a, b) => 
-        a.title.localeCompare(b.title)
-      );
-    }
+  //   const queryParams = new URLSearchParams(location.search);
     
-    setItems(filteredItems);
-    return filteredItems;
-  };
+  //   // Get and validate status from URL
+  //   let status = queryParams.get("status") || "all";
+  //   if (status !== "published" && status !== "draft" && status !== "pending_review" && status !== "all") {
+  //     status = "all";
+  //   }
+    
+  //   // Set up initial filters
+  //   const initialFilters: FilterValues = {
+  //     status: status,
+  //     schemaId: queryParams.get("schema-id") || "all",
+  //     author: queryParams.get("author") || "all",
+  //     search: queryParams.get("search") || "",
+  //     page: Number(queryParams.get("page")) || 1,
+  //     perPage: Number(queryParams.get("perPage")) || 10,
+  //   };
+    
+  //   // Handle sort parameter
+  //   const sort = queryParams.get("sort") || "title";
+  //   setSortField(sort);
+    
+  //   // Update state
+  //   setFilterValues(initialFilters);
+  //   setCurrentPage(initialFilters.page);
+  //   setItemsPerPage(initialFilters.perPage || 10);
+    
+  //   // Apply the filters from URL
+  //   applyFilters(initialFilters, sort);
+  // }, [location.search, isLoading, allItems]);
+  
+  // const totalItems = items.length;
+  // const totalPages = Math.ceil(totalItems / itemsPerPage);
+  // const uniqueAuthors = getUniqueAuthors(allItems);
+  // const displayedItems = paginateItems(items, currentPage, itemsPerPage);
+  
+  // const applyFilters = (values: FilterValues, sortBy?: string | null) => {
+  //   let filteredItems = [...allItems];
+    
+  //   if (values.schemaId && values.schemaId !== "all") {
+  //     filteredItems = filteredItems.filter(item => item.schema_id === values.schemaId);
+  //   }
+    
+  //   // Only apply status filter if not "all"
+  //   if (values.status && values.status !== "all") {
+  //     filteredItems = filteredItems.filter(item => item.status === values.status);
+  //   }
+    
+  //   // Fix author filtering to check both createdBy and updatedBy
+  //   if (values.author && values.author !== "all") {
+  //     filteredItems = filteredItems.filter(item => {
+  //       const createdBy = item.createdBy || '';
+  //       const updatedBy = item.updatedBy || '';
+  //       return createdBy === values.author || updatedBy === values.author;
+  //     });
+  //   }
+    
+  //   // Fix search filtering to be case-insensitive
+  //   if (values.search) {
+  //     const searchTerm = values.search.toLowerCase();
+  //     filteredItems = filteredItems.filter(item => 
+  //       item.title.toLowerCase().includes(searchTerm)
+  //     );
+  //   }
+    
+  //   // Apply sorting based on the sortBy field
+  //   if (sortBy === 'updatedAt') {
+  //     filteredItems.sort((a, b) => 
+  //       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  //     ); 
+  //   } else if (sortBy === 'createdAt') {
+  //     filteredItems.sort((a, b) => 
+  //       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  //     );
+  //   } else {
+  //     // Default sort by title (alphabetically)
+  //     filteredItems.sort((a, b) => 
+  //       a.title.localeCompare(b.title)
+  //     );
+  //   }
+    
+  //   setItems(filteredItems);
+  //   return filteredItems;
+  // };
   
   const onSubmitFilters = (values: FilterValues) => {
     setFilterValues(values);
     setItemsPerPage(values.perPage);
-    applyFilters(values, sortField);
     setCurrentPage(1);
     
     // Update URL with filter parameters
@@ -332,13 +334,13 @@ const ContentManagerPage: React.FC = () => {
     
     setFilterValues(defaultValues);
     setSortField("title");
-    setItems(allItems);
     setCurrentPage(1);
     setItemsPerPage(10);
     
     // Clear URL parameters
     navigate(location.pathname);
   };
+  
   
   const handleRowClick = (item: ContentItem) => {
     navigate(`/manager/editor/${item.schemaId}/${item.id}`);
@@ -352,7 +354,7 @@ const ContentManagerPage: React.FC = () => {
     setSortField(value);
     
     // Apply the sort to the current items
-    applyFilters(filterValues, value);
+    // applyFilters(filterValues, value);
     
     // Update URL with the new sort parameter
     const params = new URLSearchParams(location.search);
@@ -405,9 +407,8 @@ const ContentManagerPage: React.FC = () => {
         await deleteContentItem(id);
       }
       
-      // Update the items list
-      setAllItems(prev => prev.filter(item => !ids.includes(item.id)));
-      setItems(prev => prev.filter(item => !ids.includes(item.id)));
+      // Mutate SWR cache to refresh data
+      mutateContent();
       setSelectedItems([]);
       setShowDeleteDialog(false);
       
@@ -428,25 +429,23 @@ const ContentManagerPage: React.FC = () => {
   const handleUnpublish = async () => {
     try {
       const ids = selectedItems.map(item => item.id);
-      const updatedItems = [...allItems];
       
       for (const id of ids) {
-        const itemIndex = updatedItems.findIndex(item => item.id === id);
-        if (itemIndex !== -1) {
-          updatedItems[itemIndex] = {
-            ...updatedItems[itemIndex],
+        const item = allItems.find(item => item.id === id);
+        if (item) {
+          const updatedItem = {
+            ...item,
             status: 'draft' as ContentItemStatus,
             updatedAt: new Date().toISOString(),
           };
           
           // Save to API
-          await saveContentItem(updatedItems[itemIndex]);
+          await saveContentItem(updatedItem);
         }
       }
       
-      // Update the items list
-      setAllItems(updatedItems);
-      applyFilters(filterValues, sortField);
+      // Mutate SWR cache to refresh data
+      mutateContent();
       setSelectedItems([]);
       
       toast({
@@ -476,27 +475,24 @@ const ContentManagerPage: React.FC = () => {
       
       setIsChangingAuthor(true);
       const ids = selectedItems.map(item => item.id);
-      const updatedItems = [...allItems];
       
       for (const id of ids) {
-        const itemIndex = updatedItems.findIndex(item => item.id === id);
-        if (itemIndex !== -1) {
+        const item = allItems.find(item => item.id === id);
+        if (item) {
           const updatedItem = {
-            ...updatedItems[itemIndex],
+            ...item,
             updatedBy: newAuthors[0].value, // Keep the first author as the main updater
             coAuthors: newAuthors.slice(1).map(author => author.value), // Store additional authors
             updatedAt: new Date().toISOString(),
           };
-          updatedItems[itemIndex] = updatedItem;
           
           // Save to API
           await saveContentItem(updatedItem);
         }
       }
       
-      // Update the items list and keep selection
-      setAllItems(updatedItems);
-      applyFilters(filterValues, sortField);
+      // Mutate SWR cache to refresh data
+      mutateContent();
       setShowAuthorDialog(false);
       setNewAuthors([]);
       
@@ -535,14 +531,14 @@ const ContentManagerPage: React.FC = () => {
             onSubmitFilters={onSubmitFilters}
             resetFilters={resetFilters}
             schemas={schemas}
-            uniqueAuthors={uniqueAuthors}
+            uniqueAuthors={[]}
             initialValues={filterValues}
           />
         </div>
         
         {selectedItems.length === 0 ? (
           <ResultsBar
-            totalItems={totalItems}
+            totalItems={allItems.length}
             sortField={sortField}
             onSortChange={handleSortChange}
             sortOptions={sortOptions}
@@ -603,11 +599,11 @@ const ContentManagerPage: React.FC = () => {
           </div>
         ) : (
           <ContentTable
-            items={displayedItems}
+            items={allItems}
             schemas={schemas}
             onRowClick={handleRowClick}
             currentPage={currentPage}
-            totalPages={totalPages}
+            totalPages={1}
             onPageChange={setCurrentPage}
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
@@ -648,10 +644,7 @@ const ContentManagerPage: React.FC = () => {
             <MultiSelect
               value={newAuthors}
               onChange={(selected) => setNewAuthors(selected as Author[])}
-              options={uniqueAuthors.map(author => ({
-                value: author,
-                label: author.split('@')[0]
-              }))}
+              options={[]}
               isMulti
               className="w-full"
               placeholder="Select authors..."

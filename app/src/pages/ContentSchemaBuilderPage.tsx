@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Files, File, Layers, Loader2, Archive, Trash2, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import { ContentSchema, ContentItem } from "@/lib/contentSchema";
-import { listSchemas,  saveSchema, deleteSchema } from "@/lib/api/SchemaApi";
+import { listSchemas,  saveSchema, deleteSchema, createSchema } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import { DataTable, TableColumn } from "@/components/DataTable";
 import { formatDate } from "@/utils/formatDate";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
-
+import useSWR from "swr";
 // Schema Table Configuration
 const ContentTable: React.FC<{
   items: ContentItem[];
@@ -112,57 +112,7 @@ const parseQuery = (query: string) => {
   return { filters, searchTerms };
 };
 
-// Filter content items based on search query
-const filterContentItems = (items: ContentItem[], query: string) => {
-  if (!query.trim()) return items;
-  
-  const { filters, searchTerms } = parseQuery(query);
-  
-  return items.filter(item => {
-    // Check filters
-    for (const [key, value] of Object.entries(filters)) {
-      switch (key) {
-        case 'status':
-          if (item.status !== value) return false;
-          break;
-        case 'draft':
-          if (value === 'true' && item.status !== 'draft') return false;
-          if (value === 'false' && item.status === 'draft') return false;
-          break;
-        case 'published':
-          if (value === 'true' && item.status !== 'published') return false;
-          if (value === 'false' && item.status === 'published') return false;
-          break;
-        case 'author':
-          const author = item.createdBy?.split('@')[0] || '';
-          if (!author.toLowerCase().includes(value.toLowerCase())) return false;
-          break;
-        // Add more filters as needed
-      }
-    }
-    
-    // Check general search term
-    if (searchTerms) {
-      const searchLower = searchTerms.toLowerCase();
-      const titleMatches = item.title.toLowerCase().includes(searchLower);
-      const contentMatches = JSON.stringify(getContentField(item)).toLowerCase().includes(searchLower);
-      
-      if (!titleMatches && !contentMatches) return false;
-    }
-    
-    return true;
-  });
-};
-
-// Helper function to get content fields (supporting both data and content)
-const getContentField = (item: ContentItem) => {
-  // Prioritize data field, then fall back to content field
-  return item.data || item.content || {};
-};
-
 const ContentSchemaBuilderPage: React.FC = () => {
-  const [schemas, setSchemas] = useState<ContentSchema[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [editingSchema, setEditingSchema] = useState<ContentSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,30 +125,17 @@ const ContentSchemaBuilderPage: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { currentWorkspace } = useWorkspace();
 
-  const loadSchemas = async () => {
-    try {
-      setIsLoading(true);
-      const data = await listSchemas(currentWorkspace.id!);
-      setSchemas(data);
-    } catch (error) {
-      console.error("Error loading schemas:", error);
-      toast({
-        title: "Error loading schemas",
-        description: "There was a problem loading your content schemas.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+  const { data: schemasResponse, error: schemasError, isLoading, mutate: mutateSchemas } = useSWR(
+    currentWorkspace ? `schemas-${currentWorkspace.id}` : null,
+    () => listSchemas(currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
     }
-  };
-
-
-  // Load schemas from API
-  useEffect(() => {
-    if (currentWorkspace) {
-      loadSchemas();
-    }
-  }, [currentWorkspace, toast]);
+  );
+  
+  const schemas = schemasResponse?.data || [];
+  
 
   // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
@@ -251,8 +188,8 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const handleCreateSchema = async (schema: ContentSchema) => {
     try {
-      const savedSchema = await saveSchema(schema);
-      setSchemas([...schemas, savedSchema]);
+      const savedSchema = await createSchema(schema, currentWorkspace!.id);
+      mutateSchemas(prev => [...prev, savedSchema.data]);
       setIsCreating(false);
       toast({
         title: "Schema created",

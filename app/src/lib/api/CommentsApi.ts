@@ -1,81 +1,10 @@
 import { Comment } from '@/types/comments';
 
-// Sample mock comments
-const mockComments: Comment[] = [
-  {
-    id: crypto.randomUUID(),
-    contentId: 'article-1',
-    contentTitle: 'Sample Article 1',
-    contentType: 'article',
-    author: {
-      id: '1',
-      name: 'Jane Smith',
-      avatar: 'https://i.pravatar.cc/150?u=jane',
-      email: 'jane.smith@example.com',
-      status: 'active'
-    },
-    content: 'Great article! Very informative and well-written.',
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    status: 'approved'
-  },
-  {
-    id: crypto.randomUUID(),
-    contentId: 'article-1',
-    contentTitle: 'Sample Article 1',
-    contentType: 'article',
-    author: {
-      id: '2',
-      name: 'John Doe',
-      avatar: 'https://i.pravatar.cc/150?u=john',
-      email: 'john.doe@example.com',
-      status: 'active'
-    },
-    content: 'I have a question about the third point you made. Could you elaborate a bit more on that?',
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    status: 'approved'
-  },
-  {
-    id: crypto.randomUUID(),
-    contentId: 'article-1',
-    contentTitle: 'Sample Article 1',
-    contentType: 'article',
-    parentId: '1',
-    author: {
-      id: '3',
-      name: 'Alex Johnson',
-      avatar: 'https://i.pravatar.cc/150?u=alex',
-      email: 'alex.johnson@example.com',
-      status: 'active'
-    },
-    content: 'I agree with Jane. This is a fantastic resource!',
-    createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-    status: 'approved'
-  },
-  {
-    id: crypto.randomUUID(),
-    contentId: 'article-2',
-    contentTitle: 'Sample Article 2',
-    contentType: 'article',
-    author: {
-      id: '4',
-      name: 'Sam Wilson',
-      avatar: 'https://i.pravatar.cc/150?u=sam',
-      email: 'sam.wilson@example.com',
-      status: 'active'
-    },
-    content: 'I found a typo in the second paragraph. Just wanted to let you know!',
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    status: 'pending'
-  }
-];
-
 // In-memory storage
-let comments: Comment[] = [...mockComments];
+let comments: Comment[] = [];
 
 export const initializeStorage = async (): Promise<void> => {
-  if (comments.length === 0) {
-    comments = [...mockComments];
-  }
+  // Storage is now initialized empty
 };
 
 export const getComments = async (): Promise<Comment[]> => {

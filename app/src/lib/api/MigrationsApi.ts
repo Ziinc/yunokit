@@ -17,17 +17,6 @@ export interface MigrationResult {
   error?: string;
 }
 
-async function getAuthToken(): Promise<string> {
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error || !session?.access_token) {
-    throw new Error("Not authenticated");
-  }
-  return session.access_token;
-}
-
 
 export const listMigrations = async (workspaceId: number) => {
   const { data, error } = await supabase.functions.invoke<{versions: string[]}>("migrations/pending?workspaceId=" + workspaceId, {
