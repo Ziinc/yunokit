@@ -30,6 +30,9 @@ export interface ContentSchema {
   schemaType?: 'collection' | 'single';
   type: 'collection' | 'single';
   fields: any[];
+  createdAt?: string;
+  updatedAt?: string;
+  isArchived?: boolean;
 }
 
 // Add content item status type

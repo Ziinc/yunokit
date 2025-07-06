@@ -118,6 +118,7 @@ app.delete("/proxy/contents/:id", async (req: any, res: any) => {
 app.get("/proxy/schemas", async (req: any, res: any) => {
   const data = await listSchemas(req.dataClient, req.query);
 
+  console.log("data", data);
   res.set({ ...corsHeaders });
   res.json(data);
 });

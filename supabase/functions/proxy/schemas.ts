@@ -15,17 +15,18 @@ export const listSchemas = async (
 ) => {
   let query = client.from("schemas").select("*");
 
-  // Apply sorting
-  query = query.order(options.orderBy, { ascending: options.orderDirection === "asc" });
+  // // Apply sorting
+  // query = query.order(options.orderBy, { ascending: options.orderDirection === "asc" });
 
-  // Apply pagination
-  const offset = options.offset || 0;
-  const limit = options.limit || 50;
-  query = query.range(offset, offset + limit - 1).limit(limit);
+  // // Apply pagination
+  // const offset = options.offset || 0;
+  // const limit = options.limit || 50;
+  // query = query.range(offset, offset + limit - 1).limit(limit);
 
   const { data, error } = await query;
-  if (error) throw error;
   console.log("data", data);
+  console.log("error", error);
+  if (error) throw error;
   return data;
 };
 

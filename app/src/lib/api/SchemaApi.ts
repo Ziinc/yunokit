@@ -7,36 +7,6 @@ type DbClient = SupabaseClient<Database>;
 export type ContentSchemaRow =
   Database["yunocontent"]["Tables"]["schemas"]["Row"];
 
-// Helper function to transform database row to ContentSchema
-const transformDbRowToSchema = (row: ContentSchemaRow): ContentSchema => {
-  const fields = row.fields as any;
-  return {
-    id: row.id,
-    name: fields?.name || 'Untitled Schema',
-    description: fields?.description,
-    fields: fields?.fields || [],
-    isCollection: fields?.isCollection || false,
-    schemaType: fields?.schemaType || 'collection',
-    type: fields?.type || 'collection',
-  };
-};
-
-// Helper function to transform ContentSchema to database format
-const transformSchemaToDbFormat = (schema: ContentSchema) => {
-  return {
-    id: schema.id,
-    type: schema.type || 'collection',
-    fields: {
-      name: schema.name,
-      description: schema.description,
-      fields: schema.fields,
-      isCollection: schema.isCollection,
-      schemaType: schema.schemaType,
-      type: schema.type,
-    },
-  };
-};
-
 export const listSchemas = async (workspaceId: number) => {
   const qp = new URLSearchParams({
     workspaceId: workspaceId.toString(),
@@ -102,50 +72,6 @@ export const updateSchema = async (
   );
 };
 
-export const saveSchema = async (
-  schema: ContentSchema,
-  workspaceId: number
-): Promise<ContentSchema> => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-  });
-  
-  const dbFormat = transformSchemaToDbFormat(schema);
-  
-  if (schema.id) {
-    // Update existing schema
-    const { data } = await supabase.functions.invoke<ContentSchemaRow>(
-      `proxy/schemas/${schema.id}?${qp.toString()}`,
-      {
-        method: "PUT",
-        body: dbFormat,
-      }
-    );
-    return transformDbRowToSchema(data!);
-  } else {
-    // Create new schema
-    const { data } = await supabase.functions.invoke<ContentSchemaRow>(
-      `proxy/schemas?${qp.toString()}`,
-      {
-        method: "POST",
-        body: dbFormat,
-      }
-    );
-    return transformDbRowToSchema(data!);
-  }
-};
-
-export const saveSchemas = async (
-  newSchemas: ContentSchema[],
-  workspaceId: number
-): Promise<ContentSchema[]> => {
-  // Save each schema individually
-  const savedSchemas = await Promise.all(
-    newSchemas.map(schema => saveSchema(schema, workspaceId))
-  );
-  return savedSchemas;
-};
-
 export const deleteSchema = async (id: string, workspaceId: number): Promise<void> => {
   const qp = new URLSearchParams({
     workspaceId: workspaceId.toString(),
@@ -165,12 +91,13 @@ export const renameField = async (
   newName: string,
   workspaceId: number
 ): Promise<ContentSchema> => {
-  const schema = await getSchemaById(schemaId, workspaceId);
+  const { data: schemaData } = await getSchemaById(schemaId, workspaceId);
   
-  if (!schema) {
+  if (!schemaData || !schemaData.length) {
     throw new Error(`Schema with id ${schemaId} not found`);
   }
 
+  const schema = schemaData[0];
   const fieldIndex = schema.fields.findIndex((f) => f.id === fieldId);
 
   if (fieldIndex === -1) {
@@ -182,7 +109,8 @@ export const renameField = async (
   updatedFields[fieldIndex] = updatedField;
   const updatedSchema = { ...schema, fields: updatedFields };
 
-  return await saveSchema(updatedSchema, workspaceId);
+  const { data } = await updateSchema(updatedSchema, workspaceId);
+  return data!;
 };
 
 export const reorderFields = async (
@@ -190,12 +118,13 @@ export const reorderFields = async (
   fieldIds: string[],
   workspaceId: number
 ): Promise<ContentSchema> => {
-  const schema = await getSchemaById(schemaId, workspaceId);
+  const { data: schemaData } = await getSchemaById(schemaId, workspaceId);
 
-  if (!schema) {
+  if (!schemaData || !schemaData.length) {
     throw new Error(`Schema with id ${schemaId} not found`);
   }
 
+  const schema = schemaData[0];
   const fieldsMap = new Map(schema.fields.map((field) => [field.id, field]));
 
   const reorderedFields = fieldIds.map((id) => {
@@ -207,7 +136,8 @@ export const reorderFields = async (
   });
 
   const updatedSchema = { ...schema, fields: reorderedFields };
-  return await saveSchema(updatedSchema, workspaceId);
+  const { data } = await updateSchema(updatedSchema, workspaceId);
+  return data!;
 };
 
 export const updateField = async (
@@ -216,12 +146,13 @@ export const updateField = async (
   updates: Partial<ContentField>,
   workspaceId: number
 ): Promise<ContentSchema> => {
-  const schema = await getSchemaById(schemaId, workspaceId);
+  const { data: schemaData } = await getSchemaById(schemaId, workspaceId);
 
-  if (!schema) {
+  if (!schemaData || !schemaData.length) {
     throw new Error(`Schema with id ${schemaId} not found`);
   }
 
+  const schema = schemaData[0];
   const fieldIndex = schema.fields.findIndex((f) => f.id === fieldId);
 
   if (fieldIndex === -1) {
@@ -233,5 +164,6 @@ export const updateField = async (
   updatedFields[fieldIndex] = updatedField;
   const updatedSchema = { ...schema, fields: updatedFields };
 
-  return await saveSchema(updatedSchema, workspaceId);
+  const { data } = await updateSchema(updatedSchema, workspaceId);
+  return data!;
 };

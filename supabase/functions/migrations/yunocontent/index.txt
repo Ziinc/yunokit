@@ -1,1 +1,4 @@
 20250620080721_base.sql
+20250706065917_rename_content_items_table_update_schema_table.sql
+20250706072609_add_rls_policies_for_schemas_table_and_content_items_table.sql
+20250706074710_add_schema_grants.sql

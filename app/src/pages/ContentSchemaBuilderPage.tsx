@@ -4,7 +4,7 @@ import { Plus, Search, Files, File, Layers, Loader2, Archive, Trash2, Calendar }
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import { ContentSchema, ContentItem } from "@/lib/contentSchema";
-import { listSchemas,  saveSchema, deleteSchema, createSchema } from "@/lib/api/SchemaApi";
+import { listSchemas, createSchema, updateSchema, deleteSchema, ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { formatDate } from "@/utils/formatDate";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import useSWR from "swr";
+
 // Schema Table Configuration
 const ContentTable: React.FC<{
   items: ContentItem[];
@@ -37,7 +38,7 @@ const ContentTable: React.FC<{
       width: "300px",
       cell: (item) => (
         <div className="flex items-center gap-2">
-          {item.icon}
+          {item.icon === 'files' ? <Files className="h-4 w-4" /> : <File className="h-4 w-4" />}
           {item.title}
         </div>
       ),
@@ -135,17 +136,18 @@ const ContentSchemaBuilderPage: React.FC = () => {
   );
   
   const schemas = schemasResponse?.data || [];
-  
+  console.log("schemas", schemas);
+  console.log("schemasResponse", schemasResponse);
 
   // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
     // First filter by type and archived status
     const filtered = schemas.filter(schema => {
-      if (!isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && schema.isArchived) return false;
-      if (schemaTypeFilter === "archived") return isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && schema.isArchived;
+      if (!isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) && schema.isArchived) return false;
+      if (schemaTypeFilter === "archived") return isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) && schema.isArchived;
       if (schemaTypeFilter === "collection") return schema.isCollection && !schema.isArchived;
       if (schemaTypeFilter === "single") return !schema.isCollection && !schema.isArchived;
-      return !schema.isArchived || (isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && schema.isArchived); // "all" shows everything except archived unless feature enabled
+      return !schema.isArchived || (isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) && schema.isArchived); // "all" shows everything except archived unless feature enabled
     });
     
     // Then apply search filter
@@ -177,7 +179,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
       status: schema.isArchived ? 'archived' : 'published',
       createdAt: schema.createdAt || new Date().toISOString(),
       updatedAt: schema.updatedAt || new Date().toISOString(),
-      icon: schema.isCollection ? <Files className="h-4 w-4" /> : <File className="h-4 w-4" />,
+      icon: schema.isCollection ? 'files' : 'file',
       data: {
         type: schema.isCollection ? "Collection" : "Single",
         fields: `${schema.fields.length} field${schema.fields.length !== 1 ? 's' : ''}`,
@@ -186,10 +188,20 @@ const ContentSchemaBuilderPage: React.FC = () => {
     } as ContentItem));
   }, [paginatedSchemas]);
 
-  const handleCreateSchema = async (schema: ContentSchema) => {
+  const handleCreateSchema = async (schema: Partial<ContentSchemaRow>) => {
     try {
-      const savedSchema = await createSchema(schema, currentWorkspace!.id);
-      mutateSchemas(prev => [...prev, savedSchema.data]);
+      const response = await createSchema(schema, currentWorkspace!.id);
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      console.log("response", response.data);
+      mutateSchemas((prev) => {
+        if (!prev) return { data: [response.data], error: null };
+        return { ...prev, data: [...prev.data, response.data] };
+      });
+      
       setIsCreating(false);
       toast({
         title: "Schema created",
@@ -207,10 +219,24 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const handleUpdateSchema = async (updatedSchema: ContentSchema) => {
     try {
-      const savedSchema = await saveSchema(updatedSchema);
-      setSchemas(schemas.map(schema => 
-        schema.id === savedSchema.id ? savedSchema : schema
-      ));
+      const dbFormat = transformSchemaToDbFormat(updatedSchema);
+      const response = await updateSchema(dbFormat, currentWorkspace!.id);
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      const savedSchema = transformDbRowToSchema(response.data);
+      mutateSchemas((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: prev.data.map(schema => 
+            schema.id === savedSchema.id ? savedSchema : schema
+          )
+        };
+      });
+      
       setEditingSchema(null);
       toast({
         title: "Schema updated",
@@ -228,8 +254,15 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const handleDeleteSchema = async (schemaId: string) => {
     try { 
-      await deleteSchema(schemaId);
-      setSchemas(schemas.filter(schema => schema.id !== schemaId));
+      await deleteSchema(schemaId, currentWorkspace!.id);
+      mutateSchemas((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: prev.data.filter(schema => schema.id !== schemaId)
+        };
+      });
+      
       toast({
         title: "Schema deleted",
         description: "The schema has been deleted successfully",
@@ -249,15 +282,29 @@ const ContentSchemaBuilderPage: React.FC = () => {
       const updatedSchemas = await Promise.all(
         selectedSchemas.map(async (schema) => {
           const updated = { ...schema, isArchived: true };
-          return await saveSchema(updated);
+          const dbFormat = transformSchemaToDbFormat(updated);
+          const response = await updateSchema(dbFormat, currentWorkspace!.id);
+          
+          if (response.error) {
+            throw new Error(response.error.message);
+          }
+          
+          return transformDbRowToSchema(response.data);
         })
       );
       
-      setSchemas(schemas.map(schema => 
-        selectedSchemas.find(s => s.id === schema.id) 
-          ? updatedSchemas.find(u => u.id === schema.id)! 
-          : schema
-      ));
+      mutateSchemas((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: prev.data.map(schema => 
+            selectedSchemas.find(s => s.id === schema.id) 
+              ? updatedSchemas.find(u => u.id === schema.id)! 
+              : schema
+          )
+        };
+      });
+      
       setSelectedSchemas([]);
       
       toast({
@@ -276,8 +323,15 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const handleDeleteSchemas = async () => {
     try {
-      await Promise.all(selectedSchemas.map(schema => deleteSchema(schema.id)));
-      setSchemas(schemas.filter(schema => !selectedSchemas.find(s => s.id === schema.id)));
+      await Promise.all(selectedSchemas.map(schema => deleteSchema(schema.id, currentWorkspace!.id)));
+      mutateSchemas((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: prev.data.filter(schema => !selectedSchemas.find(s => s.id === schema.id))
+        };
+      });
+      
       setSelectedSchemas([]);
       setShowDeleteDialog(false);
       
@@ -365,7 +419,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
                   <File size={16} />
                   Singles
                 </TabsTrigger>
-                {isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) && (
+                {isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) && (
                   <TabsTrigger value="archived" className="flex items-center gap-2">
                     <Archive size={16} />
                     Archived
@@ -393,7 +447,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
                 <SelectionActionsBar
                   selectedCount={selectedSchemas.length}
                   actions={[
-                    ...(isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING) ? [{
+                    ...(isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) ? [{
                       label: "Archive",
                       icon: <Archive size={16} />,
                       onClick: handleArchiveSchemas,
