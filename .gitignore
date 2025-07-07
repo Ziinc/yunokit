@@ -19,3 +19,5 @@ dist
 supabase/.env
 supabase/functions/.env
 supabase/migrations/*.sql
+supabase/functions/migrations/yunocontent/*.sql
+supabase/functions/migrations/yunocontent/*.txt
