@@ -72,9 +72,9 @@ const SchemaTable: React.FC<{
   onItemsPerPageChange,
   onSelectionChange,
 }) => {
-  const [selectedSchemas, setSelectedSchemas] = useState<string[]>([]);
+  const [selectedSchemas, setSelectedSchemas] = useState<number[]>([]);
 
-  const handleSelectSchema = (e: React.MouseEvent, schemaId: string) => {
+  const handleSelectSchema = (e: React.MouseEvent, schemaId: number) => {
     e.stopPropagation();
 
     setSelectedSchemas((prev) => {
@@ -327,7 +327,13 @@ const ContentSchemaBuilderPage: React.FC = () => {
       const response = await createSchema(schema, currentWorkspace!.id);
 
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error("Error creating schema:", response.error);
+        toast({
+          title: "Error creating schema",
+          description: "There was a problem creating the schema.",
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log("response", response.data);
@@ -348,65 +354,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
       console.error("Error creating schema:", error);
       toast({
         title: "Error creating schema",
-        description: "There was a problem creating the schema.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateSchema = async (updatedSchema: ContentSchema) => {
-    try {
-      const response = await updateSchema(updatedSchema, currentWorkspace!.id);
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      mutateSchemas((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          data: prev.data.map((schema) =>
-            schema.id === response.data.id ? response.data : schema
-          ),
-        };
-      });
-
-      setEditingSchema(null);
-      toast({
-        title: "Schema updated",
-        description: `${updatedSchema.name} schema has been updated successfully`,
-      });
-    } catch (error) {
-      console.error("Error updating schema:", error);
-      toast({
-        title: "Error updating schema",
-        description: "There was a problem updating the schema.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteSchema = async (schemaId: string) => {
-    try {
-      await deleteSchema(schemaId, currentWorkspace!.id);
-      mutateSchemas((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          data: prev.data.filter((schema) => schema.id !== schemaId),
-        };
-      });
-
-      toast({
-        title: "Schema deleted",
-        description: "The schema has been deleted successfully",
-      });
-    } catch (error) {
-      console.error("Error deleting schema:", error);
-      toast({
-        title: "Error deleting schema",
-        description: "There was a problem deleting the schema.",
+        description: "Unexpected error occurred while creating the schema.",
         variant: "destructive",
       });
     }
@@ -417,9 +365,10 @@ const ContentSchemaBuilderPage: React.FC = () => {
       const updatedSchemas = await Promise.all(
         selectedSchemas.map(async (schema) => {
           const updated = { ...schema, archived_at: new Date().toISOString() };
-          const response = await updateSchema(updated, currentWorkspace!.id);
+          const response = await updateSchema(schema.id, updated, currentWorkspace!.id);
 
           if (response.error) {
+            console.error("Error archiving schema:", response.error);
             throw new Error(response.error.message);
           }
 
@@ -464,6 +413,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
           deleteSchema(schema.id, currentWorkspace!.id)
         )
       );
+
       mutateSchemas((prev) => {
         if (!prev) return prev;
         return {
@@ -487,7 +437,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
       console.error("Error deleting schemas:", error);
       toast({
         title: "Error deleting schemas",
-        description: "There was a problem deleting the selected schemas.",
+        description: "Unexpected error occurred while deleting the schemas.",
         variant: "destructive",
       });
     }

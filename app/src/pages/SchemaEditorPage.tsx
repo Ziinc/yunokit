@@ -67,6 +67,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  ContentItemRow,
   listContentItemsBySchema,
   saveContentItem,
 } from "@/lib/api/ContentApi";
@@ -118,7 +119,8 @@ interface NewFieldData {
 }
 
 const SchemaEditorPage: React.FC = () => {
-  const { schemaId } = useParams();
+  const { schemaId: schemaIdString } = useParams();
+  const schemaId = Number(schemaIdString);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showAddField, setShowAddField] = useState(false);
@@ -142,9 +144,6 @@ const SchemaEditorPage: React.FC = () => {
   });
   const [newOption, setNewOption] = useState("");
   const [availableSchemas, setAvailableSchemas] = useState<ContentSchema[]>([]);
-  const [contentCount, setContentCount] = useState<number>(0);
-  const [singleContentItem, setSingleContentItem] =
-    useState<ContentItem | null>(null);
 
   const { currentWorkspace } = useWorkspace();
 
@@ -162,9 +161,28 @@ const SchemaEditorPage: React.FC = () => {
     }
   );
 
+  const {
+    data: contentItemsResponse,
+    error: contentItemsError,
+    isLoading: isLoadingContentItems,
+  } = useSWR(
+    currentWorkspace && schemaId ? `content-items-${schemaId}` : null,
+    async () => {
+      const response = await listContentItemsBySchema(schemaId.toString());
+      return response;
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+
   const schema = schemaResponse?.data;
+  const contentItems = contentItemsResponse || [];
+  const contentCount = contentItems.length;
 
   console.log('schema', schema);
+
   const handleDragEnd = async (result: DropResult) => {
     if (!schema || !result.destination) return;
 
@@ -191,21 +209,40 @@ const SchemaEditorPage: React.FC = () => {
 
       // Call the API to reorder fields
       const updatedSchemaResponse = await updateSchema(
+        schema.id,
         {
-          id: schema.id,
           fields: reorderedFields,
         },
         currentWorkspace!.id
       );
+
+      if (updatedSchemaResponse.error) {
+        console.error("Error reordering fields: ", updatedSchemaResponse.error);
+        // Revert optimistic update on error
+        mutateSchema();
+        toast({
+          title: "Error reordering fields",
+          description:  "There was a problem saving the new field order.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (updatedSchemaResponse.data) {
         mutateSchema({
           ...schemaResponse,
           data: updatedSchemaResponse.data,
         });
+        
+        toast({
+          title: "Fields reordered",
+          description: "The field order has been updated successfully.",
+        });
       }
     } catch (error) {
       console.error("Error reordering fields:", error);
+      // Revert optimistic update on error
+      mutateSchema();
       toast({
         title: "Error reordering fields",
         description: "There was a problem saving the new field order.",
@@ -229,12 +266,21 @@ const SchemaEditorPage: React.FC = () => {
         relation_schema_id: newField.relation_schema_id,
       };
 
-      const updatedSchema = {
-        ...schema,
-        fields: [...(schema.fields || []), field],
-      };
+      const updatedFields = [...(schema.fields || []), field];
+      
+      // Optimistic update
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: {
+            ...schema,
+            fields: updatedFields,
+          },
+        },
+        false
+      );
 
-      await updateSchema(updatedSchema, currentWorkspace!.id);
+      // Close dialog and reset form immediately
       setShowAddField(false);
       setNewField({
         id: "",
@@ -247,12 +293,40 @@ const SchemaEditorPage: React.FC = () => {
         options: null,
       });
 
+      const updatedSchema = {
+        fields: updatedFields,
+      };
+      console.log("updatedSchema", updatedSchema);
+
+      const updatedSchemaResponse = await updateSchema(schema.id, updatedSchema, currentWorkspace!.id);
+      
+      if (updatedSchemaResponse.error) {
+        // Revert optimistic update on error
+        mutateSchema();
+        toast({
+          title: "Error adding field",
+          description: updatedSchemaResponse.error.message || "There was a problem adding the field.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update with actual response
+      if (updatedSchemaResponse.data) {
+        mutateSchema({
+          ...schemaResponse,
+          data: updatedSchemaResponse.data,
+        });
+      }
+
       toast({
         title: "Field added",
         description: `${field.label} field has been added successfully.`,
       });
     } catch (error) {
       console.error("Error adding field:", error);
+      // Revert optimistic update on error
+      mutateSchema();
       toast({
         title: "Error adding field",
         description: "There was a problem adding the field.",
@@ -266,10 +340,44 @@ const SchemaEditorPage: React.FC = () => {
 
     try {
       const updatedFields = schema.fields.filter((f) => f !== field);
-      const updatedSchema = { ...schema, fields: updatedFields };
-      await updateSchema(updatedSchema, currentWorkspace!.id);
+      
+      // Optimistic update
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: {
+            ...schema,
+            fields: updatedFields,
+          },
+        },
+        false
+      );
+
+      // Close dialog immediately
       setShowDeleteField(false);
       setSelectedField(null);
+
+      const updatedSchema = { fields: updatedFields };
+      const updatedSchemaResponse = await updateSchema(schema.id, updatedSchema, currentWorkspace!.id);
+      
+      if (updatedSchemaResponse.error) {
+        // Revert optimistic update on error
+        mutateSchema();
+        toast({
+          title: "Error deleting field",
+          description: updatedSchemaResponse.error.message || "There was a problem deleting the field.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update with actual response
+      if (updatedSchemaResponse.data) {
+        mutateSchema({
+          ...schemaResponse,
+          data: updatedSchemaResponse.data,
+        });
+      }
 
       toast({
         title: "Field deleted",
@@ -277,6 +385,8 @@ const SchemaEditorPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Error deleting field:", error);
+      // Revert optimistic update on error
+      mutateSchema();
       toast({
         title: "Error deleting field",
         description: "There was a problem deleting the field.",
@@ -289,18 +399,53 @@ const SchemaEditorPage: React.FC = () => {
     if (!schema || !selectedField || !newFieldName.trim()) return;
 
     try {
-      const updatedSchema = await updateSchema(
-        {
-          id: schema.id,
-          fields: schema.fields.map((f) =>
-            f === selectedField ? { ...f, label: newFieldName.trim() } : f
-          ),
-        },
-        currentWorkspace!.id
+      const updatedFields = schema.fields.map((f) =>
+        f === selectedField ? { ...f, label: newFieldName.trim() } : f
       );
+      
+      // Optimistic update
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: {
+            ...schema,
+            fields: updatedFields,
+          },
+        },
+        false
+      );
+
+      // Close dialog and reset form immediately
       setShowRenameField(false);
       setSelectedField(null);
       setNewFieldName("");
+
+      const updatedSchemaResponse = await updateSchema(
+        schema.id,
+        {
+          fields: updatedFields,
+        },
+        currentWorkspace!.id
+      );
+      
+      if (updatedSchemaResponse.error) {
+        // Revert optimistic update on error
+        mutateSchema();
+        toast({
+          title: "Error renaming field",
+          description: updatedSchemaResponse.error.message || "There was a problem renaming the field.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update with actual response
+      if (updatedSchemaResponse.data) {
+        mutateSchema({
+          ...schemaResponse,
+          data: updatedSchemaResponse.data,
+        });
+      }
 
       toast({
         title: "Field renamed",
@@ -308,6 +453,8 @@ const SchemaEditorPage: React.FC = () => {
       });
     } catch (error) {
       console.error("Error renaming field:", error);
+      // Revert optimistic update on error
+      mutateSchema();
       toast({
         title: "Error renaming field",
         description: "There was a problem renaming the field.",
@@ -430,36 +577,6 @@ const SchemaEditorPage: React.FC = () => {
     }
   };
 
-  const handleCreateSingleContent = async () => {
-    if (!schema) return;
-
-    try {
-      const newItem: ContentItem = {
-        id: crypto.randomUUID(),
-        schemaId: schema.id,
-        title: schema.name,
-        status: "draft",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        data: {},
-      };
-
-      await saveContentItem(newItem);
-      setSingleContentItem(newItem);
-
-      toast({
-        title: "Content created",
-        description: "Single content item has been created successfully.",
-      });
-    } catch (error) {
-      console.error("Error creating content:", error);
-      toast({
-        title: "Error creating content",
-        description: "There was a problem creating the content item.",
-        variant: "destructive",
-      });
-    }
-  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -505,36 +622,17 @@ const SchemaEditorPage: React.FC = () => {
               <Table className="h-4 w-4 mr-1" />
               {(schema.fields || []).length} Fields
             </Badge>
-            {schema.type === "collection" ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2 -mr-2 h-auto px-0 font-normal"
-                onClick={() => navigate(`/manager?schema-id=${schema.id}`)}
-              >
-                <Badge variant="secondary" className="hover:bg-secondary/80">
-                  <Pencil className="h-3 w-3 mr-1" />
-                  {contentCount} Items
-                </Badge>
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2"
-                onClick={
-                  singleContentItem
-                    ? () => navigate(`/content/${singleContentItem.id}`)
-                    : handleCreateSingleContent
-                }
-              >
-                {singleContentItem ? (
-                  <Badge variant="secondary">View Content</Badge>
-                ) : (
-                  <Badge variant="outline">Create Content</Badge>
-                )}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2 -mr-2 h-auto px-0 font-normal"
+              onClick={() => navigate(`/manager?schema-id=${schema.id}`)}
+            >
+              <Badge variant="secondary" className="hover:bg-secondary/80">
+                <Pencil className="h-3 w-3 mr-1" />
+                {contentCount} Items
+              </Badge>
+            </Button>
           </div>
           {schema.description && (
             <p className="text-muted-foreground">{schema.description}</p>
@@ -760,7 +858,7 @@ const SchemaEditorPage: React.FC = () => {
                               </TooltipContent>
                             </Tooltip>
                             <div>
-                              <div className="font-medium">{field.name}</div>
+                              <div className="font-medium">{field.label}</div>
                               <div className="text-sm text-muted-foreground flex items-center gap-2">
                                 {fieldType?.label || field.type}
                                 {field.required && (
@@ -835,43 +933,20 @@ const SchemaEditorPage: React.FC = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Field</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete the "{selectedField?.label}"
-              field? This action cannot be undone. Choose how to handle the
-              existing data:
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Are you sure you want to delete the "{selectedField?.label}" field?
+                </p>
+                <p>
+                  This will hide the field from the schema but will not delete the data from existing content items.
+                </p>
+                <p>
+                  You can add the field back later to restore access to the data.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-4 space-y-4">
-            <Select
-              value={migrationOptions.action}
-              onValueChange={(value: "delete" | "keep") =>
-                setMigrationOptions({ ...migrationOptions, action: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="delete">Delete field data</SelectItem>
-                <SelectItem value="keep">Keep data (hidden)</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="text-sm text-muted-foreground space-y-2">
-              {migrationOptions.action === "delete" ? (
-                <p>
-                  This will permanently delete the field and all its data from
-                  existing content items. This cannot be undone.
-                </p>
-              ) : (
-                <p>
-                  This will hide the field from the schema but keep its data in
-                  existing content items. You can add the field back later to
-                  restore access to the data.
-                </p>
-              )}
-            </div>
-          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

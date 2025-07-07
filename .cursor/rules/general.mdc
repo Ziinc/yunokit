@@ -3,6 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
+- Always refer to @DEVELOPMENT.md for development pattern and style guide. YOU MUST DO THIS.
 - be as succinct as possible.
 - always remove unused imports.
 - Don't explain the effect your actions, only list out what you have done.

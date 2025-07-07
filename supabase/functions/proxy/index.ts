@@ -116,15 +116,13 @@ app.delete("/proxy/contents/:id", async (req: any, res: any) => {
 });
 
 app.get("/proxy/schemas", async (req: any, res: any) => {
-  const data = await listSchemas(req.dataClient, req.query);
-
-  console.log("data", data);
+  const data = await listSchemas(req.dataClient);
   res.set({ ...corsHeaders });
   res.json(data);
 });
 
 app.get("/proxy/schemas/:id", async (req: any, res: any) => {
-  const data = await getSchema(req.dataClient, req.params.id);
+  const data = await getSchema(req.dataClient, Number(req.params.id));
 
   res.set({ ...corsHeaders });
   res.json(data);
@@ -138,14 +136,14 @@ app.post("/proxy/schemas", async (req: any, res: any) => {
 });
 
 app.put("/proxy/schemas/:id", async (req: any, res: any) => {
-  const data = await updateSchema(req.dataClient, req.params.id, req.body);
-
+  console.log("req.params", req.params);
+  const data = await updateSchema(req.dataClient, Number(req.params.id), req.body);
   res.set({ ...corsHeaders });
   res.json(data);
 });
 
 app.delete("/proxy/schemas/:id", async (req: any, res: any) => {
-  const data = await deleteSchema(req.dataClient, req.params.id);
+  const data = await deleteSchema(req.dataClient, Number(req.params.id));
 
   res.set({ ...corsHeaders });
   res.json(data);

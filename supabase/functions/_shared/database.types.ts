@@ -232,6 +232,7 @@ export type Database = {
           deleted_at: string | null
           id: number
           published_at: string | null
+          schema_id: number | null
           title: string | null
           uid: string
           updated_at: string | null
@@ -242,6 +243,7 @@ export type Database = {
           deleted_at?: string | null
           id?: number
           published_at?: string | null
+          schema_id?: number | null
           title?: string | null
           uid?: string
           updated_at?: string | null
@@ -252,11 +254,20 @@ export type Database = {
           deleted_at?: string | null
           id?: number
           published_at?: string | null
+          schema_id?: number | null
           title?: string | null
           uid?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "content_items_schema_id_fkey"
+            columns: ["schema_id"]
+            isOneToOne: false
+            referencedRelation: "schemas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       schemas: {
         Row: {
@@ -265,7 +276,7 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           fields: Json | null
-          id: string
+          id: number
           name: string | null
           type: Database["yunocontent"]["Enums"]["schema_type"] | null
           updated_at: string
@@ -276,7 +287,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           fields?: Json | null
-          id?: string
+          id?: never
           name?: string | null
           type?: Database["yunocontent"]["Enums"]["schema_type"] | null
           updated_at?: string
@@ -287,7 +298,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           fields?: Json | null
-          id?: string
+          id?: never
           name?: string | null
           type?: Database["yunocontent"]["Enums"]["schema_type"] | null
           updated_at?: string
