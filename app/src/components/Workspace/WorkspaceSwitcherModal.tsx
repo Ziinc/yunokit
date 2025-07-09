@@ -451,14 +451,38 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
                     )}
                   </CardHeader>
 
-                  {projects &&
-                    workspace.project_ref &&
+                  {workspace.project_ref &&
                     !isLinkingThis &&
                     (() => {
-                      const project = projects.find(
+                      const project = projects?.find(
                         (p) => p.id === workspace.project_ref
                       );
-                      const isHealthy = project?.status === "ACTIVE_HEALTHY";
+                      
+                      if (!projects) {
+                        // Show loading state for project status
+                        return (
+                          <div className="absolute bottom-4 right-4">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
+                              <Loader2 className="w-2 h-2 animate-spin" />
+                              Loading...
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      if (!project) {
+                        // Show error state if project not found
+                        return (
+                          <div className="absolute bottom-4 right-4">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
+                              <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                              Project not found
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      const isHealthy = project.status === "ACTIVE_HEALTHY";
                       return (
                         <div className="absolute bottom-4 right-4">
                           <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
@@ -468,8 +492,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
                                 (isHealthy ? "bg-green-500" : "bg-red-500")
                               }
                             />
-                            {project?.name || "Unknown"}{" "}
-                            {!isHealthy && `(${project?.status})`}
+                            {project.name} {!isHealthy && `(${project.status})`}
                           </div>
                         </div>
                       );
