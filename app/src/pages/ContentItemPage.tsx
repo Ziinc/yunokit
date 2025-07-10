@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
-import { exampleSchemas, ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
+import { ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, Reply, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -12,31 +12,84 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { getSchema, ContentSchemaRow } from "@/lib/api/SchemaApi";
+import { 
+  createContentItem, 
+  updateContentItem, 
+  getContentItemById,
+  ContentItemRow 
+} from "@/lib/api/ContentApi";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+import useSWR from "swr";
 
 const ContentItemPage: React.FC = () => {
   const { schemaId, contentId } = useParams<{ schemaId: string; contentId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
   const [newComment, setNewComment] = useState("");
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [inlineCommentText, setInlineCommentText] = useState("");
   const [diffView, setDiffView] = useState<"unified" | "split">("unified");
+  const [isCreating, setIsCreating] = useState(false);
   
-  // Find the schema based on the schemaId
-  const schema = exampleSchemas.find(s => s.id === schemaId);
+  const schemaIdNumber = schemaId ? Number(schemaId) : null;
+  const contentIdNumber = contentId ? Number(contentId) : null;
   
-  // Find content item if contentId is provided
-  const [contentItem, setContentItem] = useState<ContentItem | undefined>(
-    undefined
+  // Load schema from database
+  const { 
+    data: schemaResponse, 
+    error: schemaError, 
+    isLoading: isLoadingSchema 
+  } = useSWR(
+    currentWorkspace && schemaIdNumber ? `schema-${schemaIdNumber}` : null,
+    () => getSchema(schemaIdNumber!, currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
   );
+  
+  // Load content item if editing existing
+  const { 
+    data: contentItemResponse, 
+    error: contentItemError, 
+    isLoading: isLoadingContentItem,
+    mutate: mutateContentItem
+  } = useSWR(
+    currentWorkspace && contentIdNumber ? `content-item-${contentIdNumber}` : null,
+    () => getContentItemById(contentIdNumber!, currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+
+  const schema = schemaResponse?.data;
+  const contentItemData = contentItemResponse?.data;
+  
+  // Convert database row to ContentItem format
+  const contentItem: ContentItem | undefined = contentItemData ? {
+    id: contentItemData.id.toString(),
+    schemaId: contentItemData.schema_id?.toString() || '',
+    title: contentItemData.title || 'Untitled',
+    status: 'draft' as ContentItemStatus, // Map from database status if available
+    createdAt: contentItemData.created_at,
+    updatedAt: contentItemData.updated_at || contentItemData.created_at,
+    publishedAt: contentItemData.published_at || undefined,
+    data: contentItemData.data as Record<string, any> || {},
+  } : undefined;
   
   // Helper function to get content data (handles both content and data fields)
   const getContentData = (item?: ContentItem) => {
     if (!item) return {};
-    return item.data || item.content || {};
+    return item.data || {};
   };
   
-  // Mock previous version for diffing
+  // Set up initial content
+  const initialContent = getContentData(contentItem) || {};
+
+  // Mock previous version for diffing (for demo purposes)
   const [previousVersion] = useState<ContentItem | undefined>(() => {
     if (!contentItem) return undefined;
     
@@ -44,7 +97,7 @@ const ContentItemPage: React.FC = () => {
     
     return {
       ...contentItem,
-      content: {
+      data: {
         ...contentData,
         content: contentData.content?.replace("React is a JavaScript library", "React is a popular JavaScript library")
           .replace("helped me understand", "really helped me understand")
@@ -52,12 +105,6 @@ const ContentItemPage: React.FC = () => {
       updatedAt: new Date(new Date(contentItem.updatedAt).getTime() - 86400000).toISOString() // 1 day before
     };
   });
-  
-  // Set up initial content
-  const initialContent = getContentData(contentItem) || {
-    title: "New Content",
-    content: "# Add your content here\n\nStart editing to create your content.",
-  };
 
   // Mock diff data for the example
   const mockDiffLines = previousVersion && contentItem ? [
@@ -113,50 +160,85 @@ const ContentItemPage: React.FC = () => {
       ]
     }
   ]);
+
+  // Mock comments for demo purposes
+  const [comments, setComments] = useState<ContentItemComment[]>([]);
   
-  const handleSave = (content: Record<string, any>, status?: ContentItemStatus) => {
-    const newStatus = status || contentItem?.status || 'draft';
-    
-    if (contentItem) {
-      // Update existing content item
-      setContentItem({
-        ...contentItem,
-        content,
-        status: newStatus,
-        updatedAt: new Date().toISOString(),
-        ...(newStatus === 'published' && !contentItem.publishedAt ? { 
-          publishedAt: new Date().toISOString(),
-          publishedBy: 'current-user@example.com',
-        } : {})
+  const handleSave = async (content: Record<string, any>, status?: ContentItemStatus) => {
+    if (!currentWorkspace || !schemaIdNumber) {
+      toast({
+        title: "Error",
+        description: "Workspace or schema not found",
+        variant: "destructive",
       });
-    } else {
-      // Create new content item
-      const newItem: ContentItem = {
-        id: crypto.randomUUID(),
-        schemaId: schemaId || '',
-        title: content.title || 'Untitled',
-        content,
-        status: newStatus,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: 'current-user@example.com',
-        updatedBy: 'current-user@example.com',
-        comments: []
-      };
-      
-      setContentItem(newItem);
-      // In a real app, we would push this to the database
+      return;
     }
-    
-    toast({
-      title: "Content saved",
-      description: "The content has been saved successfully."
-    });
+
+    try {
+      setIsCreating(true);
+      const newStatus = status || 'draft';
+      const title = content.title || 'Untitled';
+      
+      if (contentIdNumber) {
+        // Update existing content item
+        const updateData = {
+          title,
+          data: content,
+          updated_at: new Date().toISOString(),
+          ...(newStatus === 'published' && !contentItem?.publishedAt ? { 
+            published_at: new Date().toISOString(),
+          } : {})
+        };
+        
+        await updateContentItem(contentIdNumber, updateData, currentWorkspace.id);
+        
+        toast({
+          title: "Content updated",
+          description: "The content has been updated successfully."
+        });
+      } else {
+        // Create new content item
+        const createData = {
+          schema_id: schemaIdNumber,
+          title,
+          data: content,
+          ...(newStatus === 'published' ? { 
+            published_at: new Date().toISOString(),
+          } : {})
+        };
+        
+        const response = await createContentItem(createData, currentWorkspace.id);
+        
+        if (response.data) {
+          // Navigate to the edit page for the newly created item
+          navigate(`/manager/editor/${schemaId}/${response.data.id}`);
+        }
+        
+        toast({
+          title: "Content created",
+          description: "The content has been created successfully."
+        });
+      }
+      
+      // Refresh the content item data
+      mutateContentItem();
+      
+    } catch (error) {
+      console.error('Error saving content item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save content. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
   
   const handleAddComment = () => {
     if (!newComment.trim() || !contentItem) return;
     
+    // TODO: Implement comment saving to database
     const comment: ContentItemComment = {
       id: crypto.randomUUID(),
       contentItemId: contentItem.id,
@@ -166,11 +248,7 @@ const ContentItemPage: React.FC = () => {
       createdAt: new Date().toISOString()
     };
     
-    setContentItem({
-      ...contentItem,
-      comments: [...(contentItem.comments || []), comment]
-    });
-    
+    setComments(prev => [...prev, comment]);
     setNewComment("");
     
     toast({
@@ -179,34 +257,60 @@ const ContentItemPage: React.FC = () => {
     });
   };
   
-  const handleApproveContent = () => {
-    if (!contentItem) return;
+  const handleApproveContent = async () => {
+    if (!contentItem || !currentWorkspace || !contentIdNumber) return;
     
-    setContentItem({
-      ...contentItem,
-      status: 'published',
-      publishedAt: new Date().toISOString(),
-      publishedBy: 'current-user@example.com'
-    });
-    
-    toast({
-      title: "Content approved",
-      description: "The content has been approved and published."
-    });
+    try {
+      await updateContentItem(
+        contentIdNumber, 
+        {
+          published_at: new Date().toISOString(),
+        }, 
+        currentWorkspace.id
+      );
+      
+      mutateContentItem();
+      
+      toast({
+        title: "Content approved",
+        description: "The content has been approved and published."
+      });
+    } catch (error) {
+      console.error('Error approving content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve content. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
-  const handleRejectContent = () => {
-    if (!contentItem) return;
+  const handleRejectContent = async () => {
+    if (!contentItem || !currentWorkspace || !contentIdNumber) return;
     
-    setContentItem({
-      ...contentItem,
-      status: 'draft'
-    });
-    
-    toast({
-      title: "Content needs revision",
-      description: "The content has been returned to draft status."
-    });
+    try {
+      await updateContentItem(
+        contentIdNumber, 
+        {
+          published_at: null,
+        }, 
+        currentWorkspace.id
+      );
+      
+      mutateContentItem();
+      
+      toast({
+        title: "Content needs revision",
+        description: "The content has been returned to draft status."
+      });
+    } catch (error) {
+      console.error('Error rejecting content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reject content. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddInlineComment = () => {
@@ -252,39 +356,88 @@ const ContentItemPage: React.FC = () => {
 
     setInlineCommentText("");
     setSelectedLine(null);
-    
+
     toast({
-      title: "Comment added",
-      description: "Your comment has been added to line " + selectedLine
+      title: "Inline comment added",
+      description: "Your comment has been added to this line."
     });
   };
-  
-  if (!schema) {
+
+  // Show loading state
+  if (isLoadingSchema || (contentId && isLoadingContentItem)) {
     return (
-      <div className="p-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Schema Not Found</h1>
-        <p className="mb-6">The content schema you requested was not found.</p>
-        <Button onClick={() => navigate("/schemas")}>
-          Go to Schemas
-        </Button>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
-  
+
+  // Show error state
+  if (schemaError || contentItemError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Error loading content</p>
+          <Button onClick={() => navigate('/manager')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Manager
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show schema not found
+  if (!schema) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">Schema not found</p>
+          <Button onClick={() => navigate('/manager')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Manager
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Convert schema to the expected format
+  const contentSchema = {
+    id: schema.id.toString(),
+    name: schema.name || 'Untitled Schema',
+    description: schema.description || undefined,
+    fields: schema.fields || [],
+    isCollection: schema.type === 'collection',
+    type: schema.type || 'collection'
+  };
+
   return (
-    <div>
-      <div className="mb-4">
-        <Button
-          variant="outline"
-          size="sm"
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate('/manager')}
           className="gap-2"
-          onClick={() => navigate("/content")}
         >
           <ArrowLeft size={16} />
-          Back to Content
+          Back to Manager
         </Button>
+        
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">
+            {contentId ? 'Edit Content' : 'Create Content'} - {schema.name}
+          </h1>
+          <p className="text-muted-foreground">
+            {contentId ? 'Update your content item' : 'Create a new content item'}
+          </p>
+        </div>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="col-span-2">
           {contentItem?.status === 'pending_review' && previousVersion ? (
@@ -308,148 +461,110 @@ const ContentItemPage: React.FC = () => {
                     <span>{format(new Date(contentItem.updatedAt), "MMM d, yyyy")}</span>
                   </div>
                 </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {mockDiffLines.map((line, index) => {
-                        const hasComments = inlineComments.some(c => c.lineNumber === line.lineNumber);
-                        const lineComments = inlineComments.find(c => c.lineNumber === line.lineNumber)?.comments || [];
-                        
-                        return (
-                          <React.Fragment key={`line-${index}`}>
-                            <tr className={`
-                              ${line.type === 'addition' ? 'bg-green-50' : ''}
-                              ${line.type === 'deletion' ? 'bg-red-50' : ''}
-                              ${selectedLine === line.lineNumber ? 'bg-blue-50' : ''}
-                              hover:bg-muted/50 group
-                            `}>
-                              <td className="w-8 text-right text-muted-foreground px-3 py-0.5 select-none border-r">
-                                {line.lineNumber}
-                              </td>
-                              <td className={`px-4 py-0.5 font-mono whitespace-pre ${
-                                line.type === 'addition' ? 'text-green-700' :
-                                line.type === 'deletion' ? 'text-red-700' : ''
-                              }`}>
-                                <span className="mr-2">
-                                  {line.type === 'addition' ? '+' : 
-                                   line.type === 'deletion' ? '-' : ' '}
-                                </span>
-                                {line.content}
-                              </td>
-                              <td className="w-10 px-2">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                                  onClick={() => setSelectedLine(line.lineNumber)}
-                                >
-                                  <Plus size={14} />
-                                </Button>
-                              </td>
-                            </tr>
-                            
-                            {/* Inline comments for this line */}
+
+                <ScrollArea className="h-96">
+                  <div className="p-4 space-y-1 font-mono text-sm">
+                    {mockDiffLines.map((line, index) => {
+                      const hasComments = inlineComments.some(c => c.lineNumber === line.lineNumber);
+                      
+                      return (
+                        <div key={index} className="group">
+                          <div 
+                            className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-muted/50 ${
+                              selectedLine === line.lineNumber ? 'bg-blue-50 border border-blue-200' : ''
+                            } ${
+                              line.type === 'addition' ? 'bg-green-50 text-green-800' : 
+                              line.type === 'deletion' ? 'bg-red-50 text-red-800' : 
+                              'text-muted-foreground'
+                            }`}
+                            onClick={() => setSelectedLine(line.lineNumber)}
+                          >
+                            <span className="w-8 text-xs text-right">{line.lineNumber}</span>
+                            <span className="w-4">
+                              {line.type === 'addition' ? '+' : line.type === 'deletion' ? '-' : ' '}
+                            </span>
+                            <span className="flex-1">{line.content}</span>
                             {hasComments && (
-                              <tr>
-                                <td className="w-8 border-r"></td>
-                                <td colSpan={2} className="py-2 px-8 bg-muted/30">
-                                  <div className="space-y-3">
-                                    {lineComments.map(comment => (
-                                      <div key={comment.id} className="flex gap-3">
-                                        <Avatar className="h-6 w-6">
-                                          <AvatarImage src={comment.authorAvatar} />
-                                          <AvatarFallback>{comment.author.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                          <div className="bg-background border rounded-md p-2">
-                                            <div className="flex justify-between items-center mb-1">
-                                              <span className="font-medium text-xs">{comment.author}</span>
-                                              <span className="text-xs text-muted-foreground">
-                                                {format(new Date(comment.timestamp), "MMM d, h:mm a")}
-                                              </span>
-                                            </div>
-                                            <p className="text-sm">{comment.text}</p>
-                                          </div>
-                                          <div className="mt-1 ml-2">
-                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1">
-                                              <Reply size={12} />
-                                              Reply
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </td>
-                              </tr>
+                              <MessageSquare size={12} className="text-blue-500" />
                             )}
-                            
-                            {/* Comment input when a line is selected */}
-                            {selectedLine === line.lineNumber && (
-                              <tr>
-                                <td className="w-8 border-r"></td>
-                                <td colSpan={2} className="py-2 px-8 bg-blue-50">
-                                  <div className="flex gap-3">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedLine(line.lineNumber);
+                              }}
+                            >
+                              <Plus size={12} />
+                            </Button>
+                          </div>
+                          
+                          {/* Inline comments for this line */}
+                          {inlineComments
+                            .filter(c => c.lineNumber === line.lineNumber)
+                            .map(commentGroup => (
+                              <div key={commentGroup.lineNumber} className="ml-12 mt-2 space-y-2">
+                                {commentGroup.comments.map(comment => (
+                                  <div key={comment.id} className="flex gap-2 p-2 bg-blue-50 rounded-md border border-blue-200">
                                     <Avatar className="h-6 w-6">
-                                      <AvatarFallback>C</AvatarFallback>
+                                      <AvatarImage src={comment.authorAvatar} />
+                                      <AvatarFallback className="text-xs">
+                                        {comment.author.split(' ').map(n => n[0]).join('')}
+                                      </AvatarFallback>
                                     </Avatar>
-                                    <div className="flex-1 space-y-2">
-                                      <Textarea 
-                                        value={inlineCommentText}
-                                        onChange={(e) => setInlineCommentText(e.target.value)}
-                                        placeholder="Add a comment..."
-                                        className="min-h-[80px] text-sm"
-                                      />
-                                      <div className="flex justify-end gap-2">
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm"
-                                          onClick={() => setSelectedLine(null)}
-                                        >
-                                          Cancel
-                                        </Button>
-                                        <Button 
-                                          size="sm"
-                                          onClick={handleAddInlineComment}
-                                          disabled={!inlineCommentText.trim()}
-                                        >
-                                          Add Comment
-                                        </Button>
+                                    <div className="flex-1 text-sm">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-medium">{comment.author}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {format(new Date(comment.timestamp), "MMM d, h:mm a")}
+                                        </span>
                                       </div>
+                                      <p>{comment.text}</p>
                                     </div>
                                   </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button 
-                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
-                  onClick={handleApproveContent}
-                >
-                  <ThumbsUp size={16} />
-                  Approve Changes
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1 gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                  onClick={handleRejectContent}
-                >
-                  <ThumbsDown size={16} />
-                  Request Changes
-                </Button>
+                                ))}
+                              </div>
+                            ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+
+                {/* Add inline comment form */}
+                {selectedLine !== null && (
+                  <div className="border-t p-4 bg-muted/30">
+                    <div className="flex gap-2">
+                      <Textarea
+                        placeholder={`Add a comment to line ${selectedLine}...`}
+                        value={inlineCommentText}
+                        onChange={(e) => setInlineCommentText(e.target.value)}
+                        className="flex-1 min-h-[60px]"
+                      />
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={handleAddInlineComment}
+                          disabled={!inlineCommentText.trim()}
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setSelectedLine(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <ContentItemEditor 
-                schema={schema}
+                schema={contentSchema}
                 initialContent={initialContent}
                 contentItem={contentItem}
                 onSave={handleSave}
@@ -458,7 +573,7 @@ const ContentItemPage: React.FC = () => {
             </div>
           ) : (
             <ContentItemEditor 
-              schema={schema}
+              schema={contentSchema}
               initialContent={initialContent}
               contentItem={contentItem}
               onSave={handleSave}
@@ -494,77 +609,47 @@ const ContentItemPage: React.FC = () => {
               </div>
             )}
             
-            <div className="mb-4">
-              <Badge variant={
-                contentItem?.status === 'published' ? "default" : 
-                contentItem?.status === 'pending_review' ? "secondary" : 
-                "outline"
-              }
-              className={
-                contentItem?.status === 'published' ? "bg-green-100 text-green-800" :
-                contentItem?.status === 'pending_review' ? "bg-amber-100 text-amber-800" :
-                ""
-              }
-              >
-                {contentItem?.status === 'published' ? "Published" : 
-                 contentItem?.status === 'pending_review' ? "Pending Review" : 
-                 "Draft"}
-              </Badge>
+            <div className="space-y-3 mb-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3 p-3 bg-muted rounded-md">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {comment.userName.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm">{comment.userName}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(comment.createdAt), "MMM d, h:mm a")}
+                      </span>
+                    </div>
+                    <p className="text-sm">{comment.text}</p>
+                  </div>
+                </div>
+              ))}
               
-              {contentItem?.publishedAt && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Published on {format(new Date(contentItem.publishedAt), "PPP")}
+              {comments.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No comments yet
                 </p>
               )}
             </div>
             
-            <Separator className="my-4" />
-            
-            <ScrollArea className="h-[400px] pr-4">
-              {contentItem?.comments && contentItem.comments.length > 0 ? (
-                <div className="space-y-4">
-                  {contentItem.comments.map(comment => (
-                    <div key={comment.id} className="flex gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{comment.userName.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="bg-muted p-3 rounded-md">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-medium text-sm">{comment.userName}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(comment.createdAt), "PPp")}
-                            </span>
-                          </div>
-                          <p className="text-sm">{comment.text}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  No comments yet. Add a comment to start the review discussion.
-                </p>
-              )}
-            </ScrollArea>
-            
-            <Separator className="my-4" />
-            
-            <div className="space-y-2">
-              <Textarea 
+            <div className="flex gap-2">
+              <Textarea
                 placeholder="Add a comment..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                className="resize-none min-h-[80px]"
+                className="flex-1 min-h-[80px]"
               />
-              <Button
-                className="w-full gap-2"
+              <Button 
+                size="sm" 
+                className="self-end"
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
               >
-                <Send size={16} />
-                Add Comment
+                <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>

@@ -19,6 +19,9 @@ import {
   Table,
   X,
   Pencil,
+  Edit,
+  Loader2,
+  Settings,
 } from "lucide-react";
 import { ContentSchema, ContentField } from "@/lib/contentSchema";
 import { listSchemas, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
@@ -50,6 +53,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,14 +70,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  ContentItemRow,
-  listContentItemsBySchema,
-  saveContentItem,
-} from "@/lib/api/ContentApi";
+import { ContentItemRow, listContentItemsBySchema, deleteContentItem } from "@/lib/api/ContentApi";
 import { ContentItem } from "@/lib/contentSchema";
 import useSWR from "swr";
-import { getSchema, updateSchema } from "@/lib/api/SchemaApi";
+import { getSchema, updateSchema, deleteSchema } from "@/lib/api/SchemaApi";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 // Field type definitions with their icons and labels
@@ -127,7 +127,12 @@ const SchemaEditorPage: React.FC = () => {
   const [showDeleteField, setShowDeleteField] = useState(false);
   const [selectedField, setSelectedField] = useState<SchemaField | null>(null);
   const [showRenameField, setShowRenameField] = useState(false);
+  const [showEditSchemaName, setShowEditSchemaName] = useState(false);
+  const [showDeleteSchema, setShowDeleteSchema] = useState(false);
+  const [showChangeSchemaType, setShowChangeSchemaType] = useState(false);
   const [newFieldName, setNewFieldName] = useState("");
+  const [newSchemaName, setNewSchemaName] = useState("");
+  const [multiItemAction, setMultiItemAction] = useState<"keep_first" | "delete_all">("keep_first");
   const [migrationOptions, setMigrationOptions] =
     useState<FieldMigrationOptions>({
       action: "delete",
@@ -168,7 +173,10 @@ const SchemaEditorPage: React.FC = () => {
   } = useSWR(
     currentWorkspace && schemaId ? `content-items-${schemaId}` : null,
     async () => {
-      const response = await listContentItemsBySchema(schemaId.toString());
+      const response = await listContentItemsBySchema(
+        schemaId,
+        currentWorkspace!.id
+      );
       return response;
     },
     {
@@ -178,13 +186,51 @@ const SchemaEditorPage: React.FC = () => {
   );
 
   const schema = schemaResponse?.data;
-  const contentItems = contentItemsResponse || [];
-  const contentCount = contentItems.length;
+  const contentItems = contentItemsResponse?.data || [];
+  const contentCount = Array.isArray(contentItems) ? contentItems.length : 0;
 
-  console.log('schema', schema);
+  console.log("schema", schema);
+
+  useEffect(() => {
+    const loadAvailableSchemas = async () => {
+      if (currentWorkspace) {
+        try {
+          const response = await listSchemas(currentWorkspace.id);
+          if (response.data) {
+            const mappedSchemas = response.data.map((schema) => ({
+              ...schema,
+              id: schema.id.toString(),
+              isCollection: schema.type === "collection",
+              schemaType: schema.type as "collection" | "single",
+            })) as ContentSchema[];
+            setAvailableSchemas(mappedSchemas);
+          }
+        } catch (error) {
+          console.error("Error loading schemas:", error);
+        }
+      }
+    };
+
+    loadAvailableSchemas();
+  }, [currentWorkspace]);
+
+  useEffect(() => {
+    if (schema && !newSchemaName) {
+      setNewSchemaName(schema.name);
+    }
+  }, [schema, newSchemaName]);
 
   const handleDragEnd = async (result: DropResult) => {
     if (!schema || !result.destination) return;
+
+    // Check if there's actually a change in position
+    if (result.source.index === result.destination.index) {
+      toast({
+        title: "No change in field order",
+        description: "The field position remained the same.",
+      });
+      return;
+    }
 
     try {
       // Get the current fields array
@@ -222,7 +268,7 @@ const SchemaEditorPage: React.FC = () => {
         mutateSchema();
         toast({
           title: "Error reordering fields",
-          description:  "There was a problem saving the new field order.",
+          description: "There was a problem saving the new field order.",
           variant: "destructive",
         });
         return;
@@ -233,7 +279,7 @@ const SchemaEditorPage: React.FC = () => {
           ...schemaResponse,
           data: updatedSchemaResponse.data,
         });
-        
+
         toast({
           title: "Fields reordered",
           description: "The field order has been updated successfully.",
@@ -267,7 +313,7 @@ const SchemaEditorPage: React.FC = () => {
       };
 
       const updatedFields = [...(schema.fields || []), field];
-      
+
       // Optimistic update
       mutateSchema(
         {
@@ -298,19 +344,25 @@ const SchemaEditorPage: React.FC = () => {
       };
       console.log("updatedSchema", updatedSchema);
 
-      const updatedSchemaResponse = await updateSchema(schema.id, updatedSchema, currentWorkspace!.id);
-      
+      const updatedSchemaResponse = await updateSchema(
+        schema.id,
+        updatedSchema,
+        currentWorkspace!.id
+      );
+
       if (updatedSchemaResponse.error) {
         // Revert optimistic update on error
         mutateSchema();
         toast({
           title: "Error adding field",
-          description: updatedSchemaResponse.error.message || "There was a problem adding the field.",
+          description:
+            updatedSchemaResponse.error.message ||
+            "There was a problem adding the field.",
           variant: "destructive",
         });
         return;
       }
-      
+
       // Update with actual response
       if (updatedSchemaResponse.data) {
         mutateSchema({
@@ -340,7 +392,7 @@ const SchemaEditorPage: React.FC = () => {
 
     try {
       const updatedFields = schema.fields.filter((f) => f !== field);
-      
+
       // Optimistic update
       mutateSchema(
         {
@@ -358,19 +410,25 @@ const SchemaEditorPage: React.FC = () => {
       setSelectedField(null);
 
       const updatedSchema = { fields: updatedFields };
-      const updatedSchemaResponse = await updateSchema(schema.id, updatedSchema, currentWorkspace!.id);
-      
+      const updatedSchemaResponse = await updateSchema(
+        schema.id,
+        updatedSchema,
+        currentWorkspace!.id
+      );
+
       if (updatedSchemaResponse.error) {
         // Revert optimistic update on error
         mutateSchema();
         toast({
           title: "Error deleting field",
-          description: updatedSchemaResponse.error.message || "There was a problem deleting the field.",
+          description:
+            updatedSchemaResponse.error.message ||
+            "There was a problem deleting the field.",
           variant: "destructive",
         });
         return;
       }
-      
+
       // Update with actual response
       if (updatedSchemaResponse.data) {
         mutateSchema({
@@ -402,7 +460,7 @@ const SchemaEditorPage: React.FC = () => {
       const updatedFields = schema.fields.map((f) =>
         f === selectedField ? { ...f, label: newFieldName.trim() } : f
       );
-      
+
       // Optimistic update
       mutateSchema(
         {
@@ -427,18 +485,20 @@ const SchemaEditorPage: React.FC = () => {
         },
         currentWorkspace!.id
       );
-      
+
       if (updatedSchemaResponse.error) {
         // Revert optimistic update on error
         mutateSchema();
         toast({
           title: "Error renaming field",
-          description: updatedSchemaResponse.error.message || "There was a problem renaming the field.",
+          description:
+            updatedSchemaResponse.error.message ||
+            "There was a problem renaming the field.",
           variant: "destructive",
         });
         return;
       }
-      
+
       // Update with actual response
       if (updatedSchemaResponse.data) {
         mutateSchema({
@@ -458,6 +518,177 @@ const SchemaEditorPage: React.FC = () => {
       toast({
         title: "Error renaming field",
         description: "There was a problem renaming the field.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditSchemaName = async () => {
+    if (!schema || !newSchemaName.trim()) return;
+
+    try {
+      // Optimistic update
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: {
+            ...schema,
+            name: newSchemaName.trim(),
+          },
+        },
+        false
+      );
+
+      // Close dialog and reset form immediately
+      setShowEditSchemaName(false);
+      setNewSchemaName("");
+
+      const updatedSchemaResponse = await updateSchema(
+        schema.id,
+        {
+          name: newSchemaName.trim(),
+        },
+        currentWorkspace!.id
+      );
+
+      if (updatedSchemaResponse.error) {
+        // Revert optimistic update on error
+        mutateSchema();
+        toast({
+          title: "Error updating schema name",
+          description:
+            updatedSchemaResponse.error.message ||
+            "There was a problem updating the schema name.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update with actual response
+      if (updatedSchemaResponse.data) {
+        mutateSchema({
+          ...schemaResponse,
+          data: updatedSchemaResponse.data,
+        });
+      }
+
+      toast({
+        title: "Schema name updated",
+        description: `Schema has been renamed to "${newSchemaName}" successfully.`,
+      });
+    } catch (error) {
+      console.error("Error updating schema name:", error);
+      // Revert optimistic update on error
+      mutateSchema();
+      toast({
+        title: "Error updating schema name",
+        description: "There was a problem updating the schema name.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSchema = async () => {
+    if (!schema) return;
+
+    try {
+      // Close dialog immediately
+      setShowDeleteSchema(false);
+
+      await deleteSchema(schema.id, currentWorkspace!.id);
+
+      toast({
+        title: "Schema deleted",
+        description: `${schema.name} has been deleted successfully.`,
+      });
+
+      // Navigate back to the previous page
+      navigate(-1);
+    } catch (error) {
+      console.error("Error deleting schema:", error);
+      toast({
+        title: "Error deleting schema",
+        description: "There was a problem deleting the schema.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleChangeSchemaType = async () => {
+    if (!schema) return;
+
+    const newType = schema.type === "collection" ? "single" : "collection";
+
+    try {
+      // Close dialog immediately
+      setShowChangeSchemaType(false);
+
+      // If changing from collection to single and have multiple items, handle content deletion
+      if (schema.type === "collection" && newType === "single" && contentCount > 1) {
+        if (multiItemAction === "delete_all") {
+          // Delete all content items first
+          for (const item of contentItems) {
+            await deleteContentItem(item.id, currentWorkspace!.id);
+          }
+        } else if (multiItemAction === "keep_first" && contentItems.length > 1) {
+          // Keep first item, delete the rest
+          for (let i = 1; i < contentItems.length; i++) {
+            await deleteContentItem(contentItems[i].id, currentWorkspace!.id);
+          }
+        }
+      }
+
+      // Optimistic update
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: {
+            ...schema,
+            type: newType,
+          },
+        },
+        false
+      );
+
+      const updatedSchemaResponse = await updateSchema(
+        schema.id,
+        {
+          type: newType,
+        },
+        currentWorkspace!.id
+      );
+
+      if (updatedSchemaResponse.error) {
+        // Revert optimistic update on error
+        mutateSchema();
+        console.error("Error changing schema type: ", updatedSchemaResponse.error);
+        toast({
+          title: "Error changing schema type",
+          description: "There was a problem changing the schema type.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update with actual response
+      if (updatedSchemaResponse.data) {
+        mutateSchema({
+          ...schemaResponse,
+          data: updatedSchemaResponse.data,
+        });
+      }
+
+      toast({
+        title: "Schema type changed",
+        description: `Schema has been changed to ${newType} successfully.`,
+      });
+    } catch (error) {
+      console.error("Error changing schema type:", error);
+      // Revert optimistic update on error
+      mutateSchema();
+      toast({
+        title: "Error changing schema type",
+        description: "There was a problem changing the schema type.",
         variant: "destructive",
       });
     }
@@ -577,9 +808,13 @@ const SchemaEditorPage: React.FC = () => {
     }
   };
 
-
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading schema...</p>
+      </div>
+    );
   }
 
   if (!schema) {
@@ -639,183 +874,309 @@ const SchemaEditorPage: React.FC = () => {
           )}
         </div>
 
-        <Dialog open={showAddField} onOpenChange={setShowAddField}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus size={16} />
-              Add Field
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Field</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Field Name</Label>
-                <Input
-                  id="name"
-                  value={newField.label}
-                  onChange={(e) =>
-                    setNewField({ ...newField, label: e.target.value })
-                  }
-                  placeholder="Enter field name..."
-                />
-              </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            className="gap-2 text-red-600 hover:text-red-700"
+            onClick={() => setShowDeleteSchema(true)}
+          >
+            <Trash2 size={16} />
+            Delete Schema
+          </Button>
 
-              <div className="space-y-2">
-                <Label>Field Type</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(FIELD_TYPES).map(
-                    ([type, { icon: Icon, label }]) => (
-                      <Button
-                        key={type}
-                        variant={newField.type === type ? "default" : "outline"}
-                        className={`justify-start text-left ${
-                          newField.type === type ? "" : "border-dashed"
-                        }`}
-                        onClick={() =>
-                          setNewField({
-                            ...newField,
-                            type: type as keyof typeof FIELD_TYPES,
-                          })
-                        }
-                      >
-                        <div className="flex items-center">
-                          <Icon size={16} />
-                          <span className="ml-2">{label}</span>
-                        </div>
-                      </Button>
-                    )
-                  )}
+          <Dialog
+            open={showEditSchemaName}
+            onOpenChange={setShowEditSchemaName}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Pencil size={16} />
+                Rename
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Schema Name</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="newSchemaName">New Schema Name</Label>
+                  <Input
+                    id="newSchemaName"
+                    value={newSchemaName}
+                    onChange={(e) => setNewSchemaName(e.target.value)}
+                    placeholder="Enter new schema name..."
+                  />
                 </div>
               </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEditSchemaName(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleEditSchemaName}>Update Name</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-              {newField.type === "enum" && (
-                <div className="space-y-2">
-                  <Label>Options</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add option..."
-                      value={newOption}
-                      onChange={(e) => setNewOption(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newOption.trim()) {
-                          e.preventDefault();
-                          setNewField({
-                            ...newField,
-                            options: [
-                              ...(newField.options || []),
-                              newOption.trim(),
-                            ],
-                            default_value:
-                              newField.default_value || newOption.trim(),
-                          });
-                          setNewOption("");
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (newOption.trim()) {
-                          setNewField({
-                            ...newField,
-                            options: [
-                              ...(newField.options || []),
-                              newOption.trim(),
-                            ],
-                            default_value:
-                              newField.default_value || newOption.trim(),
-                          });
-                          setNewOption("");
-                        }
-                      }}
-                    >
-                      Add
-                    </Button>
-                  </div>
-                  {newField.options && newField.options.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {newField.options.map((option) => (
-                        <Badge
-                          key={option}
-                          variant="secondary"
-                          className="cursor-pointer"
-                          onClick={() => {
-                            setNewField({
-                              ...newField,
-                              options: newField.options?.filter(
-                                (o) => o !== option
-                              ),
-                              default_value:
-                                newField.default_value === option
-                                  ? ""
-                                  : newField.default_value,
-                            });
-                          }}
+          <Dialog 
+            open={showChangeSchemaType} 
+            onOpenChange={setShowChangeSchemaType}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Settings size={16} />
+                Change Type
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Change Schema Type</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-3">
+                  <p>
+                    Current type: <strong>{schema?.type === "collection" ? "Collection" : "Single"}</strong>
+                  </p>
+                  <p>
+                    Change to: <strong>{schema?.type === "collection" ? "Single" : "Collection"}</strong>
+                  </p>
+                  
+                  {schema?.type === "collection" && contentCount > 1 && (
+                    <div className="space-y-3 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/10">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                        <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                          Multiple Items Detected
+                        </h4>
+                      </div>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                        This schema contains {contentCount} items. Changing to Single type will only keep one item.
+                      </p>
+                      <div className="space-y-2">
+                        <Label>What should happen to the existing items?</Label>
+                        <RadioGroup 
+                          value={multiItemAction} 
+                          onValueChange={(value) => setMultiItemAction(value as "keep_first" | "delete_all")}
+                          className="space-y-2"
                         >
-                          {option}
-                          <X className="ml-1 h-3 w-3" />
-                        </Badge>
-                      ))}
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="keep_first" id="keep_first" />
+                            <Label htmlFor="keep_first" className="text-sm">
+                              Keep the first item and delete the rest
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="delete_all" id="delete_all" />
+                            <Label htmlFor="delete_all" className="text-sm">
+                              Delete all existing items
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
-
-              {newField.type === "relation" && (
-                <div className="space-y-2">
-                  <Label>Related Schema</Label>
-                  <Select
-                    value={newField.relation_schema_id}
-                    onValueChange={(value) =>
-                      setNewField({ ...newField, relation_schema_id: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a schema" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableSchemas.map((schema) => (
-                        <SelectItem key={schema.id} value={schema.id}>
-                          {schema.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>Default Value</Label>
-                {renderDefaultValueInput()}
               </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowChangeSchemaType(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleChangeSchemaType}>
+                  Change Type
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="required"
-                  checked={newField.required || false}
-                  onCheckedChange={(checked) =>
-                    setNewField({ ...newField, required: checked })
-                  }
-                />
-                <Label htmlFor="required">Required Field</Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddField(false)}>
-                Cancel
+          <Dialog open={showAddField} onOpenChange={setShowAddField}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus size={16} />
+                Add Field
               </Button>
-              <Button onClick={handleAddField}>Add Field</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Field</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Field Name</Label>
+                  <Input
+                    id="name"
+                    value={newField.label}
+                    onChange={(e) =>
+                      setNewField({ ...newField, label: e.target.value })
+                    }
+                    placeholder="Enter field name..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Field Type</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(FIELD_TYPES).map(
+                      ([type, { icon: Icon, label }]) => (
+                        <Button
+                          key={type}
+                          variant={
+                            newField.type === type ? "default" : "outline"
+                          }
+                          className={`justify-start text-left ${
+                            newField.type === type ? "" : "border-dashed"
+                          }`}
+                          onClick={() =>
+                            setNewField({
+                              ...newField,
+                              type: type as keyof typeof FIELD_TYPES,
+                            })
+                          }
+                        >
+                          <div className="flex items-center">
+                            <Icon size={16} />
+                            <span className="ml-2">{label}</span>
+                          </div>
+                        </Button>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                {newField.type === "enum" && (
+                  <div className="space-y-2">
+                    <Label>Options</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add option..."
+                        value={newOption}
+                        onChange={(e) => setNewOption(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && newOption.trim()) {
+                            e.preventDefault();
+                            setNewField({
+                              ...newField,
+                              options: [
+                                ...(newField.options || []),
+                                newOption.trim(),
+                              ],
+                              default_value:
+                                newField.default_value || newOption.trim(),
+                            });
+                            setNewOption("");
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          if (newOption.trim()) {
+                            setNewField({
+                              ...newField,
+                              options: [
+                                ...(newField.options || []),
+                                newOption.trim(),
+                              ],
+                              default_value:
+                                newField.default_value || newOption.trim(),
+                            });
+                            setNewOption("");
+                          }
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {newField.options && newField.options.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {newField.options.map((option) => (
+                          <Badge
+                            key={option}
+                            variant="secondary"
+                            className="cursor-pointer"
+                            onClick={() => {
+                              setNewField({
+                                ...newField,
+                                options: newField.options?.filter(
+                                  (o) => o !== option
+                                ),
+                                default_value:
+                                  newField.default_value === option
+                                    ? ""
+                                    : newField.default_value,
+                              });
+                            }}
+                          >
+                            {option}
+                            <X className="ml-1 h-3 w-3" />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {newField.type === "relation" && (
+                  <div className="space-y-2">
+                    <Label>Related Schema</Label>
+                    <Select
+                      value={newField.relation_schema_id}
+                      onValueChange={(value) =>
+                        setNewField({ ...newField, relation_schema_id: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a schema" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSchemas.map((schema) => (
+                          <SelectItem key={schema.id} value={schema.id}>
+                            {schema.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Default Value</Label>
+                  {renderDefaultValueInput()}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="required"
+                    checked={newField.required || false}
+                    onCheckedChange={(checked) =>
+                      setNewField({ ...newField, required: checked })
+                    }
+                  />
+                  <Label htmlFor="required">Required Field</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddField(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleAddField}>Add Field</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <StrictModeDroppable droppableId="fields">
-          {(provided) => (
+          {(provided, snapshot) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
@@ -836,27 +1197,24 @@ const SchemaEditorPage: React.FC = () => {
                       <Card
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className="border-b last:border-b-0 rounded-md"
+                        className="border-b last:border-b-0 rounded-md min-h-[80px]"
                       >
-                        <CardContent className="flex items-center justify-between p-3">
+                        <CardContent className="flex items-center justify-between p-4">
                           <div className="flex items-center gap-4">
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div
-                                  className="flex items-center gap-2 cursor-move"
+                                  className="flex items-center gap-3 cursor-move px-2 py-3 -mx-2 -my-1 rounded hover:bg-muted/50 transition-colors"
                                   {...provided.dragHandleProps}
                                 >
-                                  <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                  <Icon
-                                    size={20}
-                                    className="text-muted-foreground"
-                                  />
+                                  <GripVertical className="h-6 w-6 text-muted-foreground" />
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Drag to reorder</p>
+                                <p>Drag to reorder fields</p>
                               </TooltipContent>
                             </Tooltip>
+                            <Icon size={24} className="text-muted-foreground" />
                             <div>
                               <div className="font-medium">{field.label}</div>
                               <div className="text-sm text-muted-foreground flex items-center gap-2">
@@ -869,7 +1227,8 @@ const SchemaEditorPage: React.FC = () => {
                                     <Badge variant="outline">
                                       {
                                         availableSchemas.find(
-                                            (s) => s.id === field.relation_schema_id
+                                          (s) =>
+                                            s.id === field.relation_schema_id
                                         )?.name
                                       }
                                     </Badge>
@@ -878,44 +1237,31 @@ const SchemaEditorPage: React.FC = () => {
                             </div>
                           </div>
                           <div className="flex gap-2 ml-4">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    setSelectedField(field);
-                                    setNewFieldName(field.label);
-                                    setShowRenameField(true);
-                                  }}
-                                >
-                                  <Type
-                                    size={16}
-                                    className="text-muted-foreground"
-                                  />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Rename field</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    setSelectedField(field);
-                                    setShowDeleteField(true);
-                                  }}
-                                >
-                                  <Trash2 size={16} className="text-red-500" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Delete field</p>
-                              </TooltipContent>
-                            </Tooltip>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => {
+                                setSelectedField(field);
+                                setNewFieldName(field.label);
+                                setShowRenameField(true);
+                              }}
+                            >
+                              <Pencil size={14} />
+                              Rename
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-red-600 hover:text-red-700"
+                              onClick={() => {
+                                setSelectedField(field);
+                                setShowDeleteField(true);
+                              }}
+                            >
+                              <Trash2 size={14} />
+                              Delete
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -923,11 +1269,18 @@ const SchemaEditorPage: React.FC = () => {
                   </Draggable>
                 );
               })}
-              {provided.placeholder}
+              <div className="[&>div]:min-h-[80px]">{provided.placeholder}</div>
             </div>
           )}
         </StrictModeDroppable>
       </DragDropContext>
+
+      {/* Helper text at the bottom */}
+      <div className="text-center pt-6">
+        <p className="text-xs text-muted-foreground">
+          Tip: Use the drag handles on the left to rearrange field order
+        </p>
+      </div>
 
       <AlertDialog open={showDeleteField} onOpenChange={setShowDeleteField}>
         <AlertDialogContent>
@@ -936,13 +1289,16 @@ const SchemaEditorPage: React.FC = () => {
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  Are you sure you want to delete the "{selectedField?.label}" field?
+                  Are you sure you want to delete the "{selectedField?.label}"
+                  field?
                 </p>
                 <p>
-                  This will hide the field from the schema but will not delete the data from existing content items.
+                  This will hide the field from the schema but will not delete
+                  the data from existing content items.
                 </p>
                 <p>
-                  You can add the field back later to restore access to the data.
+                  You can add the field back later to restore access to the
+                  data.
                 </p>
               </div>
             </AlertDialogDescription>
@@ -983,6 +1339,39 @@ const SchemaEditorPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showDeleteSchema} onOpenChange={setShowDeleteSchema}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Schema</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Are you sure you want to delete the "{schema?.name}" schema?
+                </p>
+                <p>
+                  This will permanently delete the schema and all of its content items.
+                  This action cannot be undone.
+                </p>
+                {contentCount > 0 && (
+                  <p className="font-semibold text-destructive">
+                    Warning: This schema contains {contentCount} content item{contentCount !== 1 ? 's' : ''} that will also be deleted.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSchema}
+              className="bg-destructive text-destructive-foreground"
+            >
+              Delete Schema
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

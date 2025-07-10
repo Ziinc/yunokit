@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { initializeStorage, listContentItems, getContentItemById, saveContentItem, deleteContentItem } from '../../src/lib/api/ContentApi';
+import { listContentItems, getContentItemById, deleteContentItem } from '../../src/lib/api/ContentApi';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -18,123 +18,63 @@ const localStorageMock = (() => {
   };
 })();
 
-// Mock global methods
-global.localStorage = localStorageMock as any;
-Object.defineProperty(global, 'crypto', {
-  value: {
-    randomUUID: vi.fn(() => 'test-uuid'),
+// Mock supabase functions
+vi.mock('../../src/lib/supabase', () => ({
+  supabase: {
+    functions: {
+      invoke: vi.fn(),
+    },
   },
-  configurable: true,
-});
+}));
 
 describe('ContentApi', () => {
-  // Test content item
-  const testItem = {
-    id: 'test-id',
-    title: 'Test Item',
-    status: 'draft' as const,
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: '2023-01-01T00:00:00Z',
-    schemaId: 'test-schema',
-    data: {}
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe('initializeStorage', () => {
-    it('should initialize storage with mock content items if empty', async () => {
-      await initializeStorage();
-      expect(localStorage.setItem).toHaveBeenCalled();
-    });
-
-    it('should not initialize storage if already populated', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
-      await initializeStorage();
-      expect(localStorage.setItem).not.toHaveBeenCalled();
-    });
-  });
-
   describe('listContentItems', () => {
-    it('should return empty array if no content items exist', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(null);
-      const result = await listContentItems();
-      expect(result).toEqual([]);
-    });
-
-    it('should return content items from storage', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
-      const result = await listContentItems();
-      expect(result).toEqual([testItem]);
+    it('should call supabase functions with correct parameters', async () => {
+      const { supabase } = await import('../../src/lib/supabase');
+      (supabase.functions.invoke as any).mockResolvedValue({ data: [] });
+      
+      await listContentItems(1);
+      
+      expect(supabase.functions.invoke).toHaveBeenCalledWith(
+        'proxy/content_items?workspaceId=1',
+        { method: 'GET' }
+      );
     });
   });
 
   describe('getContentItemById', () => {
-    it('should return null if content item does not exist', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
-      const result = await getContentItemById('non-existent-id');
-      expect(result).toBeNull();
-    });
-
-    it('should return content item by id', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
-      const result = await getContentItemById('test-id');
-      expect(result).toEqual(testItem);
-    });
-  });
-
-  describe('saveContentItem', () => {
-    it('should add a new content item', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([]));
-      const newItem = { ...testItem, id: undefined as any };
+    it('should call supabase functions with correct parameters', async () => {
+      const { supabase } = await import('../../src/lib/supabase');
+      (supabase.functions.invoke as any).mockResolvedValue({ data: {} });
       
-      await saveContentItem(newItem);
+      await getContentItemById(1, 1);
       
-      expect(localStorage.setItem).toHaveBeenCalled();
-      const savedItems = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
-      expect(savedItems.length).toBe(1);
-      expect(savedItems[0].id).toBe('test-uuid');
-    });
-
-    it('should update an existing content item', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
-      const updatedItem = { 
-        ...testItem, 
-        title: 'Updated Title',
-        updatedAt: '2023-01-02T00:00:00Z'
-      };
-      
-      await saveContentItem(updatedItem);
-      
-      expect(localStorage.setItem).toHaveBeenCalled();
-      const savedItems = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
-      expect(savedItems.length).toBe(1);
-      expect(savedItems[0].title).toBe('Updated Title');
-      expect(new Date(savedItems[0].updatedAt).toISOString()).toBe(savedItems[0].updatedAt);
+      expect(supabase.functions.invoke).toHaveBeenCalledWith(
+        'proxy/content_items/1?workspaceId=1',
+        { method: 'GET' }
+      );
     });
   });
 
   describe('deleteContentItem', () => {
-    it('should delete a content item', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
+    it('should call supabase functions with correct parameters', async () => {
+      const { supabase } = await import('../../src/lib/supabase');
+      (supabase.functions.invoke as any).mockResolvedValue({});
       
-      await deleteContentItem('test-id');
+      await deleteContentItem(1, 1);
       
-      expect(localStorage.setItem).toHaveBeenCalled();
-      const savedItems = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
-      expect(savedItems.length).toBe(0);
-    });
-
-    it('should not throw error if content item does not exist', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testItem]));
-      
-      await expect(deleteContentItem('non-existent-id')).resolves.not.toThrow();
+      expect(supabase.functions.invoke).toHaveBeenCalledWith(
+        'proxy/content_items/1?workspaceId=1',
+        { method: 'DELETE' }
+      );
     });
   });
 }); 

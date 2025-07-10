@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSchema";
-import { listContentItems, deleteContentItem, saveContentItem } from '@/lib/api/ContentApi';
+import { listContentItems, deleteContentItem, updateContentItem } from '@/lib/api/ContentApi';
 import { ContentSchemaRow, listSchemas } from '@/lib/api/SchemaApi';
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
@@ -427,20 +427,18 @@ const ContentManagerPage: React.FC = () => {
   };
   
   const handleUnpublish = async () => {
+    if (!currentWorkspace) return;
+    
     try {
       const ids = selectedItems.map(item => item.id);
       
       for (const id of ids) {
         const item = allItems.find(item => item.id === id);
         if (item) {
-          const updatedItem = {
-            ...item,
-            status: 'draft' as ContentItemStatus,
-            updatedAt: new Date().toISOString(),
-          };
-          
-          // Save to API
-          await saveContentItem(updatedItem);
+          // Save to API - unpublish by setting published_at to null
+          await updateContentItem(item.id, {
+            published_at: null,
+          }, currentWorkspace.id);
         }
       }
       
@@ -463,6 +461,8 @@ const ContentManagerPage: React.FC = () => {
   };
   
   const handleChangeAuthor = async () => {
+    if (!currentWorkspace) return;
+    
     try {
       if (newAuthors.length === 0) {
         toast({
@@ -474,32 +474,17 @@ const ContentManagerPage: React.FC = () => {
       }
       
       setIsChangingAuthor(true);
-      const ids = selectedItems.map(item => item.id);
       
-      for (const id of ids) {
-        const item = allItems.find(item => item.id === id);
-        if (item) {
-          const updatedItem = {
-            ...item,
-            updatedBy: newAuthors[0].value, // Keep the first author as the main updater
-            coAuthors: newAuthors.slice(1).map(author => author.value), // Store additional authors
-            updatedAt: new Date().toISOString(),
-          };
-          
-          // Save to API
-          await saveContentItem(updatedItem);
-        }
-      }
+      // TODO: Author management needs to be implemented using the content_authors table
+      // For now, just show a message that this feature is not yet implemented
+      toast({
+        title: "Feature not implemented",
+        description: "Author management is not yet implemented with the current database schema.",
+        variant: "destructive",
+      });
       
-      // Mutate SWR cache to refresh data
-      mutateContent();
       setShowAuthorDialog(false);
       setNewAuthors([]);
-      
-      toast({
-        title: "Authors updated",
-        description: `Successfully updated authors for ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
-      });
     } catch (error) {
       console.error("Error changing authors:", error);
       toast({

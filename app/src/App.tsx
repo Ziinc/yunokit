@@ -59,11 +59,14 @@ const AppContent: React.FC = () => {
           <Route path="/manager/json" element={<JsonEditorPage />} />
           <Route path="/manager/block" element={<BlockEditorPage />} />
           <Route
+            path="/manager/editor/:schemaId/new"
+            element={<ContentItemPage />}
+          />
+          <Route
             path="/manager/editor/:schemaId/:contentId"
             element={<ContentItemPage />}
           />
           <Route path="/builder" element={<ContentSchemaBuilderPage />} />
-          <Route path="/builder/schemas/:schemaId/new" element={<ContentItemPage />} />
           <Route
             path="/builder/schemas/:schemaId"
             element={<SchemaEditorPage />}

@@ -88,27 +88,27 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
   next();
 });
 
-app.get("/proxy/contents", async (req: any, res: any) => {
+app.get("/proxy/content_items", async (req: any, res: any) => {
   const result = await listContentItems(req.dataClient);
   console.log("result", result);
   res.set({ ...corsHeaders }).json(result.data);
 });
 
-app.get("/proxy/contents/:id", async (req: any, res: any) => {
+app.get("/proxy/content_items/:id", async (req: any, res: any) => {
   const data = await getContentItem(req.dataClient, req.params.id);
 
   res.set({ ...corsHeaders });
   res.json(data);
 });
 
-app.post("/proxy/contents", async (req: any, res: any) => {
+app.post("/proxy/content_items", async (req: any, res: any) => {
   const data = await createContentItem(req.dataClient, req.body);
 
   res.set({ ...corsHeaders });
   res.json(data);
 });
 
-app.delete("/proxy/contents/:id", async (req: any, res: any) => {
+app.delete("/proxy/content_items/:id", async (req: any, res: any) => {
   const data = await deleteContentItem(req.dataClient, req.params.id);
 
   res.set({ ...corsHeaders });

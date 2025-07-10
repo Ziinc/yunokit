@@ -336,7 +336,6 @@ const ContentSchemaBuilderPage: React.FC = () => {
         return;
       }
 
-      console.log("response", response.data);
       mutateSchemas((prev) => {
         if (!prev) return { data: [response.data], error: null };
         return { ...prev, data: [...prev.data, response.data] };
@@ -349,7 +348,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
       });
 
       // Navigate to edit the newly created schema
-      navigate(`/builder/${response.data.id}`);
+      navigate(`/builder/schemas/${response.data.id}`);
     } catch (error) {
       console.error("Error creating schema:", error);
       toast({

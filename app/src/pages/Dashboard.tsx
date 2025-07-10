@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { listContentItems, saveContentItem } from '@/lib/api/ContentApi';
+import { listContentItems, updateContentItem } from '@/lib/api/ContentApi';
 import { ContentItem } from "@/lib/contentSchema";
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
 import { toast } from "@/hooks/use-toast";
@@ -104,6 +104,8 @@ const Dashboard: React.FC = () => {
 
   // Handle approval of content item
   const handleApproveContent = async (item: ContentItem) => {
+    if (!currentWorkspace) return;
+    
     try {
       // Set approving state for this specific item only
       setApprovingItems(prev => ({ ...prev, [item.id]: true }));
@@ -111,25 +113,15 @@ const Dashboard: React.FC = () => {
       // Get the current timestamp
       const now = new Date().toISOString();
       
-      // Update the content item with approved status and publish it
-      const updatedItem: ContentItem = {
-        ...item,
-        status: 'published',
-        updatedAt: now,
-        publishedAt: now,
-        publishedBy: 'Current User', // In a real app, get this from auth context
-        reviewStatus: 'approved',
-        reviewedAt: now,
-        reviewedBy: 'Current User', // In a real app, get this from auth context
-        reviewComments: 'Approved for publishing'
-      };
-      
-      await saveContentItem(updatedItem);
+      // Update the content item with published status
+      await updateContentItem(Number(item.id), {
+        published_at: now,
+      }, currentWorkspace.id);
       
       // Update the local state to remove the approved item from the list
       setContentItems(prevItems => 
         prevItems.map(prevItem => 
-          prevItem.id === item.id ? updatedItem : prevItem
+          prevItem.id === item.id ? { ...prevItem, status: 'published', publishedAt: now } : prevItem
         )
       );
       
