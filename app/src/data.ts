@@ -1,14 +1,16 @@
 import fs from "fs";
 import path from "path";
 
-export const migrations: Array<{
-  version: string;
-  name: string;
-  filename: string;
-  sql: string;
-  workspace: string;
-}> = compileTime(async () => {
-  const results: any = [];
+export type Migration = {
+  version: string
+  name: string
+  filename: string
+  sql: string
+  workspace: string
+}
+
+export const migrations: Migration[] = compileTime(async () => {
+  const results: Migration[] = []
   // Read supabase/migrations directly
   const supabaseMigrationsPath = path.resolve(
     __dirname,
@@ -34,7 +36,7 @@ export const migrations: Array<{
             filename: `supabase/migrations/${file}`,
             sql: content,
             workspace: "supabase",
-          } as any);
+          })
         }
       }
     }

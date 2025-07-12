@@ -1,4 +1,3 @@
-import { ContentSchema, ContentField } from "../contentSchema";
 import { supabase } from "../supabase";
 import type { Database } from "../../../database.types";
 

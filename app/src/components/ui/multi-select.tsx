@@ -6,7 +6,10 @@ export type MultiSelectProps = Omit<ReactSelectProps, 'classNames' | 'styles'> &
   className?: string;
 };
 
-const MultiSelect = React.forwardRef<any, MultiSelectProps>(
+const MultiSelect = React.forwardRef<
+  React.ElementRef<typeof ReactSelect>,
+  MultiSelectProps
+>(
   ({ className, ...props }, ref) => {
     return (
       <ReactSelect
