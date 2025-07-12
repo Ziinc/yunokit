@@ -1,5 +1,29 @@
 # Development Guide
 
+## Repository Structure
+
+- app: webapp for Yunokit
+- design: design assets
+- shared: shared logic and assets between webapp and docapp
+- web: documentation and static content app
+- supabase: db schema, migrations
+  - supabase/schemas/app.sql: schema for app db
+  - supabase/schemas/yuno\*.sql: schema for respective Yunokit module
+
+- All developer documentation should be written in /web
+
+## Commands
+
+```bash
+make start
+make stop
+make restart
+make types
+make deploy
+# generate a migration
+make diff f=my_migration
+```
+
 ## Data Mutations with useSWR
 
 ### Core Pattern: Optimistic Updates
