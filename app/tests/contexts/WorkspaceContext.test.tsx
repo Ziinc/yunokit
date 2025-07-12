@@ -20,20 +20,20 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("WorkspaceContext", () => {
   beforeEach(() => {
-    const mockUseSWR = require("swr").default;
+    const mockUseSWR = vi.mocked(require("swr").default);
     mockUseSWR.mockImplementation(() => ({
       data: mockWorkspaces,
       error: null,
       isLoading: false,
       mutate: vi.fn(),
     }));
-    (localStorage.getItem as any).mockReset();
-    (localStorage.setItem as any).mockReset();
-    (localStorage.removeItem as any).mockReset();
+    vi.mocked(localStorage.getItem).mockReset();
+    vi.mocked(localStorage.setItem).mockReset();
+    vi.mocked(localStorage.removeItem).mockReset();
   });
 
   test("initializes current workspace from localStorage", async () => {
-    (localStorage.getItem as any).mockReturnValue("2");
+    vi.mocked(localStorage.getItem).mockReturnValue("2");
     const { result } = renderHook(() => useWorkspace(), { wrapper });
     await waitFor(() => expect(result.current.currentWorkspace?.id).toBe(2));
   });

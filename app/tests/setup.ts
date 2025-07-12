@@ -1,5 +1,6 @@
 // Common test setup for React Testing Library and vitest
 import { vi, beforeEach } from 'vitest';
+import '@testing-library/jest-dom';
 
 // Mock for window.matchMedia (often needed for UI component tests)
 Object.defineProperty(window, 'matchMedia', {

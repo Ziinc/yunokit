@@ -19,7 +19,10 @@ const localStorageMock = (() => {
 })();
 
 // Mock global methods
-global.localStorage = localStorageMock as any;
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  configurable: true,
+});
 Object.defineProperty(global, 'crypto', {
   value: {
     randomUUID: vi.fn(() => 'test-uuid'),

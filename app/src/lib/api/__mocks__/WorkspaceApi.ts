@@ -3,31 +3,26 @@ import { vi } from 'vitest';
 // Mock workspace data for tests
 const mockWorkspaces = [
   {
-    id: "primary",
+    id: 1,
     name: "Primary Workspace",
     description: "Main workspace for your content",
-    createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z",
-    userId: "user-1",
-    members: [
-      {
-        id: "member-1",
-        userId: "user-1",
-        role: "owner",
-        email: "owner@example.com",
-        name: "John Owner"
-      }
-    ]
+    created_at: "2024-01-01T00:00:00Z",
+    user_id: "user-1",
+    project_ref: "project-1",
+    api_key: "test-api-key-1"
   }
 ];
 
-export const WorkspaceApi = {
-  getWorkspaces: vi.fn().mockResolvedValue(mockWorkspaces),
-  getWorkspaceById: vi.fn().mockResolvedValue(mockWorkspaces[0]),
-  getCurrentUserPlan: vi.fn().mockResolvedValue('pro'),
-  getWorkspaceLimit: vi.fn().mockResolvedValue({ limit: 3, current: 1 }),
-  createWorkspace: vi.fn().mockResolvedValue(mockWorkspaces[0]),
-  updateWorkspace: vi.fn().mockResolvedValue(mockWorkspaces[0]),
-  deleteWorkspace: vi.fn().mockResolvedValue(undefined),
-  initializeStorage: vi.fn().mockResolvedValue(undefined),
-}; 
+export const getWorkspaces = vi.fn().mockResolvedValue(mockWorkspaces);
+export const getWorkspaceById = vi.fn().mockResolvedValue(mockWorkspaces[0]);
+export const getCurrentUserPlan = vi.fn().mockResolvedValue('pro');
+export const getWorkspaceLimit = vi.fn().mockResolvedValue({ 
+  currentCount: 1, 
+  includedWorkspaces: 2, 
+  additionalWorkspaces: 0,
+  planName: 'Pro',
+  isAlphaPhase: true 
+});
+export const createWorkspace = vi.fn().mockResolvedValue(mockWorkspaces[0]);
+export const updateWorkspace = vi.fn().mockResolvedValue(mockWorkspaces[0]);
+export const deleteWorkspace = vi.fn().mockResolvedValue(undefined); 

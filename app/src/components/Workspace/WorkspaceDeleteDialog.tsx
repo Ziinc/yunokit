@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,13 @@ export const WorkspaceDeleteDialog: React.FC<WorkspaceDeleteDialogProps> = ({
   const [confirmText, setConfirmText] = useState("");
   const expectedText = "delete";
   const isConfirmValid = confirmText === expectedText;
+
+  // Clear input when dialog opens
+  useEffect(() => {
+    if (open) {
+      setConfirmText("");
+    }
+  }, [open]);
 
   const handleConfirm = async () => {
     if (!isConfirmValid) return;

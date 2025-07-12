@@ -7,6 +7,7 @@ import SettingsWorkspacesPage from '../../src/pages/Settings/SettingsWorkspacesP
 // Mock dependencies
 vi.mock('../../src/lib/contexts/WorkspaceContext');
 vi.mock('../../src/lib/api/WorkspaceApi');
+vi.mock('../../src/hooks/use-toast');
 
 const mockWorkspaces = [
   {
@@ -16,6 +17,7 @@ const mockWorkspaces = [
     user_id: 'user-1',
     created_at: '2024-01-01',
     project_ref: 'project-1',
+    api_key: 'test-api-key-1',
   },
   {
     id: 2,
@@ -24,6 +26,7 @@ const mockWorkspaces = [
     user_id: 'user-1',
     created_at: '2024-01-02',
     project_ref: 'project-2',
+    api_key: 'test-api-key-2',
   },
 ];
 
@@ -33,31 +36,35 @@ describe('SettingsWorkspacesPage', () => {
   const mockSetCurrentWorkspace = vi.fn();
   const mockDeleteWorkspace = vi.fn();
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     // Mock useWorkspace
-    const { useWorkspace } = require('../../src/lib/contexts/WorkspaceContext');
-    useWorkspace.mockReturnValue({
+    const WorkspaceContext = await import('../../src/lib/contexts/WorkspaceContext');
+    vi.mocked(WorkspaceContext.useWorkspace).mockReturnValue({
       workspaces: mockWorkspaces,
       currentWorkspace: mockWorkspaces[0],
       isLoading: false,
+      error: null,
       refreshWorkspaces: mockRefreshWorkspaces,
       setCurrentWorkspace: mockSetCurrentWorkspace,
+      mutate: vi.fn(),
     });
 
     // Mock WorkspaceApi
-    const workspaceApi = require('../../src/lib/api/WorkspaceApi');
-    workspaceApi.getWorkspaceLimit.mockResolvedValue({
+    const workspaceApi = await import('../../src/lib/api/WorkspaceApi');
+    vi.mocked(workspaceApi.getWorkspaceLimit).mockResolvedValue({
       currentCount: 2,
-      maxWorkspaces: 3,
-      canCreate: true,
+      includedWorkspaces: 2,
+      additionalWorkspaces: 0,
+      planName: 'Pro',
+      isAlphaPhase: true,
     });
-    workspaceApi.deleteWorkspace = mockDeleteWorkspace;
+    vi.mocked(workspaceApi.deleteWorkspace).mockImplementation(mockDeleteWorkspace);
 
     // Mock toast
-    const { useToast } = require('../../src/hooks/use-toast');
-    useToast.mockReturnValue({ toast: mockToast });
+    const { useToast } = await import('../../src/hooks/use-toast');
+    vi.mocked(useToast).mockReturnValue({ toast: mockToast, dismiss: vi.fn(), toasts: [] });
   });
 
   const renderPage = () => {

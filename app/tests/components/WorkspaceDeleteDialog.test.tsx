@@ -30,7 +30,8 @@ describe('WorkspaceDeleteDialog', () => {
       />
     );
 
-    expect(screen.getByText('Delete Workspace')).toBeTruthy();
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete Workspace' })).toBeTruthy();
     expect(screen.getByText(/This action cannot be undone/)).toBeTruthy();
     expect(screen.getByText(/Test Workspace/)).toBeTruthy();
   });
@@ -45,7 +46,7 @@ describe('WorkspaceDeleteDialog', () => {
       />
     );
 
-    expect(screen.queryByText('Delete Workspace')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('should not render when workspace is null', () => {
@@ -58,7 +59,7 @@ describe('WorkspaceDeleteDialog', () => {
       />
     );
 
-    expect(screen.queryByText('Delete Workspace')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('should require typing "delete" to enable delete button', async () => {
@@ -71,7 +72,7 @@ describe('WorkspaceDeleteDialog', () => {
       />
     );
 
-    const deleteButton = screen.getByText('Delete Workspace');
+    const deleteButton = screen.getByRole('button', { name: 'Delete Workspace' });
     const input = screen.getByPlaceholderText('delete');
 
     // Delete button should be disabled initially
@@ -96,7 +97,7 @@ describe('WorkspaceDeleteDialog', () => {
       />
     );
 
-    const deleteButton = screen.getByText('Delete Workspace');
+    const deleteButton = screen.getByRole('button', { name: 'Delete Workspace' });
     const input = screen.getByPlaceholderText('delete');
 
     // Type correct confirmation text
@@ -124,7 +125,7 @@ describe('WorkspaceDeleteDialog', () => {
     fireEvent.change(input, { target: { value: 'wrong' } });
     
     // Delete button should be disabled, so clicking won't work
-    const deleteButton = screen.getByText('Delete Workspace');
+    const deleteButton = screen.getByRole('button', { name: 'Delete Workspace' });
     expect(deleteButton.hasAttribute('disabled')).toBe(true);
 
     expect(mockOnConfirm).not.toHaveBeenCalled();
@@ -219,6 +220,6 @@ describe('WorkspaceDeleteDialog', () => {
     );
 
     expect(screen.getByText(/All content, settings, and data associated with this workspace will be lost/)).toBeTruthy();
-    expect(screen.getByText(/Type.*delete.*to confirm deletion/)).toBeTruthy();
+    expect(screen.getByLabelText(/Type delete to confirm deletion/)).toBeTruthy();
   });
 }); 
