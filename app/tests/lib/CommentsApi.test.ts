@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import type { Mock } from 'vitest';
+import type { Comment } from '@/types/comments';
 import { initializeStorage, getComments, getCommentById, getCommentsByContentItem, getPendingComments, saveComment, approveComment, getThreadedComments } from '../../src/lib/api/CommentsApi';
 
 // Mock localStorage
@@ -128,12 +130,12 @@ describe('CommentsApi', () => {
   describe('saveComment', () => {
     it('should add a new comment', async () => {
       localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([]));
-      const newComment = { ...testComment, id: undefined as any };
+      const newComment: Partial<Comment> = { ...testComment, id: undefined };
       
       await saveComment(newComment);
       
       expect(localStorage.setItem).toHaveBeenCalled();
-      const savedComments = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
+      const savedComments = JSON.parse((localStorage.setItem as Mock).mock.calls[0][1] as string);
       expect(savedComments.length).toBe(1);
       expect(savedComments[0].id).toBe('test-uuid');
     });
@@ -149,7 +151,7 @@ describe('CommentsApi', () => {
       await saveComment(updatedComment);
       
       expect(localStorage.setItem).toHaveBeenCalled();
-      const savedComments = JSON.parse((localStorage.setItem as any).mock.calls[0][1]);
+      const savedComments = JSON.parse((localStorage.setItem as Mock).mock.calls[0][1] as string);
       expect(savedComments.length).toBe(1);
       expect(savedComments[0].text).toBe('Updated comment text');
       expect(new Date(savedComments[0].updatedAt).toISOString()).toBe(savedComments[0].updatedAt);
@@ -163,7 +165,7 @@ describe('CommentsApi', () => {
       await approveComment('test-comment-id');
       
       expect(saveComment).toHaveBeenCalled();
-      const savedComment = (saveComment as any).mock.calls[0][0];
+      const savedComment = (saveComment as Mock).mock.calls[0][0];
       expect(savedComment.status).toBe('approved');
     });
 
