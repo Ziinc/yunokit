@@ -34,27 +34,39 @@ export const signInWithGithub = async () => {
     return !!data.user;
   };
   
-  export const updateUsername = async (userId: string, username: string) => {
+  export const updateUsername = async (
+    userId: string,
+    username: string
+  ) => {
+    void userId;
+    void username;
     throw new Error("Not implemented");
   };
   
   export const signInWithEmail = async (_email: string, _password: string) => {
+    void _email;
+    void _password;
     throw new Error("not implemented");
   };
   
   export const signUpWithEmail = async (_email: string, _password: string) => {
+    void _email;
+    void _password;
     throw new Error("not implemented");
   };
   
   export const resetPassword = async (_email: string) => {
+    void _email;
     throw new Error("not implemented");
   };
   
   export const updatePassword = async (_newPassword: string) => {
+    void _newPassword;
     throw new Error("not implemented");
   };
   
   export const updateEmail = async (_newEmail: string) => {
+    void _newEmail;
     throw new Error("not implemented");
   };
   
