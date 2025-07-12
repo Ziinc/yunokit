@@ -151,6 +151,37 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
     });
   };
 
+  const applyQuickstart = (
+    template: 'article' | 'product' | 'event'
+  ) => {
+    const templates: Record<string, SchemaField[]> = {
+      article: [
+        { label: 'Title', type: SchemaFieldType.TEXT, required: true },
+        { label: 'Summary', type: SchemaFieldType.TEXT },
+        {
+          label: 'Tags',
+          type: SchemaFieldType.ENUM,
+          options: ['General', 'Update', 'Opinion'],
+        },
+        { label: 'Content', type: SchemaFieldType.MARKDOWN, required: true },
+      ],
+      product: [
+        { label: 'Name', type: SchemaFieldType.TEXT, required: true },
+        { label: 'Price', type: SchemaFieldType.NUMBER, required: true },
+        { label: 'Image', type: SchemaFieldType.IMAGE },
+        { label: 'Description', type: SchemaFieldType.MARKDOWN },
+      ],
+      event: [
+        { label: 'Name', type: SchemaFieldType.TEXT, required: true },
+        { label: 'Date', type: SchemaFieldType.DATE, required: true },
+        { label: 'Location', type: SchemaFieldType.TEXT },
+        { label: 'Description', type: SchemaFieldType.MARKDOWN },
+      ],
+    };
+
+    setSchema((s) => ({ ...s, fields: templates[template] }));
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -312,8 +343,34 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
             </div>
             
             {schema.fields.length === 0 ? (
-              <div className="text-center p-6 border border-dashed rounded-md">
-                <p className="text-muted-foreground">No fields added yet. Click "Add Field" to start building your schema.</p>
+              <div className="text-center p-6 border border-dashed rounded-md space-y-4">
+                <p className="text-muted-foreground">
+                  No fields added yet. Use a quickstart or click "Add Field" to
+                  build your schema.
+                </p>
+                <div className="flex justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyQuickstart('article')}
+                  >
+                    Article
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyQuickstart('product')}
+                  >
+                    Product
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyQuickstart('event')}
+                  >
+                    Event
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
