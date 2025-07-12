@@ -84,7 +84,6 @@ const AppContent: React.FC = () => {
           <Route path="/search" element={<ContentSearchPage />} />
           <Route path="/comments" element={<CommentsPage />} />
         </Route>
-
       </Routes>
       <Toaster />
     </>
