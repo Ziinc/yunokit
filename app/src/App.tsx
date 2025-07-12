@@ -78,15 +78,6 @@ const AppContent: React.FC = () => {
           <Route path="/search" element={<ContentSearchPage />} />
           <Route path="/comments" element={<CommentsPage />} />
         </Route>
-
-        {/* Redirect older routes */}
-        <Route path="/editor" element={<Navigate to="/manager" replace />} />
-        <Route
-          path="/editor/:schemaId/:contentId"
-          element={
-            <Navigate to="/manager/editor/:schemaId/:contentId" replace />
-          }
-        />
       </Routes>
       <Toaster />
     </>
