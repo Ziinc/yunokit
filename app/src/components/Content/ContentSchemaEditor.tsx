@@ -28,7 +28,7 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
       name: "",
       description: "",
       fields: [],
-      type: "single" as const,
+      type: "collection" as const,
     }
   );
 

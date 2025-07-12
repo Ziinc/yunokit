@@ -17,8 +17,9 @@ const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [currentWorkspace, setCurrentWorkspace] =
+  const [currentWorkspace, setCurrentWorkspaceState] =
     React.useState<WorkspaceRow | null>(null);
+  const [initialized, setInitialized] = React.useState(false);
 
   const {
     data: workspaces = [],
@@ -26,6 +27,19 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     mutate,
   } = useSWR<WorkspaceRow[]>("workspaces", getWorkspaces);
+
+  React.useEffect(() => {
+    if (!initialized && workspaces.length > 0) {
+      const storedId = localStorage.getItem("currentWorkspaceId");
+      if (storedId) {
+        const ws = workspaces.find(w => String(w.id) === storedId);
+        if (ws) {
+          setCurrentWorkspaceState(ws);
+        }
+      }
+      setInitialized(true);
+    }
+  }, [initialized, workspaces]);
 
   const refreshWorkspaces = async () => {
     await mutate();
@@ -38,7 +52,14 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         currentWorkspace,
         isLoading,
         error,
-        setCurrentWorkspace,
+        setCurrentWorkspace: (workspace: WorkspaceRow | null) => {
+          if (workspace) {
+            localStorage.setItem("currentWorkspaceId", String(workspace.id));
+          } else {
+            localStorage.removeItem("currentWorkspaceId");
+          }
+          setCurrentWorkspaceState(workspace);
+        },
         mutate,
         refreshWorkspaces,
       }}
