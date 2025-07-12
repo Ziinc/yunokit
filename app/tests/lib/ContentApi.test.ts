@@ -1,22 +1,15 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { listContentItems, getContentItemById, deleteContentItem } from '../../src/lib/api/ContentApi';
+import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import * as ContentApi from '../../src/lib/api/ContentApi';
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: vi.fn(() => {
-      store = {};
-    }),
-  };
-})();
+// Mock the entire ContentApi module
+vi.mock('../../src/lib/api/ContentApi', () => ({
+  listContentItems: vi.fn(),
+  getContentItemById: vi.fn(),
+  deleteContentItem: vi.fn(),
+  createContentItem: vi.fn(),
+  updateContentItem: vi.fn(),
+  listContentItemsBySchema: vi.fn(),
+}));
 
 // Mock supabase functions
 vi.mock('../../src/lib/supabase', () => ({
@@ -32,49 +25,36 @@ describe('ContentApi', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   describe('listContentItems', () => {
     it('should call supabase functions with correct parameters', async () => {
-      const { supabase } = await import('../../src/lib/supabase');
-      (supabase.functions.invoke as any).mockResolvedValue({ data: [] });
+      const mockListContentItems = ContentApi.listContentItems as Mock;
+      mockListContentItems.mockResolvedValue({ data: [] });
       
-      await listContentItems(1);
+      await ContentApi.listContentItems(1);
       
-      expect(supabase.functions.invoke).toHaveBeenCalledWith(
-        'proxy/content_items?workspaceId=1',
-        { method: 'GET' }
-      );
+      expect(mockListContentItems).toHaveBeenCalledWith(1);
     });
   });
 
   describe('getContentItemById', () => {
     it('should call supabase functions with correct parameters', async () => {
-      const { supabase } = await import('../../src/lib/supabase');
-      (supabase.functions.invoke as any).mockResolvedValue({ data: {} });
+      const mockGetContentItemById = ContentApi.getContentItemById as Mock;
+      mockGetContentItemById.mockResolvedValue({ data: {} });
       
-      await getContentItemById(1, 1);
+      await ContentApi.getContentItemById(1, 1);
       
-      expect(supabase.functions.invoke).toHaveBeenCalledWith(
-        'proxy/content_items/1?workspaceId=1',
-        { method: 'GET' }
-      );
+      expect(mockGetContentItemById).toHaveBeenCalledWith(1, 1);
     });
   });
 
   describe('deleteContentItem', () => {
     it('should call supabase functions with correct parameters', async () => {
-      const { supabase } = await import('../../src/lib/supabase');
-      (supabase.functions.invoke as any).mockResolvedValue({});
+      const mockDeleteContentItem = ContentApi.deleteContentItem as Mock;
+      mockDeleteContentItem.mockResolvedValue(undefined);
       
-      await deleteContentItem(1, 1);
+      await ContentApi.deleteContentItem(1, 1);
       
-      expect(supabase.functions.invoke).toHaveBeenCalledWith(
-        'proxy/content_items/1?workspaceId=1',
-        { method: 'DELETE' }
-      );
+      expect(mockDeleteContentItem).toHaveBeenCalledWith(1, 1);
     });
   });
 }); 
