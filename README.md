@@ -1,8 +1,6 @@
 # Yunokit
 
-
-<p align="center" width="100%"> 
-
+<p align="center" width="100%">
 
 ![](./shared/static/branding.png)
 
@@ -16,6 +14,6 @@ Yunokit is a suite of integrations for Supabase apps.
 
 - Content Management System
 
-## Developer
+---
 
-See [@DEVELOPMENT.md](./DEVELOPMENT.md) for development documentation.
+See [DEVELOPMENT.md](./DEVELOPMENT.md) for development documentation.
