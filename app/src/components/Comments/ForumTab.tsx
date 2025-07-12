@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Heart, MessageCircle, PinIcon, Star, ThumbsUp, Trash } from "lucide-react";
+import { Eye, MessageCircle, PinIcon, ThumbsUp, Trash } from "lucide-react";
 import { ForumPost } from "@/types/comments";
 
 interface ForumTabProps {

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, MessageSquare, Pencil, Shield, Trash, Users } from "lucide-react";
+import { MessageSquare, Pencil, Shield, Trash, Users } from "lucide-react";
 import { ChatMessage, ChatChannel } from "@/types/comments";
 
 interface ChatTabProps {
@@ -16,7 +16,6 @@ interface ChatTabProps {
   messageSearchQuery: string;
   setMessageSearchQuery: (query: string) => void;
   handleDeleteMessage: (messageId: string) => void;
-  handleHideMessage: (messageId: string) => void;
   handleChangeMessageStatus: (messageId: string, status: "visible" | "hidden" | "flagged") => void;
   formatDate: (dateString: string) => string;
 }
@@ -27,7 +26,6 @@ const ChatTab: React.FC<ChatTabProps> = ({
   messageSearchQuery,
   setMessageSearchQuery,
   handleDeleteMessage,
-  handleHideMessage,
   handleChangeMessageStatus,
   formatDate
 }) => {

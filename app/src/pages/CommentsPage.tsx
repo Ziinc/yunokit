@@ -245,11 +245,6 @@ const CommentsPage: React.FC = () => {
               onSearchQueryChange={setCommentSearchQuery}
               currentTab={currentTab}
               onTabChange={setCurrentTab}
-              currentPage={currentCommentsPage}
-              onPageChange={setCurrentCommentsPage}
-              itemsPerPage={commentsPerPage}
-              onItemsPerPageChange={setCommentsPerPage}
-              pageSizeOptions={[10, 20, 50, 100]}
             />
           )}
         </TabsContent>

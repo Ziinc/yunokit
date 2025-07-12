@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Ban, Flag, MessageCircle, Shield, Trash, UserCog } from "lucide-react";
+import { Ban, Flag, MessageCircle, Shield } from "lucide-react";
 import { User } from "@/types/comments";
 
 interface UsersTabProps {

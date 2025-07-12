@@ -16,6 +16,11 @@ import {
 } from "lucide-react";
 import { Comment } from "@/types/comments";
 
+type ExtendedComment = Comment & {
+  text?: string;
+  contentItemId?: string;
+};
+
 interface CommentsTabProps {
   comments: Comment[];
   onApprove: (commentId: string) => void;
@@ -30,11 +35,6 @@ interface CommentsTabProps {
   onSearchQueryChange: (query: string) => void;
   currentTab: string;
   onTabChange: (tab: string) => void;
-  currentPage: number;
-  onPageChange: (page: number) => void;
-  itemsPerPage: number;
-  onItemsPerPageChange: (size: number) => void;
-  pageSizeOptions: number[];
 }
 
 const CommentsTab: React.FC<CommentsTabProps> = ({
@@ -51,16 +51,12 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
   onSearchQueryChange,
   currentTab,
   onTabChange,
-  currentPage,
-  onPageChange,
-  itemsPerPage,
-  onItemsPerPageChange,
-  pageSizeOptions
+  
 }) => {
   // Filter comments based on tab and search query
   const filteredComments = comments.filter(comment => {
-    // Handle both types of comment implementations (content or text property)
-    const commentText = comment.content || (comment as any).text || '';
+    const extended = comment as ExtendedComment;
+    const commentText = comment.content || extended.text || '';
     
     const matchesTab = 
       currentTab === "all" || 
@@ -190,7 +186,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                       {comment.parentId && (
                         <Badge variant="outline" className="mb-1">Reply</Badge>
                       )}
-                      <p className="line-clamp-2">{comment.content || (comment as any).text}</p>
+                      <p className="line-clamp-2">{comment.content || (comment as ExtendedComment).text}</p>
                       {comment.reports && (
                         <div className="mt-1 flex items-center gap-1 text-xs text-destructive">
                           <span>Reported {comment.reports.count} times</span>
@@ -200,7 +196,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                   </TableCell>
                   <TableCell>
                     <div className="max-w-[200px]">
-                      <div className="font-medium truncate">{comment.contentTitle || (comment as any).contentItemId}</div>
+                      <div className="font-medium truncate">{comment.contentTitle || (comment as ExtendedComment).contentItemId}</div>
                       <div className="text-xs text-muted-foreground capitalize">{comment.contentType || 'article'}</div>
                     </div>
                   </TableCell>
@@ -264,7 +260,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                             </DialogDescription>
                           </DialogHeader>
                           <div className="bg-muted/50 p-3 rounded-md mb-4">
-                            <p className="italic text-sm">{comment.content || (comment as any).text}</p>
+                            <p className="italic text-sm">{comment.content || (comment as ExtendedComment).text}</p>
                           </div>
                           <div className="grid gap-4">
                             <div className="grid gap-2">
