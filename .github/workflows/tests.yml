@@ -18,6 +18,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        command: [test, lint]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -30,6 +33,6 @@ jobs:
             app/package-lock.json
             web/package-lock.json
 
-      - name: App tests
+      - name: Run ${{ matrix.command }}
         working-directory: ./app
-        run: npm ci && npm test
+        run: npm ci && npm run ${{ matrix.command }}
