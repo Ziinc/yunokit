@@ -19,7 +19,7 @@ export interface MigrationResult {
 
 
 export const listMigrations = async (workspaceId: number) => {
-  const { data, error } = await supabase.functions.invoke<{versions: string[]}>("migrations/pending?workspaceId=" + workspaceId, {
+  const { data } = await supabase.functions.invoke<{ versions: string[] }>("migrations/pending?workspaceId=" + workspaceId, {
     method: "GET",
   })
   const pendingVersions = data?.versions || [];

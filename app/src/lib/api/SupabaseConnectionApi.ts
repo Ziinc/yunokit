@@ -34,7 +34,7 @@ export class SupabaseConnectionApi {
     throw new Error('OAuth flow not implemented - connect directly with project credentials');
   }
 
-  static async handleOAuthCallback(params: URLSearchParams): Promise<SupabaseProject> {
+  static async handleOAuthCallback(): Promise<SupabaseProject> {
     throw new Error('OAuth callback not implemented - connect directly with project credentials');
   }
 

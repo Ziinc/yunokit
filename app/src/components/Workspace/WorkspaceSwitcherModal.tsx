@@ -9,7 +9,6 @@ import {
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,

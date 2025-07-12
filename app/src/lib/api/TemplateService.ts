@@ -1,8 +1,7 @@
-import { listContentItems } from '@/lib/api/ContentApi';
-import { 
-  generateEcommerceTemplate, 
-  generateBloggingTemplate, 
-  generateTutorialsTemplate 
+import {
+  generateEcommerceTemplate,
+  generateBloggingTemplate,
+  generateTutorialsTemplate
 } from "./TemplateGenerators";
 
 export type TemplateType = 'ecommerce' | 'blogging' | 'tutorials';
@@ -17,18 +16,16 @@ export class TemplateService {
    * @returns Promise that resolves when the template is applied
    */
   static async applyTemplate(templateType: TemplateType): Promise<void> {
-    // Get the template data based on the type
-    let templateData;
     
     switch (templateType) {
       case 'ecommerce':
-        templateData = generateEcommerceTemplate();
+        generateEcommerceTemplate();
         break;
       case 'blogging':
-        templateData = generateBloggingTemplate();
+        generateBloggingTemplate();
         break;
       case 'tutorials':
-        templateData = generateTutorialsTemplate();
+        generateTutorialsTemplate();
         break;
       default:
         throw new Error(`Unknown template type: ${templateType}`);

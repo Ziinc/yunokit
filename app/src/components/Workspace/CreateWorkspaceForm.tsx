@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus } from "lucide-react";
 import { createWorkspace } from "@/lib/api/WorkspaceApi";
-import { listProjects, SupabaseProject } from "@/lib/supabase";
+import { listProjects } from "@/lib/supabase";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
 
