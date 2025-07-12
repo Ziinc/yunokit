@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Extension } from '@tiptap/core';
 import { Node } from '@tiptap/core';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { ContentSchema, ContentField, ContentFieldType } from '@/lib/contentSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Plus, GripVertical, X, Type, Hash, Calendar, ToggleLeft, List, Link, FileText, Code, Image } from 'lucide-react';
+import { StrictModeDroppable } from '../StrictModeDroppable';
 import './TiptapEditor.css';
 
 interface TiptapEditorProps {
@@ -38,10 +40,11 @@ const FIELD_TYPE_OPTIONS: { value: ContentFieldType; label: string; icon: React.
 
 // Component for adding new field blocks
 const AddFieldDialog: React.FC<{
-  onAddField: (field: ContentField) => void;
+  onAddField: (field: ContentField, insertIndex?: number) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-}> = ({ onAddField, isOpen, onOpenChange }) => {
+  insertIndex?: number;
+}> = ({ onAddField, isOpen, onOpenChange, insertIndex }) => {
   const [newField, setNewField] = useState<Partial<ContentField>>({
     name: '',
     type: 'text',
@@ -63,7 +66,7 @@ const AddFieldDialog: React.FC<{
       options: newField.options,
     };
     
-    onAddField(field);
+    onAddField(field, insertIndex);
     
     // Reset form
     setNewField({
@@ -198,6 +201,31 @@ const AddFieldDialog: React.FC<{
   );
 };
 
+// Component for field insertion points
+const FieldInsertionPoint: React.FC<{
+  onInsertField: () => void;
+  isVisible: boolean;
+}> = ({ onInsertField, isVisible }) => {
+  if (!isVisible) return null;
+  
+  return (
+    <div className="relative field-insertion-point py-1">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-dotted border-muted-foreground/50"></div>
+      </div>
+      <div className="relative flex justify-center">
+        <button
+          onClick={onInsertField}
+          className="flex items-center gap-1.5 bg-background px-2.5 py-0.5 rounded-full border border-muted-foreground/30 hover:border-primary/50 text-muted-foreground hover:text-primary transition-all duration-200 shadow-sm cursor-pointer"
+        >
+          <Plus className="h-3 w-3" />
+          <span className="text-xs font-medium">Add Field</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Define custom node types for each field type
 const SchemaFieldNode = Node.create({
   name: 'schemaField',
@@ -279,7 +307,8 @@ const SchemaFieldComponent: React.FC<{
   onRemove: () => void;
   editable: boolean;
   isDynamic?: boolean;
-}> = ({ field, value, onChange, onRemove, editable, isDynamic = false }) => {
+  dragHandleProps?: any;
+}> = ({ field, value, onChange, onRemove, editable, isDynamic = false, dragHandleProps }) => {
   const renderFieldInput = () => {
     switch (field.type) {
       case 'text':
@@ -383,12 +412,20 @@ const SchemaFieldComponent: React.FC<{
   };
 
   return (
-    <Card className="mb-4 transition-all duration-200 hover:shadow-md">
+    <Card className="transition-all duration-200 hover:shadow-md">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="flex items-center gap-2 mt-2">
-            <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-            {getFieldIcon(field.type)}
+            {dragHandleProps ? (
+              <div {...dragHandleProps}>
+                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+              </div>
+            ) : (
+              <div className="w-4 h-4 flex items-center justify-center">
+                {getFieldIcon(field.type)}
+              </div>
+            )}
+            {dragHandleProps && getFieldIcon(field.type)}
           </div>
           
           <div className="flex-1 space-y-2">
@@ -440,6 +477,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   const [fieldValues, setFieldValues] = React.useState<Record<string, any>>({});
   const [dynamicFields, setDynamicFields] = React.useState<ContentField[]>([]);
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
+  const [insertionPointIndex, setInsertionPointIndex] = useState<number | null>(null);
 
   // Initialize field values from content
   useEffect(() => {
@@ -532,14 +570,20 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     onChange(contentWithMetadata);
   }, [fieldValues, dynamicFields, onChange]);
 
-  const handleAddField = (newField: ContentField) => {
+  const handleAddField = (newField: ContentField, insertIndex?: number) => {
     // Add the new field to the content with a default value
     const defaultValue = getDefaultValueForFieldType(newField.type);
     const newContent = { ...fieldValues, [newField.id]: defaultValue };
     setFieldValues(newContent);
     
-    // Add to dynamic fields list
-    const updatedDynamicFields = [...dynamicFields, newField];
+    // Add to dynamic fields list at the specified index
+    let updatedDynamicFields;
+    if (insertIndex !== undefined && insertIndex !== null) {
+      updatedDynamicFields = [...dynamicFields];
+      updatedDynamicFields.splice(insertIndex, 0, newField);
+    } else {
+      updatedDynamicFields = [...dynamicFields, newField];
+    }
     setDynamicFields(updatedDynamicFields);
     
     // Store content with metadata
@@ -558,6 +602,9 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     };
     
     onChange(contentWithMetadata);
+    
+    // Reset insertion point
+    setInsertionPointIndex(null);
   };
 
   const getDefaultValueForFieldType = (type: ContentFieldType): any => {
@@ -582,6 +629,42 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       default:
         return '';
     }
+  };
+
+  const handleInsertField = (insertIndex: number) => {
+    setInsertionPointIndex(insertIndex);
+    setIsAddFieldDialogOpen(true);
+  };
+
+  const handleDrop = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) return;
+
+    const [draggedField] = dynamicFields.splice(sourceIndex, 1);
+    dynamicFields.splice(destinationIndex, 0, draggedField);
+
+    setDynamicFields([...dynamicFields]);
+
+    // Update content with metadata
+    const contentWithMetadata = {
+      ...fieldValues,
+      __dynamicFields: dynamicFields.reduce((acc, field) => {
+        acc[field.id] = {
+          name: field.name,
+          type: field.type,
+          required: field.required,
+          description: field.description,
+          options: field.options,
+        };
+        return acc;
+      }, {} as Record<string, Partial<ContentField>>)
+    };
+    
+    onChange(contentWithMetadata);
   };
 
   const editor = useEditor({
@@ -609,7 +692,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
 
   return (
     <div className="tiptap-editor">
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* Render schema fields */}
         {schema.fields.map((field) => (
           <SchemaFieldComponent
@@ -623,8 +706,60 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
           />
         ))}
         
-        {/* Render dynamic fields */}
-        {dynamicFields.map((field) => (
+        {/* Render dynamic fields with drag and drop */}
+        {editable && !schema.strict && (
+          <DragDropContext onDragEnd={handleDrop}>
+            <StrictModeDroppable droppableId="dynamic-fields">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="space-y-2"
+                >
+                  {/* Insertion point at the beginning */}
+                  <FieldInsertionPoint
+                    onInsertField={() => handleInsertField(0)}
+                    isVisible={dynamicFields.length > 0}
+                  />
+                  
+                  {dynamicFields.map((field, index) => (
+                    <React.Fragment key={field.id}>
+                      <Draggable draggableId={field.id} index={index}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                          >
+                            <SchemaFieldComponent
+                              field={field}
+                              value={fieldValues[field.id]}
+                              onChange={(value) => handleFieldChange(field.id, value)}
+                              onRemove={() => handleRemoveField(field.id)}
+                              editable={editable}
+                              isDynamic={true}
+                              dragHandleProps={provided.dragHandleProps}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                      
+                      {/* Insertion point after each field */}
+                      <FieldInsertionPoint
+                        onInsertField={() => handleInsertField(index + 1)}
+                        isVisible={true}
+                      />
+                    </React.Fragment>
+                  ))}
+                  
+                  {provided.placeholder}
+                </div>
+              )}
+            </StrictModeDroppable>
+          </DragDropContext>
+        )}
+        
+        {/* Render dynamic fields without drag and drop when not editable or strict schema */}
+        {(!editable || schema.strict) && dynamicFields.map((field) => (
           <SchemaFieldComponent
             key={field.id}
             field={field}
@@ -636,21 +771,13 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
           />
         ))}
         
-        {/* Show Add Field button only if schema is not strict and editable */}
-        {editable && !schema.strict && (
-          <Dialog open={isAddFieldDialogOpen} onOpenChange={setIsAddFieldDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full border-dashed">
-                <Plus className="h-4 w-4 mr-2" /> Add Field
-              </Button>
-            </DialogTrigger>
-            <AddFieldDialog
-              onAddField={handleAddField}
-              isOpen={isAddFieldDialogOpen}
-              onOpenChange={setIsAddFieldDialogOpen}
-            />
-          </Dialog>
-        )}
+        {/* Add Field Dialog */}
+        <AddFieldDialog
+          onAddField={handleAddField}
+          isOpen={isAddFieldDialogOpen}
+          onOpenChange={setIsAddFieldDialogOpen}
+          insertIndex={insertionPointIndex}
+        />
       </div>
       
       {/* Hidden editor content for Tiptap integration */}
