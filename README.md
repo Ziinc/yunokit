@@ -2,7 +2,7 @@
 
 <p align="center" width="100%">
 
-![](./shared/static/branding.png)
+![Yunokit logo](./shared/static/branding.png)
 
 </p>
 
