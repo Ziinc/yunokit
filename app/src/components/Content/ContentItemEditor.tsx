@@ -4,10 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ContentSchema, ContentField, ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
+import { ContentSchema, ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
 import { TiptapEditor } from "./TiptapEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MessageSquare, Send, Info } from "lucide-react";
@@ -16,11 +15,11 @@ import markdownit from 'markdown-it';
 
 interface ContentItemEditorProps {
   schema: ContentSchema;
-  initialContent?: Record<string, any>;
+  initialContent?: Record<string, unknown>;
   contentItem?: ContentItem;
-  onSave: (content: Record<string, any>, status?: ContentItemStatus) => void;
-  onPublish?: (content: Record<string, any>) => void;
-  onRequestReview?: (content: Record<string, any>) => void;
+  onSave: (content: Record<string, unknown>, status?: ContentItemStatus) => void;
+  onPublish?: (content: Record<string, unknown>) => void;
+  onRequestReview?: (content: Record<string, unknown>) => void;
   onAddComment?: (comment: Omit<ContentItemComment, 'id' | 'createdAt'>) => void;
 }
 
@@ -34,7 +33,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
   onAddComment,
 }) => {
   const { toast } = useToast();
-  const [content, setContent] = useState<Record<string, any>>(initialContent);
+  const [content, setContent] = useState<Record<string, unknown>>(initialContent);
   const [activeTab, setActiveTab] = useState<string>("fields");
   const [commentValue, setCommentValue] = useState("");
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
@@ -50,7 +49,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
 
   // Initialize content with default values from schema
   useEffect(() => {
-    const defaults: Record<string, any> = {};
+    const defaults: Record<string, unknown> = {};
     
     schema.fields.forEach(field => {
       if (content[field.id] === undefined) {
@@ -91,12 +90,6 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
     setContent(prevContent => ({ ...defaults, ...prevContent }));
   }, [schema, initialContent]);
 
-  const handleFieldChange = (fieldId: string, value: any) => {
-    setContent(prevContent => ({
-      ...prevContent,
-      [fieldId]: value,
-    }));
-  };
 
   const handleSave = (newStatus?: ContentItemStatus) => {
     // Validate required fields
@@ -186,7 +179,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
     }
   };
 
-  const handleTiptapChange = (newContent: Record<string, any>) => {
+  const handleTiptapChange = (newContent: Record<string, unknown>) => {
     setContent(newContent);
   };
 

@@ -1,6 +1,8 @@
 import { ContentItem } from "@/lib/contentSchema";
 
-export const getUniqueAuthors = (items: any[]): string[] => {
+export const getUniqueAuthors = (
+  items: Array<{ createdBy?: string; created_by?: string; user_id?: string }>
+): string[] => {
   // Handle case where items might not be an array
   if (!Array.isArray(items)) {
     return [];

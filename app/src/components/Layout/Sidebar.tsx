@@ -7,7 +7,6 @@ import {
   Database,
   Image,
   MessageCircle,
-  Plus,
   Loader2,
   Building2,
   Settings,
@@ -19,9 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceSwitcherModal } from "@/components/Workspace/WorkspaceSwitcherModal";
 
-interface SidebarProps {}
-
-export const Sidebar: React.FC<SidebarProps> = () => {
+export const Sidebar: React.FC = () => {
   const location = useLocation();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { currentWorkspace, isLoading } = useWorkspace();

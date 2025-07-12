@@ -1,6 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,8 +18,6 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
   handleCreateNew,
   schemas  = [],
 }) => {
-  const navigate = useNavigate();
-
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
