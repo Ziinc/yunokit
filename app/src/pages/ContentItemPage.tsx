@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
 import { ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, Reply, ArrowRight } from "lucide-react";
+import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { getSchema, ContentSchemaRow } from "@/lib/api/SchemaApi";
-import { 
-  createContentItem, 
-  updateContentItem, 
-  getContentItemById,
-  ContentItemRow 
+import { getSchema } from "@/lib/api/SchemaApi";
+import {
+  createContentItem,
+  updateContentItem,
+  getContentItemById
 } from "@/lib/api/ContentApi";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
@@ -32,7 +29,6 @@ const ContentItemPage: React.FC = () => {
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [inlineCommentText, setInlineCommentText] = useState("");
   const [diffView, setDiffView] = useState<"unified" | "split">("unified");
-  const [isCreating, setIsCreating] = useState(false);
   
   const schemaIdNumber = schemaId ? Number(schemaId) : null;
   const contentIdNumber = contentId ? Number(contentId) : null;
@@ -78,7 +74,7 @@ const ContentItemPage: React.FC = () => {
     createdAt: contentItemData.created_at,
     updatedAt: contentItemData.updated_at || contentItemData.created_at,
     publishedAt: contentItemData.published_at || undefined,
-    data: contentItemData.data as Record<string, any> || {},
+    data: (contentItemData.data as Record<string, unknown>) || {},
   } : undefined;
   
   // Helper function to get content data (handles both content and data fields)
@@ -165,7 +161,10 @@ const ContentItemPage: React.FC = () => {
   // Mock comments for demo purposes
   const [comments, setComments] = useState<ContentItemComment[]>([]);
   
-  const handleSave = async (content: Record<string, any>, status?: ContentItemStatus) => {
+  const handleSave = async (
+    content: Record<string, unknown>,
+    status?: ContentItemStatus
+  ) => {
     if (!currentWorkspace || !schemaIdNumber) {
       toast({
         title: "Error",
@@ -175,8 +174,7 @@ const ContentItemPage: React.FC = () => {
       return;
     }
 
-    try {
-      setIsCreating(true);
+      try {
       const newStatus = status || 'draft';
       const title = content.title || 'Untitled';
       
@@ -231,8 +229,6 @@ const ContentItemPage: React.FC = () => {
         description: "Failed to save content. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsCreating(false);
     }
   };
   
@@ -589,7 +585,7 @@ const ContentItemPage: React.FC = () => {
                 initialContent={initialContent}
                 contentItem={contentItem}
                 onSave={handleSave}
-                onAddComment={comment => handleAddComment()}
+                onAddComment={() => handleAddComment()}
               />
             </div>
           ) : (
@@ -598,7 +594,7 @@ const ContentItemPage: React.FC = () => {
               initialContent={initialContent}
               contentItem={contentItem}
               onSave={handleSave}
-              onAddComment={comment => handleAddComment()}
+              onAddComment={() => handleAddComment()}
             />
           )}
         </div>

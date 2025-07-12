@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Flag, Shield, MessageSquare, Users, FileText, Loader2 } from "lucide-react";
+import { MessageCircle, Flag, Shield, MessageSquare, Users, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Comment, Report, BannedWord, ForumPost, ChatMessage, ChatChannel, User } from "@/types/comments";
+import { Comment, ForumPost } from "@/types/comments";
 import CommentsTab from "@/components/Comments/CommentsTab";
 import { getComments, approveComment, rejectComment, saveComment } from '@/lib/api/CommentsApi';
 
@@ -10,8 +10,6 @@ const CommentsPage: React.FC = () => {
   const { toast } = useToast();
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [bannedWordText, setBannedWordText] = useState("");
-  const [bannedWordAction] = useState<"flag" | "delete" | "ban">("flag");
   const [currentTab, setCurrentTab] = useState("all");
   const [commentSearchQuery, setCommentSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -22,8 +20,6 @@ const CommentsPage: React.FC = () => {
   
 
   const [comments, setComments] = useState<Comment[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
-  const [bannedWords, setBannedWords] = useState<BannedWord[]>([]);
 
   // Load comments from CommentsApi
   useEffect(() => {
@@ -35,35 +31,7 @@ const CommentsPage: React.FC = () => {
 
         // For now, we'll keep using mock data for reports and banned words
         // In a real app, these would come from their own API endpoints
-        const mockReports: Report[] = [
-          {
-            id: "r1",
-            type: "comment",
-            targetId: "5",
-            targetName: "Flagged User",
-            reporter: {
-              id: "user1",
-              name: "John Smith"
-            },
-            reason: "This comment contains offensive language",
-            status: "pending" as const,
-            createdAt: "2023-09-14T10:30:00Z",
-            contentTitle: "Advanced Content Modeling"
-          }
-        ];
-
-        const mockBannedWords: BannedWord[] = [
-          {
-            id: "bw1",
-            word: "badword1",
-            action: "flag" as const,
-            severity: "medium" as const,
-            createdAt: "2023-08-10T09:30:00Z"
-          }
-        ];
-
-        setReports(mockReports);
-        setBannedWords(mockBannedWords);
+        // In a real app, report data would come from an API
       } catch (error) {
         console.error("Error loading comments:", error);
         toast({
@@ -78,10 +46,6 @@ const CommentsPage: React.FC = () => {
 
     loadComments();
   }, [toast]);
-
-  const [posts, setPosts] = useState<ForumPost[]>([
-    // ... existing forum posts mock data
-  ]);
 
   // ... existing chat messages and users mock data
 
@@ -128,8 +92,6 @@ const CommentsPage: React.FC = () => {
     return filteredComments.slice(startIndex, endIndex);
   }, [filteredComments, currentCommentsPage, commentsPerPage]);
 
-  // Calculate total pages
-  const totalCommentsPages = Math.ceil(filteredComments.length / commentsPerPage);
 
   const handleApproveComment = async (commentId: string) => {
     try {
@@ -179,74 +141,6 @@ const CommentsPage: React.FC = () => {
     }
   };
 
-  const handleBanUser = (userId: string) => {
-    // In a real app, this would call an API to ban the user
-    toast({
-      title: "User banned",
-      description: "The user has been banned and can no longer comment.",
-    });
-  };
-
-  const handleResolveReport = (reportId: string) => {
-    const updatedReports = reports.map(report =>
-      report.id === reportId ? { ...report, status: "resolved" as const } : report
-    );
-    setReports(updatedReports);
-    
-    toast({
-      title: "Report resolved",
-      description: "The report has been marked as resolved.",
-    });
-  };
-
-  const handleDismissReport = (reportId: string) => {
-    const updatedReports = reports.map(report =>
-      report.id === reportId ? { ...report, status: "dismissed" as const } : report
-    );
-    setReports(updatedReports);
-    
-    toast({
-      title: "Report dismissed",
-      description: "The report has been dismissed.",
-    });
-  };
-
-  const handleAddBannedWord = () => {
-    if (!bannedWordText.trim()) {
-      toast({
-        title: "Empty word",
-        description: "Please enter a word to ban.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newBannedWord: BannedWord = {
-      id: `bw${bannedWords.length + 1}`,
-      word: bannedWordText.trim().toLowerCase(),
-      action: bannedWordAction,
-      severity: bannedWordAction === "ban" ? "high" : bannedWordAction === "delete" ? "medium" : "low",
-      createdAt: new Date().toISOString()
-    };
-    
-    setBannedWords([...bannedWords, newBannedWord]);
-    setBannedWordText("");
-    
-    toast({
-      title: "Word banned",
-      description: `The word "${bannedWordText}" has been added to the banned words list.`,
-    });
-  };
-
-  const handleDeleteBannedWord = (wordId: string) => {
-    const updatedBannedWords = bannedWords.filter(word => word.id !== wordId);
-    setBannedWords(updatedBannedWords);
-    
-    toast({
-      title: "Word removed",
-      description: "The word has been removed from the banned words list.",
-    });
-  };
 
   const handleSubmitReply = async () => {
     if (!selectedComment || !replyText.trim()) return;
