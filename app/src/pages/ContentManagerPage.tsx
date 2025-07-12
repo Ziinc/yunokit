@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { ContentItem, ContentSchema, ContentItemStatus } from "@/lib/contentSchema";
+import type { ContentItem } from "@/lib/contentSchema";
 import { listContentItems, deleteContentItem, updateContentItem } from '@/lib/api/ContentApi';
 import { ContentSchemaRow, listSchemas } from '@/lib/api/SchemaApi';
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
 import { ContentListHeader } from "@/components/Content/ContentList/ContentListHeader";
 import { DataTable, TableColumn } from "@/components/DataTable";
-import { ContentPagination } from "@/components/Content/ContentList/ContentPagination";
-import { getUniqueAuthors, paginateItems } from "@/components/Content/ContentList/utils";
-import { SortSelect, SortOption } from "@/components/Content/ContentList/SortSelect";
+import { SortOption } from "@/components/Content/ContentList/SortSelect";
 import { ResultsBar } from "@/components/Content/ContentList/ResultsBar";
 import { Loader2, Download, Trash2, EyeOff, Users, FileText, Calendar } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -189,7 +187,6 @@ const ContentManagerPage: React.FC = () => {
   });
   
   const [searchParams] = useSearchParams();
-  const selectedSchemaId = searchParams.get('schema-id');
   
   // Handle errors
   useEffect(() => {
@@ -368,10 +365,6 @@ const ContentManagerPage: React.FC = () => {
       pathname: location.pathname,
       search: params.toString()
     });
-  };
-  
-  const handleSelectionChange = (items: ContentItem[]) => {
-    setSelectedItems(items);
   };
   
   const handleDownload = async (format: 'csv' | 'json' | 'jsonl') => {

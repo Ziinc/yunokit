@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
-import { ContentSchema } from "@/lib/contentSchema";
 import {
   listSchemas,
   createSchema,
@@ -49,7 +48,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatDate } from "@/utils/formatDate";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
-import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
+import { isFeatureEnabled, FeatureFlags, type FeatureFlag } from "@/lib/featureFlags";
 import useSWR from "swr";
 
 // Schema Table Component
@@ -209,39 +208,8 @@ const SchemaTable: React.FC<{
   );
 };
 
-// Simple query parser for search filtering
-const parseQuery = (query: string) => {
-  const filters: Record<string, string> = {};
-
-  // Extract quoted phrases first
-  const quotedRegex = /"([^"]+)"/g;
-  let match;
-  let processedQuery = query;
-
-  while ((match = quotedRegex.exec(query)) !== null) {
-    processedQuery = processedQuery.replace(match[0], "");
-  }
-
-  // Process key:value pairs
-  const parts = processedQuery.split(" ").filter(Boolean);
-
-  for (const part of parts) {
-    if (part.includes(":")) {
-      const [key, value] = part.split(":");
-      filters[key.toLowerCase()] = value;
-    }
-  }
-
-  // Extract general search term (without key:value parts)
-  const searchTerms = parts.filter((part) => !part.includes(":")).join(" ");
-
-  return { filters, searchTerms };
-};
 
 const ContentSchemaBuilderPage: React.FC = () => {
-  const [editingSchema, setEditingSchema] = useState<ContentSchema | null>(
-    null
-  );
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [schemaTypeFilter, setSchemaTypeFilter] = useState<
@@ -259,7 +227,6 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   const {
     data: schemasResponse,
-    error: schemasError,
     isLoading,
     mutate: mutateSchemas,
   } = useSWR(
@@ -280,13 +247,13 @@ const ContentSchemaBuilderPage: React.FC = () => {
     // First filter by type and archived status
     const filtered = schemas.filter((schema) => {
       if (
-        !isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) &&
+        !isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) &&
         schema.archived_at
       )
         return false;
       if (schemaTypeFilter === "archived")
         return (
-          isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) &&
+          isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) &&
           schema.archived_at
         );
       if (schemaTypeFilter === "collection")
@@ -295,7 +262,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
         return schema.type === "single" && !schema.archived_at;
       return (
         !schema.archived_at ||
-        (isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) &&
+        (isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) &&
           schema.archived_at)
       ); // "all" shows everything except archived unless feature enabled
     });
@@ -513,7 +480,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
                   <File size={16} />
                   Singles
                 </TabsTrigger>
-                {isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any) && (
+                {isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) && (
                   <TabsTrigger
                     value="archived"
                     className="flex items-center gap-2"
@@ -558,7 +525,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
                 <SelectionActionsBar
                   selectedCount={selectedSchemas.length}
                   actions={[
-                    ...(isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as any)
+                    ...(isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag)
                       ? [
                           {
                             label: "Archive",
