@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Calendar } from "lucide-react";
 import { 
   Table, 
   TableBody, 
@@ -145,7 +144,9 @@ export const DataTable = <T extends object>({
                   )}
                   {columns.map((column, index) => (
                     <TableCell key={index} className={column.className}>
-                      {column.cell ? column.cell(item) : (item as any)[column.accessorKey]}
+                      {column.cell
+                        ? column.cell(item)
+                        : (item as Record<string, unknown>)[column.accessorKey] as React.ReactNode}
                     </TableCell>
                   ))}
                 </TableRow>

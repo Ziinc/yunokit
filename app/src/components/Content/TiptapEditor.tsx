@@ -1,9 +1,13 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Extension } from '@tiptap/core';
 import { Node } from '@tiptap/core';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import {
+  DragDropContext,
+  Draggable,
+  DropResult,
+  DraggableProvidedDragHandleProps,
+} from '@hello-pangea/dnd';
 import { ContentSchema, ContentField, ContentFieldType } from '@/lib/contentSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,8 +24,8 @@ import './TiptapEditor.css';
 
 interface TiptapEditorProps {
   schema: ContentSchema;
-  content: any;
-  onChange: (content: any) => void;
+  content: Record<string, unknown>;
+  onChange: (content: Record<string, unknown>) => void;
   editable?: boolean;
 }
 
@@ -271,7 +275,7 @@ const SchemaFieldNode = Node.create({
   },
 
   addNodeView() {
-    return ({ node, getPos, editor }) => {
+    return () => {
       const container = document.createElement('div');
       container.className = 'schema-field-node';
       return {
@@ -302,12 +306,12 @@ const getFieldIcon = (type: ContentFieldType) => {
 
 const SchemaFieldComponent: React.FC<{
   field: ContentField;
-  value: any;
-  onChange: (value: any) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
   onRemove: () => void;
   editable: boolean;
   isDynamic?: boolean;
-  dragHandleProps?: any;
+  dragHandleProps?: DraggableProvidedDragHandleProps;
 }> = ({ field, value, onChange, onRemove, editable, isDynamic = false, dragHandleProps }) => {
   const renderFieldInput = () => {
     switch (field.type) {
@@ -474,7 +478,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   onChange,
   editable = true,
 }) => {
-  const [fieldValues, setFieldValues] = React.useState<Record<string, any>>({});
+  const [fieldValues, setFieldValues] = React.useState<Record<string, unknown>>({});
   const [dynamicFields, setDynamicFields] = React.useState<ContentField[]>([]);
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [insertionPointIndex, setInsertionPointIndex] = useState<number | null>(null);
@@ -521,7 +525,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     }
   }, [content, schema]);
 
-  const handleFieldChange = useCallback((fieldId: string, value: any) => {
+  const handleFieldChange = useCallback((fieldId: string, value: unknown) => {
     const newValues = { ...fieldValues, [fieldId]: value };
     setFieldValues(newValues);
     
@@ -607,7 +611,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     setInsertionPointIndex(null);
   };
 
-  const getDefaultValueForFieldType = (type: ContentFieldType): any => {
+  const getDefaultValueForFieldType = (type: ContentFieldType): unknown => {
     switch (type) {
       case 'text':
       case 'markdown':
@@ -674,7 +678,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     ],
     content: '',
     editable,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor: _editor }) => {
       // Handle editor updates if needed
     },
   });
@@ -686,9 +690,6 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       </div>
     );
   }
-
-  // Combine schema fields and dynamic fields
-  const allFields = [...schema.fields, ...dynamicFields];
 
   return (
     <div className="tiptap-editor">

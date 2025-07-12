@@ -11,7 +11,6 @@ interface PasswordFieldProps {
   value: string;
   onChange: (value: string) => void;
   description?: string;
-  isSecret?: boolean;
 }
 
 export const PasswordField: React.FC<PasswordFieldProps> = ({
@@ -20,7 +19,6 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
   value,
   onChange,
   description,
-  isSecret = true,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   

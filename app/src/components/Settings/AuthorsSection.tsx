@@ -80,7 +80,7 @@ export const AuthorsSection: React.FC<AuthorsSectionProps> = ({
         title: "Author added",
         description: "System author has been added successfully.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to add system author. Please try again.",
@@ -96,7 +96,7 @@ export const AuthorsSection: React.FC<AuthorsSectionProps> = ({
         title: "Author deleted",
         description: "System author has been deleted successfully.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to delete system author. Please try again.",

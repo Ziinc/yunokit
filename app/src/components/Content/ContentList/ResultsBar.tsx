@@ -1,6 +1,6 @@
 import React from "react";
 import { SortSelect, SortOption } from "./SortSelect";
-import { ArrowUpDown, Info } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface ResultsBarProps {
   totalItems: number;
