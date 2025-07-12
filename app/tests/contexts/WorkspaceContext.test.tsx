@@ -7,6 +7,7 @@ vi.unmock("../../src/lib/contexts/WorkspaceContext");
 vi.mock("swr", () => ({ default: vi.fn() }));
 vi.mock("../../src/lib/api/WorkspaceApi");
 
+import swr from "swr";
 import { WorkspaceProvider, useWorkspace } from "../../src/lib/contexts/WorkspaceContext";
 
 const mockWorkspaces = [
@@ -20,7 +21,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("WorkspaceContext", () => {
   beforeEach(() => {
-    const mockUseSWR = vi.mocked(require("swr").default);
+    const mockUseSWR = vi.mocked(swr);
     mockUseSWR.mockImplementation(() => ({
       data: mockWorkspaces,
       error: null,

@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 import React from "react";
-import { describe, test, expect, vi, beforeEach, Mock } from "vitest";
+import { describe, test, expect, vi, beforeEach } from "vitest";
+import type { Mock } from "vitest";
 import { screen, within } from "@testing-library/react";
 import { render } from "../utils/test-utils";
 import Dashboard from "../../src/pages/Dashboard";
@@ -76,13 +77,13 @@ describe("Dashboard", () => {
 
   describe("Empty States", () => {
     beforeEach(() => {
-      (ContentApi.listContentItems as any).mockResolvedValue([]);
+      (ContentApi.listContentItems as Mock).mockResolvedValue([]);
     });
 
     test("renders empty state for Last Edited widget", async () => {
       render(<Dashboard />);
 
-      const emptyState = await screen.findByText("No recent activity");
+      await screen.findByText("No recent activity");
       await screen.findByText("Content you edit will appear here");
       expect(screen.queryByRole("link", { name: /view more/i })).toBeNull();
     });
@@ -90,7 +91,7 @@ describe("Dashboard", () => {
     test("renders empty state for Draft Content widget", async () => {
       render(<Dashboard />);
 
-      const emptyState = await screen.findByText("No draft content");
+      await screen.findByText("No draft content");
       await screen.findByText("Content you save as draft will appear here");
       expect(screen.queryByRole("link", { name: /view more/i })).toBeNull();
     });
@@ -98,7 +99,7 @@ describe("Dashboard", () => {
     test("renders empty state for Published Content widget", async () => {
       render(<Dashboard />);
 
-      const emptyState = await screen.findByText("No published content");
+      await screen.findByText("No published content");
       await screen.findByText("Content you publish will appear here");
       expect(screen.queryByRole("link", { name: /view more/i })).toBeNull();
     });
@@ -106,7 +107,7 @@ describe("Dashboard", () => {
     test("renders empty state for Approval Requests widget", async () => {
       render(<Dashboard />);
 
-      const emptyState = await screen.findByText("No content to review");
+      await screen.findByText("No content to review");
       await screen.findByText(
         "Content waiting for your review will appear here"
       );
@@ -116,7 +117,7 @@ describe("Dashboard", () => {
 
   describe("Content Rendering", () => {
     beforeEach(() => {
-      (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as Mock).mockResolvedValue(mockContentItems);
     });
 
     test("renders content items in Last Edited widget", async () => {
@@ -183,7 +184,7 @@ describe("Dashboard", () => {
 
   describe("View More Navigation", () => {
     beforeEach(() => {
-      (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as Mock).mockResolvedValue(mockContentItems);
     });
 
     test("navigates to correct route when clicking View More in Last Edited widget", async () => {
