@@ -44,12 +44,11 @@ const SettingsAccountPage: React.FC = () => {
   const [lastNameInput, setLastNameInput] = useState("");
   const [linkedinInput, setLinkedinInput] = useState("");
   const [githubInput, setGithubInput] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-  const [isUpdatingPseudonym, setIsUpdatingPseudonym] = useState(false);
+  const [isUpdatingPseudonym] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const { toast } = useToast();
@@ -264,7 +263,7 @@ const SettingsAccountPage: React.FC = () => {
                 )}
                 {isFeatureEnabled(FeatureFlags.PSEUDONYM) && (
                   <p className="text-sm text-muted-foreground">
-                    Writing as: {(user as any).pseudonym}
+                    Writing as: {(user as { pseudonym?: string }).pseudonym}
                   </p>
                 )}
               </div>

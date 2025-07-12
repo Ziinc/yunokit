@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, CheckCircle, AlertCircle, Plus, Edit, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { listContentItems, updateContentItem } from '@/lib/api/ContentApi';
@@ -12,12 +12,12 @@ import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isAuthenticated } from "@/lib/api/auth";
-import { dataSbClient } from "@/lib/supabase";
+import type { ContentSchemaRow } from "@/lib/api/SchemaApi";
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<"ecommerce" | "blogging" | "tutorials" | null>(null);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
-  const [schemas, setSchemas] = useState<any[]>([]);
+  const [schemas] = useState<ContentSchemaRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   // Track approval state by item id instead of a single global state
   const [approvingItems, setApprovingItems] = useState<Record<string, boolean>>({});

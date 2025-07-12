@@ -18,10 +18,11 @@ const ProfilePage: React.FC = () => {
         title: "Signed out successfully",
         description: "You have been signed out of your account.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An error occurred while signing out.";
       toast({
         title: "Error signing out",
-        description: error.message || "An error occurred while signing out.",
+        description: message,
         variant: "destructive",
       });
     }

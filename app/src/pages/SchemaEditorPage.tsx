@@ -25,13 +25,12 @@ import {
   MoreHorizontal,
   FileEdit,
 } from "lucide-react";
-import { ContentSchema, ContentField } from "@/lib/contentSchema";
+import { ContentSchema } from "@/lib/contentSchema";
 import { listSchemas, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 import {
   DragDropContext,
   Draggable,
-  Droppable,
   DropResult,
 } from "@hello-pangea/dnd";
 import {
@@ -79,8 +78,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ContentItemRow, listContentItemsBySchema, deleteContentItem } from "@/lib/api/ContentApi";
-import { ContentItem } from "@/lib/contentSchema";
+import { listContentItemsBySchema, deleteContentItem } from "@/lib/api/ContentApi";
 import useSWR from "swr";
 import { getSchema, updateSchema, deleteSchema } from "@/lib/api/SchemaApi";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
@@ -114,18 +112,6 @@ const FIELD_TYPES = {
   [SchemaFieldType.JSON]: { icon: Code, label: "JSON", defaultValue: {} },
 } as const;
 
-interface FieldMigrationOptions {
-  action: "delete" | "keep";
-}
-
-interface NewFieldData {
-  name: string;
-  type: keyof typeof FIELD_TYPES;
-  required: boolean;
-  defaultValue: any;
-  relationSchemaId?: string;
-  options?: string[];
-}
 
 const SchemaEditorPage: React.FC = () => {
   const { schemaId: schemaIdString } = useParams();
@@ -144,10 +130,6 @@ const SchemaEditorPage: React.FC = () => {
   const [newSchemaName, setNewSchemaName] = useState("");
   const [newSchemaDescription, setNewSchemaDescription] = useState("");
   const [multiItemAction, setMultiItemAction] = useState<"keep_first" | "delete_all">("keep_first");
-  const [migrationOptions, setMigrationOptions] =
-    useState<FieldMigrationOptions>({
-      action: "delete",
-    });
   const [newField, setNewField] = useState<SchemaField>({
     id: "",
     label: "",
@@ -165,7 +147,6 @@ const SchemaEditorPage: React.FC = () => {
 
   const {
     data: schemaResponse,
-    error: schemaError,
     isLoading: isLoading,
     mutate: mutateSchema,
   } = useSWR(
@@ -179,8 +160,6 @@ const SchemaEditorPage: React.FC = () => {
 
   const {
     data: contentItemsResponse,
-    error: contentItemsError,
-    isLoading: isLoadingContentItems,
   } = useSWR(
     currentWorkspace && schemaId ? `content-items-${schemaId}` : null,
     async () => {
@@ -248,7 +227,7 @@ const SchemaEditorPage: React.FC = () => {
 
     try {
       // Get the current fields array
-      let fields = Array.from(schema.fields || []);
+      const fields = Array.from(schema.fields || []);
       const [movedField] = fields.splice(result.source.index, 1);
       fields.splice(result.destination.index, 0, movedField);
 
@@ -1175,7 +1154,7 @@ const SchemaEditorPage: React.FC = () => {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <StrictModeDroppable droppableId="fields">
-          {(provided, snapshot) => (
+          {(provided) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
