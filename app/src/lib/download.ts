@@ -2,7 +2,10 @@ import { ContentItem } from './contentSchema';
 
 type ExportFormat = 'csv' | 'json' | 'jsonl';
 
-const flattenObject = (obj: any, prefix = ''): Record<string, string> => {
+const flattenObject = (
+  obj: Record<string, unknown>,
+  prefix = ''
+): Record<string, string> => {
   const flattened: Record<string, string> = {};
 
   for (const key in obj) {

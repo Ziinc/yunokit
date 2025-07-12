@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Code, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exampleSchemas } from "@/lib/contentSchema";
+import { exampleSchemas, ContentSchema, ContentField } from "@/lib/contentSchema";
 import { useToast } from "@/hooks/use-toast";
 
 export const ApiExamplesPage: React.FC = () => {
@@ -21,10 +21,12 @@ export const ApiExamplesPage: React.FC = () => {
   };
 
   // Generate a sample response for a schema
-  const generateSampleResponse = (schema: any) => {
-    const sample: any = { id: "123e4567-e89b-12d3-a456-426614174000" };
-    
-    schema.fields.forEach((field: any) => {
+  const generateSampleResponse = (schema: ContentSchema) => {
+    const sample: Record<string, unknown> = {
+      id: "123e4567-e89b-12d3-a456-426614174000",
+    };
+
+    schema.fields.forEach((field: ContentField) => {
       switch(field.type) {
         case "string":
           sample[field.name] = `Sample ${field.name}`;

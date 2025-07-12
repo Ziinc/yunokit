@@ -1,4 +1,3 @@
-import React from 'react';
 
 export type ContentFieldType = 
   | 'text'
@@ -17,7 +16,7 @@ export interface ContentField {
   type: ContentFieldType;
   required?: boolean;
   description?: string;
-  defaultValue?: any;
+  defaultValue?: unknown;
   options?: string[]; // For enum fields
   relationSchemaId?: string; // For relation fields
 }
@@ -29,7 +28,7 @@ export interface ContentSchema {
   isCollection?: boolean;
   schemaType?: 'collection' | 'single';
   type: 'collection' | 'single';
-  fields: any[];
+  fields: ContentField[];
   strict?: boolean; // When false, allows adding new fields dynamically
   createdAt?: string;
   updatedAt?: string;
@@ -51,7 +50,7 @@ export interface ContentItem {
   createdBy?: string;
   updatedBy?: string;
   icon?: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 // Comment interface for review process
