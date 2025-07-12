@@ -5,17 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContentSchema, ContentField, ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
-import { BooleanField } from "./Fields/BooleanField";
-import { EnumField } from "./Fields/EnumField";
-import { MultiselectField } from "./Fields/MultiselectField";
-import { RelationField } from "./Fields/RelationField";
+import { TiptapEditor } from "./TiptapEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Check, MessageSquare, Send, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MessageSquare, Send, Info } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import markdownit from 'markdown-it';
 
 interface ContentItemEditorProps {
@@ -41,7 +37,6 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
   const [content, setContent] = useState<Record<string, any>>(initialContent);
   const [activeTab, setActiveTab] = useState<string>("fields");
   const [commentValue, setCommentValue] = useState("");
-  const [fieldComments, setFieldComments] = useState<Record<string, string>>({});
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
   // Status indicator
@@ -68,10 +63,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
               defaults[field.id] = "";
               break;
             case "json":
-              defaults[field.id] = "{}";
-              break;
-            case "block":
-              defaults[field.id] = "[]";
+              defaults[field.id] = {};
               break;
             case "boolean":
               defaults[field.id] = false;
@@ -79,11 +71,17 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
             case "enum":
               defaults[field.id] = field.options?.[0] || "";
               break;
-            case "multiselect":
-              defaults[field.id] = [];
+            case "text":
+              defaults[field.id] = "";
               break;
-            case "relation":
-              defaults[field.id] = [];
+            case "number":
+              defaults[field.id] = 0;
+              break;
+            case "date":
+              defaults[field.id] = "";
+              break;
+            default:
+              defaults[field.id] = "";
               break;
           }
         }
@@ -173,28 +171,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
     });
   };
 
-  const handleAddFieldComment = (fieldId: string) => {
-    const comment = fieldComments[fieldId];
-    if (!comment || !comment.trim()) return;
-    
-    if (onAddComment) {
-      onAddComment({
-        contentItemId: contentItem?.id || '',
-        userId: 'current-user',
-        userName: 'You',
-        text: comment,
-        fieldId: fieldId,
-        resolved: false
-      });
-    }
-    
-    setFieldComments(prev => ({ ...prev, [fieldId]: '' }));
-    
-    toast({
-      title: "Comment added",
-      description: "Your comment has been added to the field",
-    });
-  };
+
 
   const renderStatusBadge = () => {
     switch (status) {
@@ -209,190 +186,8 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
     }
   };
 
-  const renderField = (field: ContentField) => {
-    const fieldComments = contentItem?.comments?.filter(c => c.fieldId === field.id) || [];
-    
-    const fieldContent = (
-      <>
-        {field.type === "markdown" && (
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">{field.name}</h3>
-            {field.description && (
-              <p className="text-sm text-muted-foreground mb-4">{field.description}</p>
-            )}
-            <div className="border rounded-md p-4">
-              <Tabs defaultValue="edit">
-                <TabsList>
-                  <TabsTrigger value="edit">Edit</TabsTrigger>
-                  <TabsTrigger value="preview">Preview</TabsTrigger>
-                </TabsList>
-                <TabsContent value="edit">
-                  <Textarea
-                    value={content[field.id] || ""}
-                    onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                    className="min-h-[200px] font-mono"
-                  />
-                </TabsContent>
-                <TabsContent value="preview">
-                  <div 
-                    className="prose dark:prose-invert max-w-none p-4"
-                    dangerouslySetInnerHTML={{ 
-                      __html: markdownit().render(content[field.id] || "") 
-                    }} 
-                  />
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
-        )}
-        
-        {field.type === "json" && (
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">{field.name}</h3>
-            {field.description && (
-              <p className="text-sm text-muted-foreground mb-4">{field.description}</p>
-            )}
-            <div className="border rounded-md p-4">
-              <Textarea
-                value={content[field.id] || "{}"}
-                onChange={(e) => {
-                  try {
-                    // Check if it's valid JSON
-                    JSON.parse(e.target.value);
-                    handleFieldChange(field.id, e.target.value);
-                  } catch (err) {
-                    // Still update the field even if JSON is invalid
-                    handleFieldChange(field.id, e.target.value);
-                  }
-                }}
-                className="min-h-[200px] font-mono"
-              />
-            </div>
-          </div>
-        )}
-        
-        {field.type === "block" && (
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">{field.name}</h3>
-            {field.description && (
-              <p className="text-sm text-muted-foreground mb-4">{field.description}</p>
-            )}
-            <div className="border rounded-md p-4">
-              <p className="text-sm text-muted-foreground mb-4">Block editor integration</p>
-            </div>
-          </div>
-        )}
-        
-        {field.type === "boolean" && (
-          <BooleanField
-            id={field.id}
-            name={field.name}
-            value={content[field.id] || false}
-            onChange={(value) => handleFieldChange(field.id, value)}
-            description={field.description}
-          />
-        )}
-        
-        {field.type === "enum" && (
-          <EnumField
-            id={field.id}
-            name={field.name}
-            value={content[field.id] || ""}
-            onChange={(value) => handleFieldChange(field.id, value)}
-            options={field.options || []}
-            description={field.description}
-          />
-        )}
-        
-        {field.type === "multiselect" && (
-          <MultiselectField
-            id={field.id}
-            name={field.name}
-            value={content[field.id] || []}
-            onChange={(value) => handleFieldChange(field.id, value)}
-            options={field.options || []}
-            description={field.description}
-          />
-        )}
-        
-        {field.type === "relation" && (
-          <RelationField
-            id={field.id}
-            name={field.name}
-            schemaId={field.relationTarget || ""}
-            value={content[field.id] || []}
-            onChange={(value) => handleFieldChange(field.id, value)}
-            description={field.description}
-            isMultiple={field.isMultiple}
-          />
-        )}
-      </>
-    );
-    
-    // Add field comments if this is a review
-    if (status === 'pending_review' || fieldComments.length > 0) {
-      return (
-        <div>
-          {fieldContent}
-          
-          {/* Field comments section */}
-          {fieldComments.length > 0 && (
-            <div className="mt-4 border-t pt-4">
-              <h4 className="text-sm font-medium mb-2">Comments</h4>
-              <div className="space-y-3">
-                {fieldComments.map(comment => (
-                  <div key={comment.id} className="flex gap-3 text-sm">
-                    <Avatar className="h-8 w-8">
-                      <div className="bg-primary text-primary-foreground flex h-full w-full items-center justify-center rounded-full text-xs">
-                        {comment.userName.charAt(0)}
-                      </div>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{comment.userName}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(comment.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="mt-1">{comment.text}</p>
-                    </div>
-                    {!comment.resolved && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0 text-green-600"
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Add comment form */}
-          <div className="mt-4 flex gap-2">
-            <Textarea
-              placeholder={`Comment on ${field.name}...`}
-              value={fieldComments[field.id] || ""}
-              onChange={(e) => setFieldComments(prev => ({ ...prev, [field.id]: e.target.value }))}
-              className="min-h-[80px] flex-1"
-            />
-            <Button 
-              size="sm" 
-              className="self-end"
-              onClick={() => handleAddFieldComment(field.id)}
-              disabled={!fieldComments[field.id]?.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      );
-    }
-    
-    return fieldContent;
+  const handleTiptapChange = (newContent: Record<string, any>) => {
+    setContent(newContent);
   };
 
   return (
@@ -402,6 +197,21 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
           <h1 className="text-2xl font-bold">
             {schema.isCollection ? "Edit Item" : `Edit ${schema.name}`}
           </h1>
+          {!schema.strict && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-blue-600">
+                    <Info className="h-4 w-4" />
+                    <span className="text-sm font-medium">Flexible Schema</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This schema allows you to add custom fields. Use the "Add Field" button to create new content blocks as needed.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {renderStatusBadge()}
         </div>
         
@@ -453,27 +263,21 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
           <TabsTrigger value="fields">Content Fields</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="json">JSON</TabsTrigger>
-          {(contentItem?.comments?.length > 0 || status === 'pending_review') && (
+          {status === 'pending_review' && (
             <TabsTrigger value="comments" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Comments
-              {contentItem?.comments?.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                  {contentItem.comments.length}
-                </Badge>
-              )}
             </TabsTrigger>
           )}
         </TabsList>
         
         <TabsContent value="fields" className="space-y-6 pt-4">
-          {schema.fields.map((field) => (
-            <Card key={field.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                {renderField(field)}
-              </CardContent>
-            </Card>
-          ))}
+          <TiptapEditor
+            schema={schema}
+            content={content}
+            onChange={handleTiptapChange}
+            editable={true}
+          />
         </TabsContent>
         
         <TabsContent value="preview" className="pt-4">
@@ -483,45 +287,71 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {schema.fields.map((field) => (
-                  <div key={field.id}>
-                    <h3 className="font-medium">{field.name}</h3>
-                    <div className="mt-1 p-2 bg-muted rounded-md">
-                      {field.type === "markdown" && (
-                        <div 
-                          className="prose dark:prose-invert max-w-none"
-                          dangerouslySetInnerHTML={{ 
-                            __html: markdownit().render(content[field.id] || "") 
-                          }} 
-                        />
-                      )}
-                      {field.type === "json" && (
-                        <pre className="whitespace-pre-wrap text-sm">
-                          {JSON.stringify(JSON.parse(content[field.id] || "{}"), null, 2)}
-                        </pre>
-                      )}
-                      {field.type === "block" && (
-                        <div className="text-sm">Block content preview</div>
-                      )}
-                      {field.type === "boolean" && (
-                        <div>{content[field.id] ? "Yes" : "No"}</div>
-                      )}
-                      {field.type === "enum" && (
-                        <div>{content[field.id]}</div>
-                      )}
-                      {field.type === "multiselect" && (
-                        <div>{content[field.id]?.join(", ") || ""}</div>
-                      )}
-                      {field.type === "relation" && (
-                        <div>
-                          {content[field.id]?.length > 0 
-                            ? `${content[field.id].length} related item(s)` 
-                            : "No related items"}
-                        </div>
-                      )}
+                {/* Show all fields from content, including dynamic ones */}
+                {Object.entries(content).map(([fieldId, value]) => {
+                  // Skip metadata field
+                  if (fieldId === '__dynamicFields') return null;
+                  
+                  // Find field definition in schema or treat as dynamic
+                  const schemaField = schema.fields.find(f => f.id === fieldId);
+                  const dynamicFieldMetadata = content.__dynamicFields?.[fieldId];
+                  
+                  // Use stored metadata for dynamic fields, otherwise use schema field or fallback
+                  const fieldName = schemaField?.name || 
+                                  dynamicFieldMetadata?.name || 
+                                  fieldId.replace('field_', '').replace(/_/g, ' ');
+                  const fieldType = schemaField?.type || 
+                                  dynamicFieldMetadata?.type || 
+                                  'text';
+                  const isDynamic = !schemaField;
+                  
+                  return (
+                    <div key={fieldId}>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">{fieldName}</h3>
+                        {isDynamic && (
+                          <Badge variant="outline" className="text-xs">
+                            Dynamic
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="mt-1 p-2 bg-muted rounded-md">
+                        {fieldType === "markdown" && (
+                          <div 
+                            className="prose dark:prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ 
+                              __html: markdownit().render(value || "") 
+                            }} 
+                          />
+                        )}
+                        {fieldType === "json" && (
+                          <pre className="whitespace-pre-wrap text-sm">
+                            {JSON.stringify(typeof value === 'string' ? JSON.parse(value || "{}") : value, null, 2)}
+                          </pre>
+                        )}
+                        {fieldType === "boolean" && (
+                          <div>{value ? "Yes" : "No"}</div>
+                        )}
+                        {fieldType === "enum" && (
+                          <div>{value}</div>
+                        )}
+                        {fieldType === "multiselect" && (
+                          <div>{Array.isArray(value) ? value.join(", ") : ""}</div>
+                        )}
+                        {fieldType === "relation" && (
+                          <div>
+                            {Array.isArray(value) && value.length > 0 
+                              ? `${value.length} related item(s)` 
+                              : "No related items"}
+                          </div>
+                        )}
+                        {(fieldType === "text" || fieldType === "number" || fieldType === "date") && (
+                          <div>{value || <span className="text-muted-foreground">No value</span>}</div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -546,47 +376,9 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
               <CardTitle>Review Comments</CardTitle>
             </CardHeader>
             <CardContent>
-              {contentItem?.comments?.filter(c => !c.fieldId).length > 0 ? (
-                <ScrollArea className="h-[400px] pr-4">
-                  <div className="space-y-4">
-                    {contentItem.comments
-                      .filter(c => !c.fieldId)
-                      .map(comment => (
-                        <div key={comment.id} className="flex gap-3 p-3 border rounded-md">
-                          <Avatar className="h-8 w-8">
-                            <div className="bg-primary text-primary-foreground flex h-full w-full items-center justify-center rounded-full text-xs">
-                              {comment.userName.charAt(0)}
-                            </div>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{comment.userName}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(comment.createdAt).toLocaleString()}
-                                </span>
-                              </div>
-                              {!comment.resolved && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-8 w-8 p-0 text-green-600"
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                            <p className="mt-2">{comment.text}</p>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </ScrollArea>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No general comments yet
-                </div>
-              )}
+              <div className="text-center py-8 text-muted-foreground">
+                No general comments yet
+              </div>
               
               <div className="mt-6 border-t pt-4">
                 <h3 className="text-sm font-medium mb-3">Add a Comment</h3>
