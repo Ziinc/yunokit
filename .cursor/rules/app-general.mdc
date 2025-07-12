@@ -1,0 +1,32 @@
+---
+description: 
+globs: *.tsx,*.ts
+alwaysApply: false
+---
+# Dev rules for working on /app
+
+- never suggest performing an `npm install`, only recommend the packages that is used in the generated code.
+- Always use [database.types.ts](mdc:app/database.types.ts) as the supabase schema reference.
+
+## useEffect callback
+- never create a callback in a useEffect. Always create it outside of the useEffect.
+
+## Routing
+Use the [App.tsx](mdc:app/src/App.tsx) router logic to determine the correct paths for links and general navigation
+
+## Page Layout
+- always ensure that pages within the app are standardized.
+- Pages with tabs should use the correct [tabs.tsx](mdc:app/src/components/ui/tabs.tsx) component instead of buttons.
+- Any use of tabs should result in nested routes so that each tab has its own path.
+
+
+## Testing
+
+- Tests should always be written under the `app/tests` directory. 
+- When working on files under `app/src/lib/**`, always ensure that there are appropriate tests written.
+
+## UI Components & Radix UI
+- Use the consolidated `radix-ui` package for all Radix UI components instead of individual `@radix-ui/react-*` packages.
+- Import components using destructured imports: `import { Dialog, DropdownMenu } from "radix-ui"`.
+- For Slot usage in components, use `Slot.Slot` from the radix-ui package.
+- When creating new UI components, follow the existing pattern in `app/src/components/ui/` using the consolidated package.

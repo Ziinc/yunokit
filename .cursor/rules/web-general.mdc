@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Dev rules for documentation
+For each feature written, always write documentation under `web/docs` directory in the docusaurus-compatible mdx file.
+
+## When working on /web
+
+Always use Docusuarus v3 conventions.
+
+Use .mdx files always.
+
+Avoid creating custom react components in .mdx files when docusuarus as a built in component that can function similarly.
+
+Always use Ziinc as the author.
+
+## Style Guide
+
+Always be simple and to the point. Be concise and avoid duplications. Don't use the words "you".
+Refer to @https://diataxis.fr/reference/ when writing documentation.
+
+When writing a tutorial, refer to @https://diataxis.fr/tutorials/
+
+When writing a guide, refer to @https://diataxis.fr/how-to-guides/
+
+When writing explainer blog posts, refer to @https://diataxis.fr/explanation/
+
+## Marketing Tone Guide
+When explicitly asked to edit copy for a marketing component, use a fun and quirky tone that conveys a magical experience.

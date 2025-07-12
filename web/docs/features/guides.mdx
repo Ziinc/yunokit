@@ -1,0 +1,119 @@
+---
+title: Guides
+description: Step-by-step guides for common Supacontent tasks
+sidebar_position: 8
+---
+
+# Guides
+
+## Getting Started
+
+### Quick Start
+1. Install dependencies
+2. Configure environment
+3. Create first content type
+4. Add content
+5. Query API
+
+### Authentication Setup
+1. Create account
+2. Generate API keys
+3. Set permissions
+4. Test access
+
+## Content Management
+
+### Creating a Blog
+```typescript
+// Define blog post type
+const blogPostType = {
+  name: 'Blog Post',
+  apiId: 'blog-post',
+  fields: [
+    {
+      name: 'title',
+      type: 'shortText',
+      required: true
+    },
+    {
+      name: 'content',
+      type: 'richText'
+    }
+  ]
+};
+
+// Create post
+const post = await api.createContent('blog-post', {
+  title: 'My First Post',
+  content: '# Hello World'
+});
+```
+
+### Media Management
+1. Upload assets
+2. Organize library
+3. Set metadata
+4. Use in content
+
+## Integration
+
+### Frontend Integration
+```typescript
+// React example
+function BlogPost({ id }) {
+  const [post, setPost] = useState(null);
+  
+  useEffect(() => {
+    api.getContent('blog-post', id)
+      .then(setPost);
+  }, [id]);
+  
+  return post ? (
+    <article>
+      <h1>{post.title}</h1>
+      <div>{post.content}</div>
+    </article>
+  ) : null;
+}
+```
+
+### Webhooks Setup
+1. Configure endpoint
+2. Select events
+3. Set security
+4. Handle payloads
+
+## Deployment
+
+### Production Checklist
+- [ ] Environment variables
+- [ ] API keys
+- [ ] SSL certificates
+- [ ] Backup strategy
+
+### Monitoring Setup
+1. Configure logging
+2. Set up alerts
+3. Monitor performance
+4. Track errors
+
+## Advanced Usage
+
+### Custom Fields
+```typescript
+// Custom field type
+const customField = {
+  type: 'custom',
+  name: 'location',
+  component: 'MapPicker',
+  validate: (value) => {
+    return value.lat && value.lng;
+  }
+};
+```
+
+### Workflow Automation
+1. Define triggers
+2. Set conditions
+3. Configure actions
+4. Test workflow 

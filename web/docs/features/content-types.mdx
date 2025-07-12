@@ -1,0 +1,91 @@
+---
+title: Content Types
+description: Understanding and managing content types in Supacontent
+sidebar_position: 2
+---
+
+# Content Types System
+
+## Overview
+
+Content types are the building blocks of your content model. They define the structure and validation rules for your content.
+
+## Creating Content Types
+
+### Basic Configuration
+```typescript
+interface ContentType {
+  name: string;
+  apiId: string;
+  description?: string;
+  fields: Field[];
+}
+```
+
+### Field Configuration
+- Required vs Optional
+- Default values
+- Validation rules
+- Relationships
+
+## Field Types
+
+### Basic Types
+- Text (short, long)
+- Number
+- Boolean
+- Date/Time
+- Media
+
+### Advanced Types
+- Rich Text
+- JSON
+- References
+- Arrays
+- Custom Components
+
+## Relationships
+
+### Types of Relationships
+- One-to-One
+- One-to-Many
+- Many-to-Many
+
+### Configuration
+```typescript
+interface Relationship {
+  type: 'oneToOne' | 'oneToMany' | 'manyToMany';
+  target: string;
+  inverseSide?: string;
+}
+```
+
+## Validation
+
+### Built-in Validators
+- Required fields
+- String length
+- Number range
+- Pattern matching
+- Custom functions
+
+### Custom Validation
+```typescript
+interface CustomValidator {
+  validate: (value: any) => boolean | Promise<boolean>;
+  message: string;
+}
+```
+
+## API Integration
+
+### GraphQL Schema
+- Automatic type generation
+- Query capabilities
+- Mutation support
+
+### REST Endpoints
+- CRUD operations
+- Filtering
+- Pagination
+- Sorting 

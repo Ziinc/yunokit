@@ -6,23 +6,40 @@ sidebar_label: Introduction
 title: Introduction
 ---
 
-Supacontent is the a content-centric feature framework for Supabase apps. Each feature is pluggable and integrates with any existing Supabase project.
-
-Supacontent ships with an npm package that provides a cli for working with the framework.
+Supacontent is a Content Management System with a batteries-included admin dashboard. Each core feature integrates seamlessly into existing Supabase stack.
 
 ### Why?
 
-**Integration into existing supabase projects**. Existing features and apps can directly query data through the same familiar Supabase client interface.
+**Admin dashboard**. Built-in admin dashboard for managing content, assets, and more.
 
-**No more re-inventing the wheel for eacn new project**. Focus on the value-added feature buildling, instead of boilerplate functionality.
+**Integrate into existing Supabase projects**. Existing features and apps can directly query and join on data through the same familiar Supabase client.
 
-**Migrations are automatically handled**. Spend your development hours on your UI instead of database/api wrangling.
+**Stop re-inventing the wheel for each new project**. Focus on the value-added feature building, instead of re-creating boilerplate functionality.
+
+**Migrations are automatically handled**. Spend your development hours on your UI instead of database schema building.
+
+
+<!--
+**Out-of-the-box components**. UI? No problem. Integrate and ship our features as fast as a copy-paste. -->
 
 ### Getting Started
 
-Requirements:
+1. Pull and run the docker image.
 
-- npm and node
-- dbmate (if self-managed or platform-managed)
+```bash
+docker pull ziinc/yunocontent:latest
+docker run -d --name yunocontent -p 8000:8000 ziinc/yunocontent:latest
+```
 
-🚧 WIP
+2. Update your project's `config.toml` to include `yunocontent` under the list of api schemas.
+
+```toml
+# supabase/config.toml
+[api]
+schemas = ["yunocontent", ...]
+```
+
+Then start your local project:
+```bash
+supabase start
+```

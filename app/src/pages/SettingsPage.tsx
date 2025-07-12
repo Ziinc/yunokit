@@ -1,52 +1,44 @@
-import { ReactHTMLElement } from "react";
-import Prose from "../components/Prose";
-import { SUPABASE_API_KEY, SUPABASE_API_URL } from "../constants";
+import React from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link, useLocation, Navigate, Outlet } from "react-router-dom";
 
-const SettingsPage = () => (
-  <Prose>
-    <h1>Settings</h1>
+const SettingsPage: React.FC = () => {
+  const location = useLocation();
+  const currentTab = location.pathname.split("/settings/")[1] || "account";
 
-    <div className="flex flex-col gap-4 max-w-lg">
-      <h4>Supabase</h4>
-      <Input
-        label="API Endpoint"
-        description="This is the API endpoint where all client requests are sent."
-        value={SUPABASE_API_URL}
-        disabled
-      />
-      <Input
-        label="API Key"
-        description="The public API endpoint key."
-        value={SUPABASE_API_KEY}
-        disabled
-      />
+  // Redirect /settings to /settings/account
+  if (location.pathname === '/settings') {
+    return <Navigate to="/settings/account" replace />;
+  }
+
+  return (
+    <div className="container py-6">
+      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      
+      <Tabs value={currentTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="account" asChild>
+            <Link to="/settings/account">Account</Link>
+          </TabsTrigger>
+          <TabsTrigger value="workspaces" asChild>
+            <Link to="/settings/workspaces">Workspaces</Link>
+          </TabsTrigger>
+          <TabsTrigger value="members" asChild>
+            <Link to="/settings/members">Members</Link>
+          </TabsTrigger>
+          <TabsTrigger value="database" asChild>
+            <Link to="/settings/database">Database</Link>
+          </TabsTrigger>
+          <TabsTrigger value="billing" asChild>
+            <Link to="/settings/billing">Billing</Link>
+          </TabsTrigger>
+        </TabsList>
+
+        <Outlet />
+      </Tabs>
     </div>
-  </Prose>
-);
-
-interface Props extends Partial<ReactHTMLElement<HTMLInputElement>> {
-  label: string;
-  description?: string;
-  value?: string;
-  disabled?: boolean;
-}
-const Input: React.FC<Props> = ({ label, description, disabled, ...props }) => (
-  <div className="form-control">
-    <label className="label">
-      <span className="label-text">{label}</span>
-    </label>
-    <input
-      type="text"
-      className="input input-bordered w-full"
-      disabled={disabled}
-      {...props}
-    />
-    {description && (
-      <label className="label">
-        <span className="label-text-alt">{description}</span>
-      </label>
-    )}
-  </div>
-);
+  );
+};
 
 export default SettingsPage;
+

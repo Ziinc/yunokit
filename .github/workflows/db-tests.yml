@@ -1,0 +1,38 @@
+name: Database Tests
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - "supabase/**"
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "supabase/**"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+          
+      - name: Start Supabase local development setup
+        run: supabase start
+        working-directory: ./supabase
+        
+      - name: Run database tests
+        run: supabase test db
+        working-directory: ./supabase
+        
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
+        working-directory: ./supabase 

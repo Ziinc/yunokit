@@ -1,134 +1,131 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { Navigate, Routes, Route, BrowserRouter } from "react-router-dom";
-import BaseLayout from "./layouts/BaseLayout";
-import ContentPage from "./pages/ContentPage";
+import React from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import NotFound from "./pages/NotFound";
+import MarkdownEditorPage from "./pages/MarkdownEditorPage";
+import JsonEditorPage from "./pages/JsonEditorPage";
+import BlockEditorPage from "./pages/BlockEditorPage";
+import ContentSchemaBuilderPage from "./pages/ContentSchemaBuilderPage";
+import SchemaEditorPage from "./pages/SchemaEditorPage";
+import ContentManagerPage from "./pages/ContentManagerPage";
+import ContentItemPage from "./pages/ContentItemPage";
+import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
-import { client, supacontent } from "./utils";
-import Auth from "./components/Auth";
-import ListContent from "./pages/content/ListContent";
-import Home from "./pages/Home";
-import ContentTypesPage from "./pages/ContentTypesPage";
-import ContentTypesOnboarding from "./interfaces/ContentTypes/ContentTypesOnboarding";
-import { Project } from "./types";
-import { AuthUser } from "@supabase/supabase-js";
-import NewProjectPage from "./pages/NewProjectPage";
-import ProjectSettingsPage from "./pages/ProjectSettingsPage";
-import NewContentType from "./pages/NewContentType";
-import ShowContentType from "./pages/ShowContentType";
-import ShowContent from "./pages/ShowContent";
+import SettingsAccountPage from "./pages/Settings/SettingsAccountPage";
+import SettingsWorkspacesPage from "./pages/Settings/SettingsWorkspacesPage";
+import SettingsMembersPage from "./pages/Settings/SettingsMembersPage";
+import SettingsDatabasePage from "./pages/Settings/SettingsDatabasePage";
+import SettingsBillingPage from "./pages/Settings/SettingsBillingPage";
+import AssetsLibraryPage from "./pages/AssetsLibraryPage";
+import SignInPage from "./pages/SignInPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ContentSearchPage from "./pages/ContentSearchPage";
+import CommentsPage from "./pages/CommentsPage";
+import { AppLayout } from "./components/Layout/AppLayout";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { SearchProvider } from "@/contexts/SearchContext";
+import { WorkspaceProvider } from "@/lib/contexts/WorkspaceContext";
+import { ThemeProvider } from "@/components/theme-provider";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard";
 
-interface IAppContext {
-  projects: Project[] | null;
-  currentProject: Project;
-  user: AuthUser;
-  refreshProjects: () => void;
-}
-const AppContext = createContext<IAppContext>({
-  projects: null,
-  currentProject: null,
-  user: null,
-  refreshProjects: () => null,
-});
-
-export const useAppContext = () => useContext(AppContext);
-const App = ({ base_path = "" }) => {
-  const [user, setUser] = useState<AuthUser>(null);
-  const [projects, setProjects] = useState<Project[]>(null);
-  useEffect(() => {
-    const session = client.auth.session();
-    setUser(session?.user ?? null);
-
-    const { data: authListener } = client.auth.onAuthStateChange(
-      async (_event, session) => {
-        const currentUser = session?.user;
-        setUser(currentUser ?? null);
-      }
-    );
-
-    return () => authListener?.unsubscribe();
-  }, [user]);
-
-  const refreshProjects = async () => {
-    const { data } = await supacontent.from("projects").select();
-    setProjects(data);
-  };
-
-  useEffect(() => {
-    startup();
-  }, [user]);
-
-  const startup = async () => {
-    if (user) {
-      const { data } = await supacontent.from("projects").select();
-      if (data.length === 0) {
-        // create default project
-        const { data: newProject } = await supacontent
-          .from("projects")
-          .insert(
-            {
-              name: "Untitled Project",
-              user_id: user.id,
-            },
-            { returning: "minimal" }
-          );
-      }
-      refreshProjects();
-    }
-  };
+const AppContent: React.FC = () => {
   return (
-    <BrowserRouter basename={process.env.BASE_PATH || undefined}>
-      <AppContext.Provider
-        value={{
-          projects,
-          user,
-          refreshProjects,
-          currentProject: null,
-        }}
-      >
-        <main className="flex flex-col h-screen ">
-          {!user ? (
-            <Auth />
-          ) : (
-            <Routes>
-              {projects && projects.length > 0 && (
-                <Route
-                  path="/"
-                  element={
-                    <Navigate to={`/projects/${projects[0].id}`} replace />
-                  }
-                />
-              )}
-              <Route path="/projects/new" element={<NewProjectPage />} />
-              <Route path="/projects/:project_id" element={<BaseLayout />}>
-                <Route index element={<Home />} />
-                <Route path="settings" element={<ProjectSettingsPage />} />
-                <Route path="content" element={<ContentPage />}>
-                  <Route index element={<ListContent />} />
-                  <Route
-                    path="type/:content_type_id"
-                    element={<ListContent />}
-                  />
-                  <Route
-                    path="type/:content_type_id/edit/:content_id"
-                    element={<ShowContent />}
-                  />
-                </Route>
-                <Route path="content-types" element={<ContentTypesPage />}>
-                  <Route path="new" element={<NewContentType />} />
-                  <Route
-                    path=":content_type_id"
-                    element={<ShowContentType />}
-                  />
-                  <Route index element={<ContentTypesOnboarding />} />
-                </Route>
-              </Route>
-              <Route path="settings" element={<SettingsPage />} />
-            </Routes>
-          )}
-        </main>
-      </AppContext.Provider>
-    </BrowserRouter>
+    <>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+        <Route path="*" element={<NotFound />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <WorkspaceProvider>
+                <AppLayout />
+              </WorkspaceProvider>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/manager" element={<ContentManagerPage />} />
+          <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
+          <Route path="/manager/json" element={<JsonEditorPage />} />
+          <Route path="/manager/block" element={<BlockEditorPage />} />
+          <Route
+            path="/manager/editor/:schemaId/new"
+            element={<ContentItemPage />}
+          />
+          <Route
+            path="/manager/editor/:schemaId/:contentId"
+            element={<ContentItemPage />}
+          />
+          <Route path="/builder" element={<ContentSchemaBuilderPage />} />
+          <Route
+            path="/builder/schemas/:schemaId"
+            element={<SchemaEditorPage />}
+          />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/library" element={<AssetsLibraryPage />} />
+          <Route path="/settings" element={<SettingsPage />}>
+            <Route index element={<Navigate to="account" replace />} />
+            <Route path="account" element={<SettingsAccountPage />} />
+            <Route path="workspaces" element={<SettingsWorkspacesPage />} />
+            <Route path="members" element={<SettingsMembersPage />} />
+            <Route path="database" element={<SettingsDatabasePage />} />
+            <Route path="billing" element={<SettingsBillingPage />} />
+          </Route>
+          <Route path="/search" element={<ContentSearchPage />} />
+          <Route path="/comments" element={<CommentsPage />} />
+        </Route>
+
+        {/* Redirect older routes */}
+        <Route path="/editor" element={<Navigate to="/manager" replace />} />
+        <Route
+          path="/editor/markdown"
+          element={<Navigate to="/manager/markdown" replace />}
+        />
+        <Route
+          path="/editor/json"
+          element={<Navigate to="/manager/json" replace />}
+        />
+        <Route
+          path="/editor/block"
+          element={<Navigate to="/manager/block" replace />}
+        />
+        <Route
+          path="/editor/:schemaId/:contentId"
+          element={
+            <Navigate to="/manager/editor/:schemaId/:contentId" replace />
+          }
+        />
+      </Routes>
+      <Toaster />
+    </>
   );
 };
+
+const App: React.FC = () => (
+  <>
+    <div id="radix-portal-root" />
+    <TooltipProvider>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <BrowserRouter>
+          <AuthProvider>
+            <SearchProvider>
+              <AppContent />
+            </SearchProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </TooltipProvider>
+  </>
+);
 
 export default App;
