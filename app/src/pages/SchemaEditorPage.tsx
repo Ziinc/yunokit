@@ -22,6 +22,8 @@ import {
   Edit,
   Loader2,
   Settings,
+  MoreHorizontal,
+  FileEdit,
 } from "lucide-react";
 import { ContentSchema, ContentField } from "@/lib/contentSchema";
 import { listSchemas, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
@@ -40,6 +42,13 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -128,10 +137,12 @@ const SchemaEditorPage: React.FC = () => {
   const [selectedField, setSelectedField] = useState<SchemaField | null>(null);
   const [showRenameField, setShowRenameField] = useState(false);
   const [showEditSchemaName, setShowEditSchemaName] = useState(false);
+  const [showEditSchemaDescription, setShowEditSchemaDescription] = useState(false);
   const [showDeleteSchema, setShowDeleteSchema] = useState(false);
   const [showChangeSchemaType, setShowChangeSchemaType] = useState(false);
   const [newFieldName, setNewFieldName] = useState("");
   const [newSchemaName, setNewSchemaName] = useState("");
+  const [newSchemaDescription, setNewSchemaDescription] = useState("");
   const [multiItemAction, setMultiItemAction] = useState<"keep_first" | "delete_all">("keep_first");
   const [migrationOptions, setMigrationOptions] =
     useState<FieldMigrationOptions>({
@@ -218,7 +229,10 @@ const SchemaEditorPage: React.FC = () => {
     if (schema && !newSchemaName) {
       setNewSchemaName(schema.name);
     }
-  }, [schema, newSchemaName]);
+    if (schema && !newSchemaDescription) {
+      setNewSchemaDescription(schema.description || "");
+    }
+  }, [schema, newSchemaName, newSchemaDescription]);
 
   const handleDragEnd = async (result: DropResult) => {
     if (!schema || !result.destination) return;
@@ -588,6 +602,71 @@ const SchemaEditorPage: React.FC = () => {
     }
   };
 
+  const handleEditSchemaDescription = async () => {
+    if (!schema) return;
+
+    try {
+      // Optimistic update
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: {
+            ...schema,
+            description: newSchemaDescription.trim(),
+          },
+        },
+        false
+      );
+
+      // Close dialog and reset form immediately
+      setShowEditSchemaDescription(false);
+      setNewSchemaDescription("");
+
+      const updatedSchemaResponse = await updateSchema(
+        schema.id,
+        {
+          description: newSchemaDescription.trim(),
+        },
+        currentWorkspace!.id
+      );
+
+      if (updatedSchemaResponse.error) {
+        // Revert optimistic update on error
+        mutateSchema();
+        toast({
+          title: "Error updating schema description",
+          description:
+            updatedSchemaResponse.error.message ||
+            "There was a problem updating the schema description.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update with actual response
+      if (updatedSchemaResponse.data) {
+        mutateSchema({
+          ...schemaResponse,
+          data: updatedSchemaResponse.data,
+        });
+      }
+
+      toast({
+        title: "Schema description updated",
+        description: "Schema description has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating schema description:", error);
+      // Revert optimistic update on error
+      mutateSchema();
+      toast({
+        title: "Error updating schema description",
+        description: "There was a problem updating the schema description.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteSchema = async () => {
     if (!schema) return;
 
@@ -875,125 +954,6 @@ const SchemaEditorPage: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
-            className="gap-2 text-red-600 hover:text-red-700"
-            onClick={() => setShowDeleteSchema(true)}
-          >
-            <Trash2 size={16} />
-            Delete Schema
-          </Button>
-
-          <Dialog
-            open={showEditSchemaName}
-            onOpenChange={setShowEditSchemaName}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Pencil size={16} />
-                Rename
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Schema Name</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="newSchemaName">New Schema Name</Label>
-                  <Input
-                    id="newSchemaName"
-                    value={newSchemaName}
-                    onChange={(e) => setNewSchemaName(e.target.value)}
-                    placeholder="Enter new schema name..."
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowEditSchemaName(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleEditSchemaName}>Update Name</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog 
-            open={showChangeSchemaType} 
-            onOpenChange={setShowChangeSchemaType}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Settings size={16} />
-                Change Type
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Change Schema Type</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-3">
-                  <p>
-                    Current type: <strong>{schema?.type === "collection" ? "Collection" : "Single"}</strong>
-                  </p>
-                  <p>
-                    Change to: <strong>{schema?.type === "collection" ? "Single" : "Collection"}</strong>
-                  </p>
-                  
-                  {schema?.type === "collection" && contentCount > 1 && (
-                    <div className="space-y-3 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/10">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-yellow-600" />
-                        <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
-                          Multiple Items Detected
-                        </h4>
-                      </div>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                        This schema contains {contentCount} items. Changing to Single type will only keep one item.
-                      </p>
-                      <div className="space-y-2">
-                        <Label>What should happen to the existing items?</Label>
-                        <RadioGroup 
-                          value={multiItemAction} 
-                          onValueChange={(value) => setMultiItemAction(value as "keep_first" | "delete_all")}
-                          className="space-y-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="keep_first" id="keep_first" />
-                            <Label htmlFor="keep_first" className="text-sm">
-                              Keep the first item and delete the rest
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="delete_all" id="delete_all" />
-                            <Label htmlFor="delete_all" className="text-sm">
-                              Delete all existing items
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowChangeSchemaType(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleChangeSchemaType}>
-                  Change Type
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
           <Dialog open={showAddField} onOpenChange={setShowAddField}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -1171,6 +1131,45 @@ const SchemaEditorPage: React.FC = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate(`/manager/editor/${schema.id}/new`)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Content
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/manager?schema-id=${schema.id}`)}>
+                <FileEdit className="mr-2 h-4 w-4" />
+                Browse Content
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowEditSchemaName(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Rename Schema
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowEditSchemaDescription(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Description
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowChangeSchemaType(true)}>
+                <Settings className="mr-2 h-4 w-4" />
+                Change Type
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => setShowDeleteSchema(true)}
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Schema
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -1282,6 +1281,7 @@ const SchemaEditorPage: React.FC = () => {
         </p>
       </div>
 
+      {/* Existing dialogs and alert dialogs remain the same */}
       <AlertDialog open={showDeleteField} onOpenChange={setShowDeleteField}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1336,6 +1336,136 @@ const SchemaEditorPage: React.FC = () => {
               Cancel
             </Button>
             <Button onClick={handleRenameField}>Rename Field</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showEditSchemaName}
+        onOpenChange={setShowEditSchemaName}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Schema Name</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="newSchemaName">New Schema Name</Label>
+              <Input
+                id="newSchemaName"
+                value={newSchemaName}
+                onChange={(e) => setNewSchemaName(e.target.value)}
+                placeholder="Enter new schema name..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditSchemaName(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditSchemaName}>Update Name</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showEditSchemaDescription}
+        onOpenChange={setShowEditSchemaDescription}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Schema Description</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="newSchemaDescription">Schema Description</Label>
+              <Textarea
+                id="newSchemaDescription"
+                value={newSchemaDescription}
+                onChange={(e) => setNewSchemaDescription(e.target.value)}
+                placeholder="Enter schema description..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditSchemaDescription(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditSchemaDescription}>Update Description</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog 
+        open={showChangeSchemaType} 
+        onOpenChange={setShowChangeSchemaType}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Schema Type</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-3">
+              <p>
+                Current type: <strong>{schema?.type === "collection" ? "Collection" : "Single"}</strong>
+              </p>
+              <p>
+                Change to: <strong>{schema?.type === "collection" ? "Single" : "Collection"}</strong>
+              </p>
+              
+              {schema?.type === "collection" && contentCount > 1 && (
+                <div className="space-y-3 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/10">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                      Multiple Items Detected
+                    </h4>
+                  </div>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    This schema contains {contentCount} items. Changing to Single type will only keep one item.
+                  </p>
+                  <div className="space-y-2">
+                    <Label>What should happen to the existing items?</Label>
+                    <RadioGroup 
+                      value={multiItemAction} 
+                      onValueChange={(value) => setMultiItemAction(value as "keep_first" | "delete_all")}
+                      className="space-y-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="keep_first" id="keep_first" />
+                        <Label htmlFor="keep_first" className="text-sm">
+                          Keep the first item and delete the rest
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="delete_all" id="delete_all" />
+                        <Label htmlFor="delete_all" className="text-sm">
+                          Delete all existing items
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowChangeSchemaType(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleChangeSchemaType}>
+              Change Type
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
