@@ -47,14 +47,12 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
   }
 
   // check if user owns the workspace
-  console.log("req.query.workspaceId", req.query.workspaceId);
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
     .select("*")
     .eq("id", req.query.workspaceId as string)
     .eq("user_id", user.user.id)
     .single();
-  console.log("workspace", workspace);
 
   if (workspaceError || !workspace) {
     return res.status(401).set(corsHeaders).send("Unauthorized");
@@ -73,6 +71,7 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
         },
       }
     );
+    console.log("using local db");
   } else {
     req.dataClient = createClient(
       `https://${workspace.project_ref}.supabase.co`,

@@ -3,9 +3,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import NotFound from "./pages/NotFound";
-import MarkdownEditorPage from "./pages/MarkdownEditorPage";
-import JsonEditorPage from "./pages/JsonEditorPage";
-import BlockEditorPage from "./pages/BlockEditorPage";
 import ContentSchemaBuilderPage from "./pages/ContentSchemaBuilderPage";
 import SchemaEditorPage from "./pages/SchemaEditorPage";
 import ContentManagerPage from "./pages/ContentManagerPage";
@@ -55,9 +52,6 @@ const AppContent: React.FC = () => {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/manager" element={<ContentManagerPage />} />
-          <Route path="/manager/markdown" element={<MarkdownEditorPage />} />
-          <Route path="/manager/json" element={<JsonEditorPage />} />
-          <Route path="/manager/block" element={<BlockEditorPage />} />
           <Route
             path="/manager/editor/:schemaId/new"
             element={<ContentItemPage />}

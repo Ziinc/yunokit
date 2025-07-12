@@ -163,68 +163,6 @@ export type Database = {
   }
   yunocontent: {
     Tables: {
-      authors: {
-        Row: {
-          description: string | null
-          first_name: string | null
-          id: string
-          last_name: string | null
-          metadata: Json | null
-          pseudonym: string | null
-          sc_user_id: string | null
-          title: string | null
-          user_id: string | null
-        }
-        Insert: {
-          description?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          metadata?: Json | null
-          pseudonym?: string | null
-          sc_user_id?: string | null
-          title?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          description?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          metadata?: Json | null
-          pseudonym?: string | null
-          sc_user_id?: string | null
-          title?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      content_authors: {
-        Row: {
-          author_id: string
-          content_id: string
-          id: number
-        }
-        Insert: {
-          author_id: string
-          content_id: string
-          id?: number
-        }
-        Update: {
-          author_id?: string
-          content_id?: string
-          id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "content_authors_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "authors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       content_items: {
         Row: {
           created_at: string
@@ -269,6 +207,18 @@ export type Database = {
           },
         ]
       }
+      content_items_authors: {
+        Row: {
+          id: number
+        }
+        Insert: {
+          id?: number
+        }
+        Update: {
+          id?: number
+        }
+        Relationships: []
+      }
       schemas: {
         Row: {
           archived_at: string | null
@@ -277,7 +227,8 @@ export type Database = {
           description: string | null
           fields: Json | null
           id: number
-          name: string | null
+          name: string
+          strict: boolean
           type: Database["yunocontent"]["Enums"]["schema_type"] | null
           updated_at: string
         }
@@ -287,8 +238,9 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           fields?: Json | null
-          id?: never
-          name?: string | null
+          id?: number
+          name: string
+          strict?: boolean
           type?: Database["yunocontent"]["Enums"]["schema_type"] | null
           updated_at?: string
         }
@@ -298,8 +250,9 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           fields?: Json | null
-          id?: never
-          name?: string | null
+          id?: number
+          name?: string
+          strict?: boolean
           type?: Database["yunocontent"]["Enums"]["schema_type"] | null
           updated_at?: string
         }

@@ -30,6 +30,7 @@ export interface ContentSchema {
   schemaType?: 'collection' | 'single';
   type: 'collection' | 'single';
   fields: any[];
+  strict?: boolean; // When false, allows adding new fields dynamically
   createdAt?: string;
   updatedAt?: string;
   isArchived?: boolean;
@@ -178,6 +179,7 @@ export const exampleSchemas: ContentSchema[] = [
     isCollection: false,
     schemaType: 'single',
     type: 'single',
+    strict: false, // Allow dynamic fields
     fields: [
       {
         id: 'title',
