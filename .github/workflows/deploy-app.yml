@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 defaults:
   run:
@@ -37,11 +40,21 @@ jobs:
         run: npm ci
       - name: Build app
         run: npm run build
-      - name: Publish
+      - name: Publish to Production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=yunokit-app --branch=${{ github.ref_name }}
+          command: pages deploy dist --project-name=yunokit-app --branch=main
+          workingDirectory: app
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Preview
+        if: github.event_name == 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=yunokit-app --branch=preview-${{ github.event.pull_request.number }}
           workingDirectory: app
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
