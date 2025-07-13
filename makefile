@@ -55,6 +55,7 @@ diff.app:
 	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/app/$$(basename $$latest_migration)" ]; then \
 		cp "$$latest_migration" supabase/migrations/app/; \
 	fi;
+	$(MAKE) types
 
 diff.yunocontent:
 	supabase db diff -f $(f) -s yunocontent --local;
@@ -62,6 +63,7 @@ diff.yunocontent:
 	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/yunocontent/$$(basename $$latest_migration)" ]; then \
 		cp "$$latest_migration" supabase/migrations/yunocontent/; \
 	fi;
+	$(MAKE) types
 
 types:
 	supabase gen types typescript --local --schema public,yunocontent  > app/database.types.ts
