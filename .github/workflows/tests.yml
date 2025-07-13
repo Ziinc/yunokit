@@ -4,11 +4,11 @@ name: Tests
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main", "develop"]
+    branches: ["main"]
     paths:
       - "app/**"
   pull_request:
-    branches: ["main", "develop"]
+    branches: ["main"]
     paths:
       - "app/**"
 

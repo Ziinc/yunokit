@@ -5,10 +5,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "app/**"
   pull_request:
     branches:
       - main
-
+    paths:
+      - "app/**"
 defaults:
   run:
     shell: bash
@@ -18,6 +21,9 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      url: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'https://app.yunokit.com' || format('https://preview-{0}.yunokit-app.pages.dev', github.event.pull_request.number) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
