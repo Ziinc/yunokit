@@ -8,6 +8,7 @@ import {
   Layers,
   Loader2,
   Archive,
+  ArchiveRestore,
   Trash2,
   Calendar,
 } from "lucide-react";
@@ -372,6 +373,56 @@ const ContentSchemaBuilderPage: React.FC = () => {
     }
   };
 
+  const handleUnarchiveSchemas = async () => {
+    try {
+      const updatedSchemas = await Promise.all(
+        selectedSchemas.map(async (schema) => {
+          const updated = { ...schema, archived_at: null };
+          const response = await updateSchema(
+            schema.id,
+            updated,
+            currentWorkspace!.id
+          );
+
+          if (response.error) {
+            console.error("Error unarchiving schema:", response.error);
+            throw new Error(response.error.message);
+          }
+
+          return response.data;
+        })
+      );
+
+      mutateSchemas((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: prev.data.map((schema) =>
+            selectedSchemas.find((s) => s.id === schema.id)
+              ? updatedSchemas.find((u) => u.id === schema.id)!
+              : schema
+          ),
+        };
+      });
+
+      setSelectedSchemas([]);
+
+      toast({
+        title: "Schemas restored",
+        description: `Successfully restored ${selectedSchemas.length} schema${
+          selectedSchemas.length !== 1 ? "s" : ""
+        }.`,
+      });
+    } catch (error) {
+      console.error("Error unarchiving schemas:", error);
+      toast({
+        title: "Error restoring schemas",
+        description: "There was a problem restoring the selected schemas.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteSchemas = async () => {
     try {
       await Promise.all(
@@ -525,13 +576,28 @@ const ContentSchemaBuilderPage: React.FC = () => {
                 <SelectionActionsBar
                   selectedCount={selectedSchemas.length}
                   actions={[
-                    ...(isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag)
+                    ...(isFeatureEnabled(
+                      FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag
+                    )
                       ? [
-                          {
-                            label: "Archive",
-                            icon: <Archive size={16} />,
-                            onClick: handleArchiveSchemas,
-                          },
+                          ...(selectedSchemas.some((s) => !s.archived_at)
+                            ? [
+                                {
+                                  label: "Archive",
+                                  icon: <Archive size={16} />,
+                                  onClick: handleArchiveSchemas,
+                                },
+                              ]
+                            : []),
+                          ...(selectedSchemas.some((s) => s.archived_at)
+                            ? [
+                                {
+                                  label: "Unarchive",
+                                  icon: <ArchiveRestore size={16} />,
+                                  onClick: handleUnarchiveSchemas,
+                                },
+                              ]
+                            : []),
                         ]
                       : []),
                     {
