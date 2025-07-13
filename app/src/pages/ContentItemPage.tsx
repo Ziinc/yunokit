@@ -3,7 +3,7 @@ import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
 import { ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight } from "lucide-react";
+import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight, FileX2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -411,6 +411,37 @@ const ContentItemPage: React.FC = () => {
               <TooltipContent />
             </Tooltip>
           </TooltipProvider>
+        </div>
+      </div>
+    );
+  }
+
+  // Show content item not found
+  if (contentId && !contentItem) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate('/manager')}
+                >
+                  <ChevronLeft size={16} />
+                  <span className="sr-only">Back</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent />
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <FileX2 className="h-12 w-12 text-muted-foreground mx-auto" />
+            <p className="mt-4 text-muted-foreground">Content item not found</p>
+          </div>
         </div>
       </div>
     );
