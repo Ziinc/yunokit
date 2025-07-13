@@ -3,7 +3,7 @@
 
 const {themes} = require('prism-react-renderer');
 const autoprefixer = require("autoprefixer")
-const tailwindConfig = require("../app/tailwind.config");
+const tailwindConfig = require("../shared/tailwind.config");
 const tailwind = require("tailwindcss");
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
