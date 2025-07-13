@@ -15,7 +15,6 @@ import {
   listSchemas,
   updateSchema,
 } from "./schemas.ts";
-import { dataSbClient } from "./_utils.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -89,7 +88,6 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
 
 app.get("/proxy/content_items", async (req: any, res: any) => {
   const result = await listContentItems(req.dataClient);
-  console.log("result", result);
   res.set({ ...corsHeaders }).json(result.data);
 });
 

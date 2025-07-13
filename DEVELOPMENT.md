@@ -154,7 +154,9 @@ if (response.error) {
   /* handle error */ return;
 }
 ```
+## Database
 
+- Views use the `_vw` suffix for db tables.
 
 
 ## Testing of App
