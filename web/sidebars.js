@@ -15,7 +15,7 @@ const sidebars = {
   // By default, Docusaurus generates a sidebar from the docs folder structure
   docs: [
     "intro",
-    "supabase-integration",
+    "features/supabase-integration",
     {
       type: "category",
       label: "Features",

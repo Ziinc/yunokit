@@ -30,6 +30,9 @@ jobs:
           path: |
             node_modules
           key: ${{ runner.os }}-web-build-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies on shared
+        run: npm ci
+        working-directory: shared
       - name: Install dependencies on web
         run: npm ci
       - name: Build web

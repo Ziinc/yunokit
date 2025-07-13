@@ -3,10 +3,10 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import { Check, DollarSign, ChevronDown, Rocket, Zap } from 'lucide-react';
-import { Button } from '../../../app/src/components/ui/button';
-import { Alert, AlertDescription } from '../../../app/src/components/ui/alert';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../app/src/components/ui/collapsible';
-import { cn } from '../../../app/src/lib/utils';
+import { Button } from '../../../shared/src/ui/button';
+import { Alert, AlertDescription } from '../../../shared/src/ui/alert';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../shared/src/ui/collapsible';
+import { cn } from '../lib/utils';
 
 const plans = [
   {
@@ -208,7 +208,7 @@ function PricingCard({ plan }) {
         asChild
         className="w-full font-medium bg-cms-purple hover:bg-cms-purple/90 text-white"
         variant="default">
-        <Link to="/docs/getting-started" className="flex items-center justify-center gap-2">
+                    <Link to="/docs/intro" className="flex items-center justify-center gap-2">
           <Rocket className="w-4 h-4" />
           {plan.cta}
         </Link>
