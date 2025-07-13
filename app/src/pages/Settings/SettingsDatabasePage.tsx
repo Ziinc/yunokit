@@ -237,7 +237,7 @@ const SettingsDatabasePage: React.FC = () => {
   );
 
   // Fetch projects when connected
-  const { data: projects, error: projectsError } = useSWR(
+  const { data: projects } = useSWR(
     connectionData?.result ? "projects" : null,
     listProjects,
     {

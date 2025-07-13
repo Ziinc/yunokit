@@ -21,7 +21,7 @@ import {
   Database,
   Wand2,
 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
   signInWithGoogle,
@@ -164,7 +164,7 @@ const SignInPage: React.FC = () => {
       } 
       
       // Sign in with Supabase
-      const { data, error } = await signInWithEmail(email, password);
+      const { error } = await signInWithEmail(email, password);
       
       if (error) {
         throw error;

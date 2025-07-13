@@ -27,13 +27,6 @@ interface BillingInfo {
   };
 }
 
-interface Invoice {
-  id: string;
-  date: string;
-  amount: number;
-  status: "paid" | "pending" | "failed";
-  items: { name: string; quantity: number; price: number }[];
-}
 
 const SettingsBillingPage: React.FC = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -93,19 +86,6 @@ const SettingsBillingPage: React.FC = () => {
           }
         } satisfies BillingInfo;
 
-        const mockInvoices: Invoice[] = [
-          {
-            id: "inv_1",
-            date: "2024-03-01",
-            amount: 35,
-            status: "paid",
-            items: [
-              { name: "Pro Plan", quantity: 1, price: 15 },
-              { name: "Additional Workspace", quantity: 1, price: 10 },
-              { name: "Additional Member", quantity: 2, price: 5 }
-            ]
-          }
-        ];
 
         setPlans(mockPlans);
         setBillingInfo(mockBillingInfo);
