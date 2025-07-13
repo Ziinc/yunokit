@@ -22,7 +22,10 @@ jobs:
           cache-dependency-path: |
             app/package-lock.json
             web/package-lock.json
-
+            shared/package-lock.json
+      - name: Install dependencies on shared
+        run: npm ci
+        working-directory: shared
       - name: Install dependencies in ${{ matrix.dir }}
         working-directory: ${{ matrix.dir }}
         run: npm ci
