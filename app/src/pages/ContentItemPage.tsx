@@ -15,8 +15,10 @@ import { getSchema } from "@/lib/api/SchemaApi";
 import {
   createContentItem,
   updateContentItem,
-  getContentItemById
+  getContentItemById,
+  listContentItemVersions
 } from "@/lib/api/ContentApi";
+import ContentItemHistoryPanel from "@/components/Content/ContentItemHistoryPanel";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
 
@@ -29,6 +31,7 @@ const ContentItemPage: React.FC = () => {
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [inlineCommentText, setInlineCommentText] = useState("");
   const [diffView, setDiffView] = useState<"unified" | "split">("unified");
+  const [historyOpen, setHistoryOpen] = useState(false);
   
   const contentIdNumber = contentId ? Number(contentId) : null;
   
@@ -85,6 +88,15 @@ const ContentItemPage: React.FC = () => {
   
   // Set up initial content
   const initialContent = getContentData(contentItem) || {};
+
+  const { data: historyResponse } = useSWR(
+    historyOpen && currentWorkspace && contentIdNumber
+      ? `content-item-history-${contentIdNumber}`
+      : null,
+    () => listContentItemVersions(contentIdNumber!, currentWorkspace!.id),
+    { revalidateOnFocus: false }
+  );
+  const history = historyResponse?.data;
 
   // Mock previous version for diffing (for demo purposes)
   const [previousVersion] = useState<ContentItem | undefined>(() => {
@@ -453,6 +465,11 @@ const ContentItemPage: React.FC = () => {
             {contentId ? 'Update your content item' : 'Create a new content item'}
           </p>
         </div>
+        {contentId && (
+          <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)}>
+            History
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -673,6 +690,11 @@ const ContentItemPage: React.FC = () => {
         </div>
       </div>
     </div>
+    <ContentItemHistoryPanel
+      open={historyOpen}
+      onOpenChange={setHistoryOpen}
+      versions={history}
+    />
   );
 };
 
