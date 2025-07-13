@@ -25,7 +25,7 @@ export const Sidebar: React.FC = () => {
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
     { name: "Content Manager", path: "/manager", icon: <FileText size={20} /> },
-    { name: "Content Builder", path: "/builder", icon: <Database size={20} /> },
+    { name: "Schema Builder", path: "/builder", icon: <Database size={20} /> },
     ...(isFeatureEnabled(FeatureFlags.ASSET_LIBRARY)
       ? [{ name: "Library", path: "/library", icon: <Image size={20} /> }]
       : []),

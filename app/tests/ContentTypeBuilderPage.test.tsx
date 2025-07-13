@@ -5,7 +5,7 @@ import React from 'react';
 // Mock the page component since we can't import it
 const MockContentSchemaBuilderPage = () => (
   <div>
-    <h1>Content Schema Builder</h1>
+    <h1>Schema Builder</h1>
     <table>
       <thead>
         <tr>

@@ -150,7 +150,7 @@ function BenefitsSection() {
       ]
     },
     {
-      title: "Content Builder",
+      title: "Schema Builder",
       features: [
         "Drag-and-drop page builder",
         "Custom field types and validations",

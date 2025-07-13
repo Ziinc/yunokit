@@ -419,7 +419,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold tracking-tight">
-              Content Schema Builder
+              Schema Builder
             </h1>
             <DocsButton href="https://yunokit.com/docs/schema-builder" />
           </div>
