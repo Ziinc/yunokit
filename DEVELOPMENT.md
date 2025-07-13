@@ -154,3 +154,17 @@ if (response.error) {
   /* handle error */ return;
 }
 ```
+
+
+
+## Testing of App
+
+- Tests should always be written under the `app/tests` directory. 
+- When working on files under `app/src/lib/**`, always ensure that there are appropriate tests written.
+
+- Tests should always be written under the `app/tests` directory. 
+- Use the global setup file to perform common app-level setup.
+
+### mocks
+- always use automocks in __mocks__ folder
+- never use `vi.mock()`
