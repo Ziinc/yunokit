@@ -35,11 +35,10 @@ jobs:
       - name: Build web
         run: npm run build
       - name: Publish
-        uses: cloudflare/pages-action@1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: yunokit-web
+          command: pages deploy build --project-name=yunokit-web --branch=${{ github.ref_name }}
           workingDirectory: web
-          directory: build
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
