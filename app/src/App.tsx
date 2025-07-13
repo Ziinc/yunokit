@@ -57,7 +57,7 @@ const AppContent: React.FC = () => {
             element={<ContentItemPage />}
           />
           <Route
-            path="/manager/editor/:schemaId/:contentId"
+            path="/manager/editor/:contentId"
             element={<ContentItemPage />}
           />
           <Route path="/builder" element={<ContentSchemaBuilderPage />} />

@@ -21,7 +21,7 @@ import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
 
 const ContentItemPage: React.FC = () => {
-  const { schemaId, contentId } = useParams<{ schemaId: string; contentId?: string }>();
+  const { contentId } = useParams<{ contentId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
@@ -30,22 +30,7 @@ const ContentItemPage: React.FC = () => {
   const [inlineCommentText, setInlineCommentText] = useState("");
   const [diffView, setDiffView] = useState<"unified" | "split">("unified");
   
-  const schemaIdNumber = schemaId ? Number(schemaId) : null;
   const contentIdNumber = contentId ? Number(contentId) : null;
-  
-  // Load schema from database
-  const { 
-    data: schemaResponse, 
-    error: schemaError, 
-    isLoading: isLoadingSchema 
-  } = useSWR(
-    currentWorkspace && schemaIdNumber ? `schema-${schemaIdNumber}` : null,
-    () => getSchema(schemaIdNumber!, currentWorkspace!.id),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    }
-  );
   
   // Load content item if editing existing
   const { 
@@ -62,9 +47,24 @@ const ContentItemPage: React.FC = () => {
     }
   );
 
-  const schema = schemaResponse?.data;
   const contentItemData = contentItemResponse?.data;
   
+  // Load schema from database
+  const { 
+    data: schemaResponse, 
+    error: schemaError, 
+    isLoading: isLoadingSchema 
+  } = useSWR(
+    currentWorkspace && contentItemData?.schema_id ? `schema-${contentItemData.schema_id}` : null,
+    () => getSchema(contentItemData?.schema_id!, currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+  const schema = schemaResponse?.data;
+  
+
   // Convert database row to ContentItem format
   const contentItem: ContentItem | undefined = contentItemData ? {
     id: contentItemData.id.toString(),

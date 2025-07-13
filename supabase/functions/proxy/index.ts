@@ -87,8 +87,8 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
 });
 
 app.get("/proxy/content_items", async (req: any, res: any) => {
-  const result = await listContentItems(req.dataClient);
-  res.set({ ...corsHeaders }).json(result.data);
+  const data = await listContentItems(req.dataClient);
+  res.set({ ...corsHeaders }).json(data);
 });
 
 app.get("/proxy/content_items/:id", async (req: any, res: any) => {

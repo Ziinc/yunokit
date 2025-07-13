@@ -1,7 +1,7 @@
 import { supabase } from "../supabase";
 import type { Database } from "../../../database.types";
 
-export type ContentItemRow = Database['yunocontent']['Tables']['content_items']['Row'];
+export type ContentItemRow = Database['yunocontent']['Views']['content_items_vw']['Row'];
 export type ContentItemInsert = Database['yunocontent']['Tables']['content_items']['Insert'];
 export type ContentItemUpdate = Database['yunocontent']['Tables']['content_items']['Update'];
 
