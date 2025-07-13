@@ -163,6 +163,52 @@ export type Database = {
   }
   yunocontent: {
     Tables: {
+      content_item_versions: {
+        Row: {
+          content_item_id: number
+          created_at: string
+          data: Json | null
+          id: number
+          schema_id: number
+        }
+        Insert: {
+          content_item_id: number
+          created_at?: string
+          data?: Json | null
+          id?: number
+          schema_id: number
+        }
+        Update: {
+          content_item_id?: number
+          created_at?: string
+          data?: Json | null
+          id?: number
+          schema_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_versions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_versions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items_vw"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_versions_schema_id_fkey"
+            columns: ["schema_id"]
+            isOneToOne: false
+            referencedRelation: "schemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_items: {
         Row: {
           archived_at: string | null
