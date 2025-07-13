@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, UserPlus, UserMinus } from "lucide-react";
+import { Loader2, UserPlus, UserMinus } from "lucide-react";
 
 interface Member {
   id: string;

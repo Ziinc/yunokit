@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import type { ContentItem } from "@/lib/contentSchema";
 import { listContentItems, deleteContentItem, updateContentItem } from '@/lib/api/ContentApi';
 import { ContentSchemaRow, listSchemas } from '@/lib/api/SchemaApi';
@@ -186,7 +186,6 @@ const ContentManagerPage: React.FC = () => {
     perPage: 10,
   });
   
-  const [searchParams] = useSearchParams();
   
   // Handle errors
   useEffect(() => {

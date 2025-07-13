@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Plus, GripVertical, X, Type, Hash, Calendar, ToggleLeft, List, Link, FileText, Code, Image } from 'lucide-react';
@@ -678,7 +678,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     ],
     content: '',
     editable,
-    onUpdate: ({ editor: _editor }) => {
+    onUpdate: () => {
       // Handle editor updates if needed
     },
   });

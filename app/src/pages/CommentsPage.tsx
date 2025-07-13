@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Flag, Shield, MessageSquare, Users, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Comment, ForumPost } from "@/types/comments";
+import { Comment } from "@/types/comments";
 import CommentsTab from "@/components/Comments/CommentsTab";
 import { getComments, approveComment, rejectComment, saveComment } from '@/lib/api/CommentsApi';
 
@@ -15,8 +15,8 @@ const CommentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   // Pagination state for comments
-  const [commentsPerPage, setCommentsPerPage] = useState(10);
-  const [currentCommentsPage, setCurrentCommentsPage] = useState(1);
+  const commentsPerPage = 10;
+  const currentCommentsPage = 1;
   
 
   const [comments, setComments] = useState<Comment[]>([]);
