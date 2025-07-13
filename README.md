@@ -1,10 +1,10 @@
 # Yunokit
 
-<p align="center" width="100%">
+<div align="center">
 
 ![Yunokit logo](./shared/static/branding.png)
 
-</p>
+</div>
 
 Yunokit is a suite of micro-apps for Supabase apps.
 
