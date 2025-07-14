@@ -46,7 +46,7 @@ const SettingsBillingPage: React.FC = () => {
             name: "Free",
             price: 0,
             features: [
-              "1 user included",
+              "1 user included per workspace",
               "1 workspace",
               "Basic content management",
               "Standard support",
@@ -59,7 +59,7 @@ const SettingsBillingPage: React.FC = () => {
             name: "Pro",
             price: 15,
             features: [
-              { text: "3 users included", highlight: true },
+              { text: "3 users included per workspace", highlight: true },
               { text: "2 workspaces included", highlight: true },
               { text: "Community features", highlight: true },
               "System authors",

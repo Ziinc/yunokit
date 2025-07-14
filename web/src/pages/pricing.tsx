@@ -14,7 +14,7 @@ const plans = [
     description: "Perfect for individuals getting started",
     price: 0,
     features: [
-      "1 user included",
+      "1 user included per workspace",
       "1 workspace",
       "Basic content management",
       "Standard support",
@@ -33,8 +33,8 @@ const plans = [
     description: "For growing teams that need more power",
     price: 15,
     features: [
-      { text: "3 users included", highlight: true },
-      { text: "2 workspace included", highlight: true },
+      { text: "3 users included per workspace", highlight: true },
+      { text: "2 workspaces included", highlight: true },
       { text: "Community features", highlight: true },
       "System authors",
       "Content approval flow",
