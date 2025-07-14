@@ -5,6 +5,13 @@ import ContentManagerPage from '../src/pages/ContentManagerPage';
 import { act } from 'react-dom/test-utils';
 import { render } from './utils/test-utils';
 import { ContentApi } from '../src/lib/api/ContentApi';
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return { ...actual, useLocation: vi.fn() };
+});
+import { useLocation } from 'react-router-dom';
+import type { Mock } from 'vitest';
+const useLocationMock = useLocation as Mock;
 
 const mockContentItems = [
   {
@@ -38,7 +45,6 @@ describe('ContentManagerPage', () => {
     vi.clearAllMocks();
     
     // Mock the useLocation implementation for each test
-    const useLocationMock = vi.spyOn(require('react-router-dom'), 'useLocation');
     useLocationMock.mockImplementation(() => ({
       pathname: '/manager',
       search: '',
@@ -48,7 +54,7 @@ describe('ContentManagerPage', () => {
     }));
 
     // Setup mock responses
-    (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
+    (ContentApi.listContentItems as any).mockResolvedValue({ data: mockContentItems });
     (ContentApi.getSchemas as any).mockResolvedValue(mockSchemas);
   });
 
@@ -65,7 +71,6 @@ describe('ContentManagerPage', () => {
 
   it('updates filter values from URL query parameters', async () => {
     // Mock useLocation to return query parameters
-    const useLocationMock = vi.spyOn(require('react-router-dom'), 'useLocation');
     useLocationMock.mockImplementation(() => ({
       pathname: '/manager',
       search: '?status=published&schema=article&author=user1@example.com&search=test',
@@ -99,7 +104,6 @@ describe('ContentManagerPage', () => {
     });
     
     // Now update the location to simulate navigation with query parameters
-    const useLocationMock = vi.spyOn(require('react-router-dom'), 'useLocation');
     useLocationMock.mockImplementation(() => ({
       pathname: '/manager',
       search: '?status=draft&schema=blog&search=draft',
@@ -126,7 +130,6 @@ describe('ContentManagerPage', () => {
 
   it('correctly resets filters when clicking the reset button', async () => {
     // Start with filters applied
-    const useLocationMock = vi.spyOn(require('react-router-dom'), 'useLocation');
     useLocationMock.mockImplementation(() => ({
       pathname: '/manager',
       search: '?status=published&schema=article&search=test',
@@ -159,7 +162,6 @@ describe('ContentManagerPage', () => {
 
   it('correctly applies sort parameter from URL', async () => {
     // Render with sort parameter
-    const useLocationMock = vi.spyOn(require('react-router-dom'), 'useLocation');
     useLocationMock.mockImplementation(() => ({
       pathname: '/manager',
       search: '?sort=updatedAt',
@@ -184,7 +186,7 @@ describe('ContentManagerPage - Selection Actions', () => {
     vi.clearAllMocks();
     
     // Setup mock responses
-    (ContentApi.listContentItems as any).mockResolvedValue(mockContentItems);
+    (ContentApi.listContentItems as any).mockResolvedValue({ data: mockContentItems });
     (ContentApi.getSchemas as any).mockResolvedValue(mockSchemas);
   });
   

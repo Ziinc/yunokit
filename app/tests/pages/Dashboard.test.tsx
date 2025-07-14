@@ -117,7 +117,7 @@ describe("Dashboard", () => {
 
   describe("Content Rendering", () => {
     beforeEach(() => {
-      (ContentApi.listContentItems as Mock).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as Mock).mockResolvedValue({ data: mockContentItems });
     });
 
     test("renders content items in Last Edited widget", async () => {
@@ -184,7 +184,7 @@ describe("Dashboard", () => {
 
   describe("View More Navigation", () => {
     beforeEach(() => {
-      (ContentApi.listContentItems as Mock).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as Mock).mockResolvedValue({ data: mockContentItems });
     });
 
     test("navigates to correct route when clicking View More in Last Edited widget", async () => {
