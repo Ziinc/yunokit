@@ -7,4 +7,5 @@ export const ContentApi = {
   updateContentItem: vi.fn().mockResolvedValue({}),
   deleteContentItem: vi.fn().mockResolvedValue(undefined),
   getContentItemById: vi.fn().mockResolvedValue({}),
-}; 
+  listContentItemVersions: vi.fn().mockResolvedValue([]),
+};
