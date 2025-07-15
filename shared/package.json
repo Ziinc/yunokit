@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +21,13 @@
     "react": "^19.0.0"
   },
   "devDependencies": {
-    "tailwindcss-animate": "^1.0.7"
+    "@storybook/addon-docs": "^9.0.16",
+    "@storybook/react-vite": "^9.0.16",
+    "prop-types": "^15.8.1",
+    "storybook": "^9.0.16",
+    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.4.47",
+    "autoprefixer": "^10.4.21"
   }
 }
