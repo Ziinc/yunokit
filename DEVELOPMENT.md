@@ -170,3 +170,10 @@ if (response.error) {
 ### mocks
 - always use automocks in __mocks__ folder
 - never use `vi.mock()`
+
+## Coding Style & Architecture
+
+- API modules wrap `supabase.functions.invoke` calls
+- Pages consume these helpers and update data through `useSWR`
+- Keep domain types in `/types` and share across modules
+- Remove prototype code and mock data from production files
