@@ -15,6 +15,20 @@ start:
 	npm run dev --prefix=app & \
 	wait $$!; \
 	cleanup
+start.ci:
+	@cleanup() { 
+		rm -f supabase/migrations/*.sql 2>/dev/null || true; 
+		rm -f supabase/functions/migrations/yunocontent/*.sql 2>/dev/null || true; 
+		rm -f supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; 
+	}; 
+	trap cleanup EXIT INT TERM; 
+	cp -f supabase/migrations/app/*.sql supabase/migrations/ 2>/dev/null || true; 
+	cp -f supabase/migrations/yunocontent/*.sql supabase/migrations/ 2>/dev/null || true; 
+	mkdir -p supabase/functions/migrations/yunocontent && cp -f supabase/migrations/yunocontent/*.sql supabase/functions/migrations/yunocontent/ 2>/dev/null || true; 
+	ls supabase/migrations/yunocontent/*.sql 2>/dev/null | xargs -n1 basename | sort > supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; 
+	supabase start -D; 
+	npm run dev --prefix=app &
+
 stop:
 	supabase stop
 
@@ -75,5 +89,5 @@ deploy:
 	@echo 'Deploying functions now'
 	@find ./supabase/functions/* -type d ! -name '_*'  | xargs -I {} basename {} | xargs -I {} supabase functions deploy {}
 
-.PHONY: start diff deploy restart types db.reset stop check-version
+.PHONY: start start.ci diff deploy restart types db.reset stop check-version
 
