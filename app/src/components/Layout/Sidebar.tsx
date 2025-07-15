@@ -5,6 +5,7 @@ import {
   FileText,
   Home,
   Database,
+  Clock,
   Image,
   MessageCircle,
   Loader2,
@@ -26,6 +27,7 @@ export const Sidebar: React.FC = () => {
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
     { name: "Content Manager", path: "/manager", icon: <FileText size={20} /> },
     { name: "Schema Builder", path: "/builder", icon: <Database size={20} /> },
+    { name: "Workflows", path: "/workflows", icon: <Clock size={20} /> },
     ...(isFeatureEnabled(FeatureFlags.ASSET_LIBRARY)
       ? [{ name: "Library", path: "/library", icon: <Image size={20} /> }]
       : []),

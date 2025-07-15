@@ -23,6 +23,14 @@ import {
   listSchemas,
   updateSchema,
 } from "./schemas.ts";
+import {
+  listWorkflows,
+  getWorkflow,
+  createWorkflow,
+  updateWorkflow,
+  deleteWorkflow,
+  queueWorkflow,
+} from "./workflows.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -204,6 +212,36 @@ app.delete("/proxy/schemas/:id", async (req: any, res: any) => {
 
   res.set({ ...corsHeaders });
   res.json(data);
+});
+
+app.get("/proxy/workflows", async (req: any, res: any) => {
+  const data = await listWorkflows(req.dataClient);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.get("/proxy/workflows/:id", async (req: any, res: any) => {
+  const data = await getWorkflow(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/workflows", async (req: any, res: any) => {
+  const data = await createWorkflow(req.dataClient, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.put("/proxy/workflows/:id", async (req: any, res: any) => {
+  const data = await updateWorkflow(req.dataClient, req.params.id, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.delete("/proxy/workflows/:id", async (req: any, res: any) => {
+  const data = await deleteWorkflow(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/workflows/:id/queue", async (req: any, res: any) => {
+  const data = await queueWorkflow(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
 });
 
 app.listen(8000, () => {

@@ -57,7 +57,7 @@ const ContentItemPage: React.FC = () => {
     isLoading: isLoadingSchema 
   } = useSWR(
     currentWorkspace && contentItemData?.schema_id ? `schema-${contentItemData.schema_id}` : null,
-    () => getSchema(contentItemData?.schema_id!, currentWorkspace!.id),
+    () => getSchema(contentItemData!.schema_id, currentWorkspace!.id),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,

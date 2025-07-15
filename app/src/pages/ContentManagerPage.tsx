@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { ContentItem, ContentItemStatus, ContentSchema, ContentField } from "@/lib/contentSchema";
+import type { ContentItem, ContentItemStatus, ContentField } from "@/lib/contentSchema";
 import { listContentItems, deleteContentItem, updateContentItem } from '@/lib/api/ContentApi';
 import { ContentSchemaRow, listSchemas } from '@/lib/api/SchemaApi';
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
@@ -86,7 +86,7 @@ const ContentTable: React.FC<{
       header: "Status",
       accessorKey: "status",
       width: "120px",
-      cell: (item) => <ContentStatusBadge status={item.status as any} />,
+      cell: (item) => <ContentStatusBadge status={item.status as ContentItemStatus} />,
     },
     {
       header: (
@@ -116,7 +116,7 @@ const ContentTable: React.FC<{
         </span>
       ),
       accessorKey: "authors",
-      cell: (item) => {
+      cell: () => {
         // For now, we don't have author information in the view
         // This would need to be implemented with proper author relations
         return '-';
@@ -178,7 +178,7 @@ const ContentManagerPage: React.FC = () => {
     id: schema.id.toString(),
     name: schema.name,
     description: schema.description || undefined,
-    fields: schema.fields as any[] || [],
+    fields: schema.fields as ContentField[] || [],
     isCollection: schema.type === 'collection',
     type: schema.type || 'collection',
     strict: schema.strict
