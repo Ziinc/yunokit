@@ -3,14 +3,19 @@ VERSION := $(shell node -p "require('./app/package.json').version")
 start:
 	@cleanup() { \
 		rm -f supabase/migrations/*.sql 2>/dev/null || true; \
-		rm -f supabase/functions/migrations/yunocontent/*.sql 2>/dev/null || true; \
-		rm -f supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; \
+               rm -f supabase/functions/migrations/yunocontent/*.sql 2>/dev/null || true; \
+               rm -f supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; \
+               rm -f supabase/functions/migrations/yunofeedback/*.sql 2>/dev/null || true; \
+               rm -f supabase/functions/migrations/yunofeedback/index.txt 2>/dev/null || true; \
 	}; \
 	trap cleanup EXIT INT TERM; \
 	cp -f supabase/migrations/app/*.sql supabase/migrations/ 2>/dev/null || true; \
-	cp -f supabase/migrations/yunocontent/*.sql supabase/migrations/ 2>/dev/null || true; \
-	mkdir -p supabase/functions/migrations/yunocontent && cp -f supabase/migrations/yunocontent/*.sql supabase/functions/migrations/yunocontent/ 2>/dev/null || true; \
-	ls supabase/migrations/yunocontent/*.sql 2>/dev/null | xargs -n1 basename | sort > supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; \
+       cp -f supabase/migrations/yunocontent/*.sql supabase/migrations/ 2>/dev/null || true; \
+       cp -f supabase/migrations/yunofeedback/*.sql supabase/migrations/ 2>/dev/null || true; \
+       mkdir -p supabase/functions/migrations/yunocontent && cp -f supabase/migrations/yunocontent/*.sql supabase/functions/migrations/yunocontent/ 2>/dev/null || true; \
+       mkdir -p supabase/functions/migrations/yunofeedback && cp -f supabase/migrations/yunofeedback/*.sql supabase/functions/migrations/yunofeedback/ 2>/dev/null || true; \
+       ls supabase/migrations/yunocontent/*.sql 2>/dev/null | xargs -n1 basename | sort > supabase/functions/migrations/yunocontent/index.txt 2>/dev/null || true; \
+       ls supabase/migrations/yunofeedback/*.sql 2>/dev/null | xargs -n1 basename | sort > supabase/functions/migrations/yunofeedback/index.txt 2>/dev/null || true; \
 	supabase start; \
 	npm run dev --prefix=app & \
 	wait $$!; \
@@ -31,7 +36,7 @@ check-version:
 		echo 'Warning: main branch not found, skipping version check'; \
 		exit 0; \
 	fi; \
-	migration_changes=$$(git diff --name-only main...HEAD | grep -E '^supabase/migrations/(app|yunocontent)/.*\.sql$$' || true); \
+       migration_changes=$$(git diff --name-only main...HEAD | grep -E '^supabase/migrations/(app|yunocontent|yunofeedback)/.*\.sql$$' || true); \
 	if [ -n "$$migration_changes" ]; then \
 		echo 'Migration files changed:'; \
 		echo "$$migration_changes"; \
@@ -58,16 +63,24 @@ diff.app:
 	$(MAKE) types
 
 diff.yunocontent:
-	supabase db diff -f $(f) -s yunocontent --local;
-	latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
-	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/yunocontent/$$(basename $$latest_migration)" ]; then \
-		cp "$$latest_migration" supabase/migrations/yunocontent/; \
-	fi;
-	$(MAKE) types
+        supabase db diff -f $(f) -s yunocontent --local;
+        latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
+        if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/yunocontent/$$(basename $$latest_migration)" ]; then \
+                cp "$$latest_migration" supabase/migrations/yunocontent/; \
+        fi;
+        $(MAKE) types
+
+diff.yunofeedback:
+       supabase db diff -f $(f) -s yunofeedback --local;
+       latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
+       if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/yunofeedback/$$(basename $$latest_migration)" ]; then \
+               cp "$$latest_migration" supabase/migrations/yunofeedback/; \
+       fi;
+       $(MAKE) types
 
 types:
-	supabase gen types typescript --local --schema public,yunocontent  > app/database.types.ts
-	supabase gen types typescript --local --schema public,yunocontent > supabase/functions/_shared/database.types.ts
+       supabase gen types typescript --local --schema public,yunocontent,yunofeedback  > app/database.types.ts
+       supabase gen types typescript --local --schema public,yunocontent,yunofeedback > supabase/functions/_shared/database.types.ts
 
 deploy:
 	@echo 'Deploying DB migrations now'

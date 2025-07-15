@@ -2,12 +2,28 @@ import express from "npm:express";
 import cors from "npm:cors";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+const allowedSchemas = ["yunocontent", "yunofeedback"] as const;
 import {
   createContentItem,
   deleteContentItem,
   getContentItem,
   listContentItems,
 } from "./content_items.ts";
+import {
+  listBoards,
+  getBoard,
+  createBoard,
+  updateBoard,
+  deleteBoard,
+} from "./feedback_boards.ts";
+import {
+  listIssues,
+  createIssue,
+  updateIssue,
+  deleteIssue,
+} from "./feedback_issues.ts";
+import { createVote, deleteVote } from "./feedback_votes.ts";
 import {
   createContentItemVersion,
   deleteContentItemVersion,
@@ -68,24 +84,28 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
   // Attach user and workspace to request for use in route handlers
   req.user = user.user;
   req.workspace = workspace;
+  const schema =
+    typeof req.query.schema === "string" && allowedSchemas.includes(req.query.schema)
+      ? req.query.schema
+      : "yunocontent";
+  req.schema = schema;
   if (Deno.env.get("USE_SUPABASE_LOCAL") === "true") {
     req.dataClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       {
         db: {
-          schema: "yunocontent",
+          schema,
         },
       }
     );
-    console.log("using local db");
   } else {
     req.dataClient = createClient(
       `https://${workspace.project_ref}.supabase.co`,
       workspace.api_key,
       {
         db: {
-          schema: "yunocontent",
+          schema,
         },
       }
     );
@@ -118,6 +138,62 @@ app.delete("/proxy/content_items/:id", async (req: any, res: any) => {
 
   res.set({ ...corsHeaders });
   res.json(data);
+});
+
+// Feedback Boards
+app.get("/proxy/feedback/boards", async (req: any, res: any) => {
+  const data = await listBoards(req.dataClient);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/feedback/boards", async (req: any, res: any) => {
+  const data = await createBoard(req.dataClient, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.put("/proxy/feedback/boards/:id", async (req: any, res: any) => {
+  const data = await updateBoard(req.dataClient, req.params.id, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.delete("/proxy/feedback/boards/:id", async (req: any, res: any) => {
+  const data = await deleteBoard(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.get("/proxy/feedback/boards/:id", async (req: any, res: any) => {
+  const data = await getBoard(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.get("/proxy/feedback/issues", async (req: any, res: any) => {
+  const data = await listIssues(req.dataClient, req.query.boardId as string);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/feedback/issues", async (req: any, res: any) => {
+  const data = await createIssue(req.dataClient, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.put("/proxy/feedback/issues/:id", async (req: any, res: any) => {
+  const data = await updateIssue(req.dataClient, req.params.id, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.delete("/proxy/feedback/issues/:id", async (req: any, res: any) => {
+  const data = await deleteIssue(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/feedback/votes", async (req: any, res: any) => {
+  const data = await createVote(req.dataClient, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.delete("/proxy/feedback/votes/:id", async (req: any, res: any) => {
+  const data = await deleteVote(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
 });
 
 // Content Item Versions routes
