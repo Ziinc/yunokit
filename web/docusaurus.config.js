@@ -75,7 +75,7 @@ const config = {
             label: "About",
           },
           {
-            href: "https://github.com/Ziinc/yunocontent",
+            href: "https://github.com/Ziinc/yunokit",
             label: "GitHub",
             position: "right",
           },
@@ -101,7 +101,7 @@ const config = {
               },
               {
                 label: "Github",
-                href: "https://github.com/Ziinc/yunocontent",
+                href: "https://github.com/Ziinc/yunokit",
               },
             ],
           },
