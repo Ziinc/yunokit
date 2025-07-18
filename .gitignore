@@ -22,4 +22,3 @@ supabase/migrations/*.sql
 supabase/functions/migrations/yunocontent/*.sql
 supabase/functions/migrations/yunocontent/*.txt
 
-bun.lockb
