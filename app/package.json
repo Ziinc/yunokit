@@ -14,6 +14,7 @@
     "profileLinks": false,
     "profilePicture": false,
     "emailAuth": false,
+    "schemaArchiving": false,
     "profileName": false
   },
   "scripts": {
