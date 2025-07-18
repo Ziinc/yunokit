@@ -12,6 +12,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentItem, ContentItemStatus } from "@/lib/contentSchema";
 import { useSearch } from "@/contexts/SearchContext";
 import { listContentItems } from "@/lib/api/ContentApi";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { listSchemas } from "@/lib/api/SchemaApi";
 import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 
@@ -32,13 +33,16 @@ const ContentSearchPage: React.FC = () => {
   const [filtersApplied, setFiltersApplied] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const { currentWorkspace } = useWorkspace();
   
   const performSearch = async (query: string) => {
     setIsLoading(true);
     
     try {
+      if (!currentWorkspace) return;
       // Get all content items
-      const allItems = await listContentItems();
+      const { data: items } = await listContentItems(currentWorkspace.id);
+      const allItems = items || [];
       
       // Filter items based on search query
       const results = allItems.filter(item => {
@@ -63,7 +67,7 @@ const ContentSearchPage: React.FC = () => {
       setSearchResults(results);
       
       // Get available schemas from the results and from the API
-      const schemas = await listSchemas();
+      const { data: schemas } = await listSchemas(currentWorkspace.id);
       const schemaIds = [...new Set(results.map(item => item.schemaId))];
       const availableSchemaList = schemaIds.map(id => {
         const schema = schemas.find(s => s.id === id);

@@ -5,7 +5,7 @@ import type { Mock } from "vitest";
 import { screen, within } from "@testing-library/react";
 import { render } from "../utils/test-utils";
 import Dashboard from "../../src/pages/Dashboard";
-import { ContentApi } from "../../src/lib/api/ContentApi";
+import * as ContentApi from "../../src/lib/api/ContentApi";
 import { useWorkspace } from "../../src/lib/contexts/WorkspaceContext";
 import { isFeatureEnabled } from "../../src/lib/featureFlags";
 import { Workspace } from "../../src/lib/workspaceSchema";

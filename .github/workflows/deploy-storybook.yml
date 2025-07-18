@@ -1,4 +1,4 @@
-name: Deploy App
+name: Deploy Storybook
 
 on:
   workflow_dispatch:
@@ -6,24 +6,28 @@ on:
     branches:
       - main
     paths:
-      - "app/**"
+      - "shared/**"
+      - "app/src/components/ui/**"
+      - "web/src/components/**"
   pull_request:
     branches:
       - main
     paths:
-      - "app/**"
+      - "shared/**"
+      - "app/src/components/ui/**"
+      - "web/src/components/**"
+
 defaults:
   run:
     shell: bash
-    working-directory: app
+    working-directory: shared
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'production' || 'preview' }}
-      url: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'https://app.yunokit.com' || format('https://preview-{0}.yunokit-app.pages.dev', github.event.pull_request.number) }}
+      name: preview
+      url: ${{ format('https://preview-{0}-storybook.yunokit-web.pages.dev', github.event.pull_request.number) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -33,28 +37,24 @@ jobs:
           node-version: "22.9"
           cache: npm
           cache-dependency-path: '**/package-lock.json'
-      - name: Restore node_modules cache
+      - name: Restore cache
         uses: actions/cache@v3
         with:
           path: |
             node_modules
-            ../shared/node_modules
-          key: ${{ runner.os }}-app-build-${{ hashFiles('app/package-lock.json', 'shared/package-lock.json') }}
-      - name: Install dependencies on shared
+          key: ${{ runner.os }}-storybook-build-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
         run: npm ci
-        working-directory: shared
-      - name: Install dependencies on app
-        run: npm ci
-      - name: Build app
-        run: npm run build
+      - name: Build storybook
+        run: npm run build-storybook
       - name: Publish to Production
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=yunokit-app --branch=main
-          workingDirectory: app
+          command: pages deploy storybook-static --project-name=yunokit-web --branch=main-storybook
+          workingDirectory: shared
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Preview
         if: github.event_name == 'pull_request'
@@ -62,6 +62,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=yunokit-app --branch=preview-${{ github.event.pull_request.number }}
-          workingDirectory: app
+          command: pages deploy storybook-static --project-name=yunokit-web --branch=preview-${{ github.event.pull_request.number }}-storybook
+          workingDirectory: shared
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

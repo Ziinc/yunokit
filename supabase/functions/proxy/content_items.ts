@@ -8,16 +8,13 @@ type SupabaseClient = ReturnType<typeof createClient>;
 export const listContentItems = async (
   client: SupabaseClient,
   options?: {
-    // filter by schema id
     schemaIds?: number[];
     authorIds?: number[];
-    status?: "draft" | "published" | "archived";
-    // pagination
-    limit: number;
-    offset: number;
-    // sorting
-    orderBy: "created_at" | "updated_at";
-    orderDirection: "asc" | "desc";
+    status?: string;
+    limit?: number;
+    offset?: number;
+    orderBy?: "created_at" | "updated_at" | "published_at";
+    orderDirection?: "asc" | "desc";
   }
 ) => {
   let query = client.from("content_items_vw").select();

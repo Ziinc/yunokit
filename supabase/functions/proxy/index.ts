@@ -95,7 +95,25 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
 });
 
 app.get("/proxy/content_items", async (req: any, res: any) => {
-  const data = await listContentItems(req.dataClient);
+  const options = {
+    schemaIds: req.query.schemaIds
+      ? (req.query.schemaIds as string).split(",").map(Number)
+      : undefined,
+    authorIds: req.query.authorIds
+      ? (req.query.authorIds as string).split(",").map(Number)
+      : undefined,
+    status: req.query.status as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+    orderBy: req.query.orderBy as
+      | "created_at"
+      | "updated_at"
+      | "published_at"
+      | undefined,
+    orderDirection: req.query.orderDirection as "asc" | "desc" | undefined,
+  };
+
+  const data = await listContentItems(req.dataClient, options);
   res.set({ ...corsHeaders }).json(data);
 });
 
