@@ -20,6 +20,9 @@ import AuthCallbackPage from "./pages/AuthCallbackPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ContentSearchPage from "./pages/ContentSearchPage";
 import CommentsPage from "./pages/CommentsPage";
+import ForumManagementPage from "./pages/ForumManagementPage";
+import UserManagementPage from "./pages/UserManagementPage";
+import CommunityConfigPage from "./pages/CommunityConfigPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
@@ -77,6 +80,9 @@ const AppContent: React.FC = () => {
           </Route>
           <Route path="/search" element={<ContentSearchPage />} />
           <Route path="/comments" element={<CommentsPage />} />
+          <Route path="/community/forums" element={<ForumManagementPage />} />
+          <Route path="/community/users" element={<UserManagementPage />} />
+          <Route path="/community/config" element={<CommunityConfigPage />} />
         </Route>
       </Routes>
       <Toaster />

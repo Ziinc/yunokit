@@ -75,13 +75,21 @@ diff.yunocontent:
 	supabase db diff -f $(f) -s yunocontent --local;
 	latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
 	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/yunocontent/$$(basename $$latest_migration)" ]; then \
-		cp "$$latest_migration" supabase/migrations/yunocontent/; \
+	cp "$$latest_migration" supabase/migrations/yunocontent/; \
+	fi;
+	$(MAKE) types
+
+diff.yunocommunity:
+	supabase db diff -f $(f) -s yunocommunity --local;
+	latest_migration=$$(ls -t supabase/migrations/*$(f)*.sql 2>/dev/null | head -1); \
+	if [ -n "$$latest_migration" ] && [ ! -f "supabase/migrations/yunocommunity/$$(basename $$latest_migration)" ]; then \
+	cp "$$latest_migration" supabase/migrations/yunocommunity/; \
 	fi;
 	$(MAKE) types
 
 types:
-	supabase gen types typescript --local --schema public,yunocontent  > app/database.types.ts
-	supabase gen types typescript --local --schema public,yunocontent > supabase/functions/_shared/database.types.ts
+	supabase gen types typescript --local --schema public,yunocontent,yunocommunity  > app/database.types.ts
+	supabase gen types typescript --local --schema public,yunocontent,yunocommunity > supabase/functions/_shared/database.types.ts
 
 deploy:
 	@echo 'Deploying DB migrations now'
