@@ -33,7 +33,7 @@ const sidebars = {
       ],
       link: {
         type: "generated-index",
-        description: "The main pluggable features of Supacontent",
+        description: "The main pluggable features of YunoContent",
       },
     },
   ],

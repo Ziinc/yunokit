@@ -11,7 +11,7 @@ const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Supacontent",
+  title: "YunoContent",
   tagline: "Dinosaurs are cool",
   url: "https://www.yunocontent.com",
   baseUrl: "/",
@@ -106,7 +106,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Supacontent`,
+        copyright: `Copyright © ${new Date().getFullYear()} YunoContent`,
       },
       prism: {
         theme: lightCodeTheme,
