@@ -147,7 +147,7 @@ const SchemaEditorPage: React.FC = () => {
 
   const {
     data: schemaResponse,
-    isLoading: isLoading,
+    isLoading,
     mutate: mutateSchema,
   } = useSWR(
     currentWorkspace && schemaId ? `schema-${schemaId}` : null,
