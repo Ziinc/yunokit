@@ -370,6 +370,157 @@ export type Database = {
       [_ in never]: never
     }
   }
+  ,
+  yunoflow: {
+    Tables: {
+      workflows: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          dag: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          dag?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          dag?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      workflow_runs: {
+        Row: {
+          id: string
+          workflow_id: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          started_at: string | null
+          ended_at: string | null
+        }
+        Insert: {
+          id?: string
+          workflow_id?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          started_at?: string | null
+          ended_at?: string | null
+        }
+        Update: {
+          id?: string
+          workflow_id?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          started_at?: string | null
+          ended_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_runs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      task_queue: {
+        Row: {
+          id: number
+          workflow_id: string | null
+          run_id: string | null
+          task_name: string
+          payload: Json | null
+          status: string
+          created_at: string
+          scheduled_at: string | null
+          executed_at: string | null
+        }
+        Insert: {
+          id?: number
+          workflow_id?: string | null
+          run_id?: string | null
+          task_name: string
+          payload?: Json | null
+          status?: string
+          created_at?: string
+          scheduled_at?: string | null
+          executed_at?: string | null
+        }
+        Update: {
+          id?: number
+          workflow_id?: string | null
+          run_id?: string | null
+          task_name?: string
+          payload?: Json | null
+          status?: string
+          created_at?: string
+          scheduled_at?: string | null
+          executed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_queue_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_queue_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      task_dependencies: {
+        Row: {
+          workflow_id: string | null
+          task_name: string
+          depends_on: string
+        }
+        Insert: {
+          workflow_id?: string | null
+          task_name: string
+          depends_on: string
+        }
+        Update: {
+          workflow_id?: string | null
+          task_name?: string
+          depends_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+    }
+    Views: {}
+    Functions: {}
+    Enums: {}
+    CompositeTypes: {}
+  }
 }
 
 type DefaultSchema = Database[Extract<keyof Database, "public">]
@@ -485,6 +636,9 @@ export const Constants = {
     Enums: {
       schema_type: ["single", "collection"],
     },
+  },
+  yunoflow: {
+    Enums: {},
   },
 } as const
 

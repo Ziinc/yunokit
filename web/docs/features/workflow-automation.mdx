@@ -1,0 +1,25 @@
+---
+title: Workflow Automation
+description: Automate tasks with Yunoflow
+sidebar_position: 10
+---
+
+# Yunoflow
+
+Yunoflow adds workflow automation to your projects. It installs a dedicated `yunoflow` schema containing tables for workflows, runs and queues.
+
+- Define tasks and dependencies using the DAG editor built with React Flow
+- Queue workflows for execution or trigger them by calling `run_workflow(uuid)`
+- Track run status and history
+
+## Creating a workflow
+
+1. Select **Workflows > Create** from the sidebar.
+2. Drag task nodes into the canvas and connect them to express dependencies.
+3. Nodes support JavaScript execution, notifications, API calls and database actions.
+4. Click **Save** to store the graph.
+
+## Running workflows
+
+- Schedule jobs with cron expressions or invoke the `run_workflow` function from your code or database triggers.
+- Runs appear in the workflow history with timestamps and status updates.

@@ -29,6 +29,7 @@ const sidebars = {
         "features/api-reference",
         "features/database-migrations",
         "features/best-practices",
+        "features/workflow-automation",
         "features/guides"
       ],
       link: {

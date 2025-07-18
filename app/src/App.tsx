@@ -20,6 +20,8 @@ import AuthCallbackPage from "./pages/AuthCallbackPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ContentSearchPage from "./pages/ContentSearchPage";
 import CommentsPage from "./pages/CommentsPage";
+import WorkflowListPage from "./pages/WorkflowListPage";
+import WorkflowBuilderPage from "./pages/WorkflowBuilderPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
@@ -67,6 +69,8 @@ const AppContent: React.FC = () => {
           />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/library" element={<AssetsLibraryPage />} />
+          <Route path="/workflows" element={<WorkflowListPage />} />
+          <Route path="/workflows/:workflowId" element={<WorkflowBuilderPage />} />
           <Route path="/settings" element={<SettingsPage />}>
             <Route index element={<Navigate to="account" replace />} />
             <Route path="account" element={<SettingsAccountPage />} />
