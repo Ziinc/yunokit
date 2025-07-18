@@ -25,6 +25,15 @@ import {
 } from "./feedback_issues.ts";
 import { createVote, deleteVote } from "./feedback_votes.ts";
 import {
+  listTickets,
+  createTicket,
+  updateTicket,
+  deleteTicket,
+  addTicketComment,
+  listTicketComments,
+} from "./feedback_tickets.ts";
+import integrationHandler from "./feedback_integration.ts";
+import {
   createContentItemVersion,
   deleteContentItemVersion,
   getContentItemVersion,
@@ -47,7 +56,7 @@ const supabase = createClient(
     db: {
       schema: "public",
     },
-  }
+  },
 );
 
 const app = express();
@@ -85,7 +94,8 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
   req.user = user.user;
   req.workspace = workspace;
   const schema =
-    typeof req.query.schema === "string" && allowedSchemas.includes(req.query.schema)
+    typeof req.query.schema === "string" &&
+    allowedSchemas.includes(req.query.schema)
       ? req.query.schema
       : "yunocontent";
   req.schema = schema;
@@ -97,7 +107,7 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
         db: {
           schema,
         },
-      }
+      },
     );
   } else {
     req.dataClient = createClient(
@@ -107,7 +117,7 @@ app.use("/proxy", async (req: any, res: any, next: any) => {
         db: {
           schema,
         },
-      }
+      },
     );
   }
 
@@ -196,10 +206,47 @@ app.delete("/proxy/feedback/votes/:id", async (req: any, res: any) => {
   res.set({ ...corsHeaders }).json(data);
 });
 
+app.get("/proxy/feedback/tickets", async (req: any, res: any) => {
+  const data = await listTickets(req.dataClient);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/feedback/tickets", async (req: any, res: any) => {
+  const data = await createTicket(req.dataClient, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.put("/proxy/feedback/tickets/:id", async (req: any, res: any) => {
+  const data = await updateTicket(req.dataClient, req.params.id, req.body);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.delete("/proxy/feedback/tickets/:id", async (req: any, res: any) => {
+  const data = await deleteTicket(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.get("/proxy/feedback/tickets/:id/comments", async (req: any, res: any) => {
+  const data = await listTicketComments(req.dataClient, req.params.id);
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/feedback/tickets/:id/comments", async (req: any, res: any) => {
+  const data = await addTicketComment(req.dataClient, {
+    ...req.body,
+    ticket_id: req.params.id,
+  });
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/feedback/integrations", integrationHandler);
+
 // Content Item Versions routes
 app.get("/proxy/content_item_versions", async (req: any, res: any) => {
   const options = {
-    contentItemId: req.query.contentItemId ? Number(req.query.contentItemId) : undefined,
+    contentItemId: req.query.contentItemId
+      ? Number(req.query.contentItemId)
+      : undefined,
     schemaId: req.query.schemaId ? Number(req.query.schemaId) : undefined,
     limit: req.query.limit ? Number(req.query.limit) : undefined,
     offset: req.query.offset ? Number(req.query.offset) : undefined,
@@ -224,7 +271,11 @@ app.get("/proxy/content_items/:id/versions", async (req: any, res: any) => {
     offset: req.query.offset ? Number(req.query.offset) : undefined,
   };
 
-  const data = await getContentItemVersionHistory(req.dataClient, req.params.id, options);
+  const data = await getContentItemVersionHistory(
+    req.dataClient,
+    req.params.id,
+    options,
+  );
   res.set({ ...corsHeaders }).json(data);
 });
 
@@ -236,7 +287,11 @@ app.post("/proxy/content_item_versions", async (req: any, res: any) => {
 });
 
 app.put("/proxy/content_item_versions/:id", async (req: any, res: any) => {
-  const data = await updateContentItemVersion(req.dataClient, req.params.id, req.body);
+  const data = await updateContentItemVersion(
+    req.dataClient,
+    req.params.id,
+    req.body,
+  );
   res.set({ ...corsHeaders });
   res.json(data);
 });
@@ -270,7 +325,11 @@ app.post("/proxy/schemas", async (req: any, res: any) => {
 
 app.put("/proxy/schemas/:id", async (req: any, res: any) => {
   console.log("req.params", req.params);
-  const data = await updateSchema(req.dataClient, Number(req.params.id), req.body);
+  const data = await updateSchema(
+    req.dataClient,
+    Number(req.params.id),
+    req.body,
+  );
   res.set({ ...corsHeaders });
   res.json(data);
 });
