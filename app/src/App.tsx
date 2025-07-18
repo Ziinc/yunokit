@@ -20,6 +20,7 @@ import AuthCallbackPage from "./pages/AuthCallbackPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ContentSearchPage from "./pages/ContentSearchPage";
 import CommentsPage from "./pages/CommentsPage";
+import FeedbackPage from "./pages/FeedbackPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
@@ -77,6 +78,7 @@ const AppContent: React.FC = () => {
           </Route>
           <Route path="/search" element={<ContentSearchPage />} />
           <Route path="/comments" element={<CommentsPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
         </Route>
       </Routes>
       <Toaster />

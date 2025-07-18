@@ -29,7 +29,9 @@ const sidebars = {
         "features/api-reference",
         "features/database-migrations",
         "features/best-practices",
-        "features/guides"
+        "features/guides",
+        "features/feedback",
+        "features/voting"
       ],
       link: {
         type: "generated-index",

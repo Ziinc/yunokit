@@ -7,6 +7,7 @@ import {
   Database,
   Image,
   MessageCircle,
+  MessageSquare,
   Loader2,
   Building2,
   Settings,
@@ -35,6 +36,11 @@ export const Sidebar: React.FC = () => {
             name: "Community",
             path: "/comments",
             icon: <MessageCircle size={20} />,
+          },
+          {
+            name: "Feedback",
+            path: "/feedback",
+            icon: <MessageSquare size={20} />,
           },
         ]
       : []),

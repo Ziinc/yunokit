@@ -5,3 +5,4 @@ export * from './CommentsApi';
 export * from './TemplateService';
 export * from './TemplateGenerators'; 
 export * from './SystemAuthorApi';
+export * from './FeedbackApi';
