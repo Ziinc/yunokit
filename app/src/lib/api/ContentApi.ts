@@ -17,11 +17,11 @@ export interface ListContentItemsOptions {
 }
 
 export const listContentItems = async (
-  workspaceId?: number,
+  workspaceId: number,
   options?: ListContentItemsOptions
 ) => {
   const qp = new URLSearchParams();
-  if (workspaceId) qp.set("workspaceId", workspaceId.toString());
+  qp.set("workspaceId", workspaceId.toString());
   if (options?.schemaIds) qp.set("schemaIds", options.schemaIds.join(","));
   if (options?.authorIds) qp.set("authorIds", options.authorIds.join(","));
   if (options?.status) qp.set("status", options.status);

@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { listContentItemsBySchema } from "@/lib/api/ContentApi";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { ContentItem } from "@/lib/contentSchema";
 
 interface RelationFieldProps {
@@ -31,6 +32,7 @@ export const RelationField: React.FC<RelationFieldProps> = ({
   const [availableItems, setAvailableItems] = useState<ContentItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { currentWorkspace } = useWorkspace();
   
   // Load available items when component mounts or relationSchemaId changes
   useEffect(() => {
@@ -39,7 +41,11 @@ export const RelationField: React.FC<RelationFieldProps> = ({
       
       setIsLoading(true);
       try {
-        const items = await listContentItemsBySchema(relationSchemaId);
+        if (!currentWorkspace) return;
+        const items = await listContentItemsBySchema(
+          Number(relationSchemaId),
+          currentWorkspace.id
+        );
         // Filter out already selected items and only show published items
         const filteredItems = items.filter(item => 
           item.status === 'published' && !value.includes(item.id)
@@ -65,7 +71,11 @@ export const RelationField: React.FC<RelationFieldProps> = ({
       }
 
       try {
-        const items = await listContentItemsBySchema(relationSchemaId);
+        if (!currentWorkspace) return;
+        const items = await listContentItemsBySchema(
+          Number(relationSchemaId),
+          currentWorkspace.id
+        );
         const selected = items.filter(item => value.includes(item.id));
         setSelectedItems(selected);
       } catch (error) {

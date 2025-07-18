@@ -44,12 +44,12 @@ const Dashboard: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const { data: items } = await listContentItems(currentWorkspace?.id);
+        const { data: items } = await listContentItems(currentWorkspace!.id);
         if (items) {
           setContentItems(items);
         }
 
-        const { data: recent } = await listContentItems(currentWorkspace?.id, {
+        const { data: recent } = await listContentItems(currentWorkspace!.id, {
           limit: 8,
           offset: 0,
           orderBy: "updated_at",
@@ -59,7 +59,7 @@ const Dashboard: React.FC = () => {
           setRecentlyEditedContent(recent);
         }
 
-        const { data: published } = await listContentItems(currentWorkspace?.id, {
+        const { data: published } = await listContentItems(currentWorkspace!.id, {
           status: "published",
           limit: 8,
           offset: 0,
