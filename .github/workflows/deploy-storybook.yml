@@ -1,0 +1,67 @@
+name: Deploy Storybook
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "shared/**"
+      - "app/src/components/ui/**"
+      - "web/src/components/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "shared/**"
+      - "app/src/components/ui/**"
+      - "web/src/components/**"
+
+defaults:
+  run:
+    shell: bash
+    working-directory: shared
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: preview
+      url: ${{ format('https://preview-{0}-storybook.yunokit-web.pages.dev', github.event.pull_request.number) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22.9"
+          cache: npm
+          cache-dependency-path: '**/package-lock.json'
+      - name: Restore cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+          key: ${{ runner.os }}-storybook-build-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Build storybook
+        run: npm run build-storybook
+      - name: Publish to Production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy storybook-static --project-name=yunokit-web --branch=main-storybook
+          workingDirectory: shared
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Preview
+        if: github.event_name == 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy storybook-static --project-name=yunokit-web --branch=preview-${{ github.event.pull_request.number }}-storybook
+          workingDirectory: shared
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
