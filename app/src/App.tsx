@@ -19,7 +19,10 @@ const SignInPage = lazy(() => import("./pages/SignInPage"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const ContentSearchPage = lazy(() => import("./pages/ContentSearchPage"));
-// import CommentsPage from "./pages/CommentsPage";
+const CommentsPage = lazy(() => import("./pages/CommentsPage"));
+const ForumManagementPage = lazy(() => import("./pages/ForumManagementPage"));
+const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
+const CommunityConfigPage = lazy(() => import("./pages/CommunityConfigPage"));
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
@@ -77,7 +80,10 @@ const AppContent: React.FC = () => {
             <Route path="billing" element={<SettingsBillingPage />} />
           </Route>
           <Route path="/search" element={<ContentSearchPage />} />
-          {/* <Route path="/comments" element={<CommentsPage />} /> */}
+          <Route path="/comments" element={<CommentsPage />} />
+          <Route path="/community/forums" element={<ForumManagementPage />} />
+          <Route path="/community/users" element={<UserManagementPage />} />
+          <Route path="/community/config" element={<CommunityConfigPage />} />
         </Route>
       </Routes>
       </Suspense>
