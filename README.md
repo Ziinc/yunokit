@@ -1,10 +1,10 @@
 # Yunokit
 
-<p align="center" width="100%">
+<div align="center">
 
 ![Yunokit logo](./shared/static/branding.png)
 
-</p>
+</div>
 
 Yunokit is a suite of micro-apps for Supabase apps.
 
@@ -24,3 +24,7 @@ Yunokit is like PostgreSQL extensions, but for full fledge app features.
 ---
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md) for development documentation.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for details.

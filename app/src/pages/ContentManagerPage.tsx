@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { ContentItem } from "@/lib/contentSchema";
+import type { ContentItem, ContentItemStatus, ContentSchema, ContentField } from "@/lib/contentSchema";
 import { listContentItems, deleteContentItem, updateContentItem } from '@/lib/api/ContentApi';
 import { ContentSchemaRow, listSchemas } from '@/lib/api/SchemaApi';
 import { FilterForm, FilterValues } from "@/components/Content/ContentList/FilterForm";
@@ -49,32 +49,32 @@ import type { ContentItemRow } from '@/lib/api/ContentApi';
 const ContentTable: React.FC<{
   items: ContentItemRow[];
   schemas: ContentSchemaRow[];
-  onRowClick: (item: ContentItem) => void;
+  onRowClick: (item: ContentItemRow) => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   itemsPerPage: number;
   onItemsPerPageChange: (value: number) => void;
-  onSelectionChange?: (selectedItems: ContentItem[]) => void;
+  onSelectionChange?: (selectedItems: ContentItemRow[]) => void;
 }> = (props) => {
-  const columns: TableColumn<ContentItem>[] = [
+  const columns: TableColumn<ContentItemRow>[] = [
     {
       header: "Title",
       accessorKey: "title",
       width: "300px",
       cell: (item) => (
         <div className="flex items-center gap-2">
-          {item.icon || <FileText size={16} className="text-muted-foreground" />}
+          <FileText size={16} className="text-muted-foreground" />
           {item.title}
         </div>
       ),
     },
     {
       header: "Type",
-      accessorKey: "schemaId",
+      accessorKey: "schema_id",
       width: "120px",
       cell: (item) => {
-        const schema = props.schemas.find(s => s.id === item.schemaId);
+        const schema = props.schemas.find(s => s.id === item.schema_id);
         return (
           <div className="flex items-center gap-2">
             {schema?.name || 'Unknown Schema'}
@@ -86,7 +86,7 @@ const ContentTable: React.FC<{
       header: "Status",
       accessorKey: "status",
       width: "120px",
-      cell: (item) => <ContentStatusBadge status={item.status} />,
+      cell: (item) => <ContentStatusBadge status={item.status as any} />,
     },
     {
       header: (
@@ -95,8 +95,8 @@ const ContentTable: React.FC<{
           Last Updated
         </span>
       ),
-      accessorKey: "updatedAt",
-      cell: (item) => formatDate(item.updatedAt),
+      accessorKey: "updated_at",
+      cell: (item) => formatDate(item.updated_at),
     },
     {
       header: (
@@ -105,8 +105,8 @@ const ContentTable: React.FC<{
           Published
         </span>
       ),
-      accessorKey: "publishedAt",
-      cell: (item) => formatDate(item.publishedAt) || '-',
+      accessorKey: "published_at",
+      cell: (item) => formatDate(item.published_at) || '-',
     },
     {
       header: (
@@ -117,11 +117,9 @@ const ContentTable: React.FC<{
       ),
       accessorKey: "authors",
       cell: (item) => {
-        const authors = new Set([
-          item.createdBy,
-          item.updatedBy
-        ].filter(Boolean));
-        return authors.size > 0 ? Array.from(authors).map(author => author.split('@')[0]).join(', ') : '-';
+        // For now, we don't have author information in the view
+        // This would need to be implemented with proper author relations
+        return '-';
       },
     },
   ];
@@ -130,7 +128,7 @@ const ContentTable: React.FC<{
     <DataTable
       {...props}
       columns={columns}
-      getItemId={(item) => item.id}
+      getItemId={(item) => item.id?.toString() || ''}
       emptyMessage="No content items found."
     />
   );
@@ -148,7 +146,7 @@ const ContentManagerPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("title");
-  const [selectedItems, setSelectedItems] = useState<ContentItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<ContentItemRow[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAuthorDialog, setShowAuthorDialog] = useState(false);
   const [newAuthors, setNewAuthors] = useState<Author[]>([]);
@@ -174,6 +172,17 @@ const ContentManagerPage: React.FC = () => {
     }
   );
   const schemas = schemasResponse?.data || [];
+  
+  // Convert ContentSchemaRow[] to ContentSchema[] for components that expect string IDs
+  const convertedSchemas = schemas.map(schema => ({
+    id: schema.id.toString(),
+    name: schema.name,
+    description: schema.description || undefined,
+    fields: schema.fields as any[] || [],
+    isCollection: schema.type === 'collection',
+    type: schema.type || 'collection',
+    strict: schema.strict
+  }));
 
   const isLoading = contentLoading || schemasLoading;
   
@@ -338,8 +347,8 @@ const ContentManagerPage: React.FC = () => {
   };
   
   
-  const handleRowClick = (item: ContentItem) => {
-    navigate(`/manager/editor/${item.schemaId}/${item.id}`);
+  const handleRowClick = (item: ContentItemRow) => {
+    navigate(`/manager/editor/${item.id}`);
   };
   
   const handleCreateNew = (schemaId: string) => {
@@ -374,7 +383,18 @@ const ContentManagerPage: React.FC = () => {
         description: "We're preparing your download, please wait...",
       });
       
-      await downloadContent(selectedItems, format);
+      // Convert ContentItemRow to ContentItem for download
+      const convertedItems: ContentItem[] = selectedItems.map(item => ({
+        id: item.id?.toString() || '',
+        title: item.title || '',
+        schemaId: item.schema_id?.toString() || '',
+        status: (item.status || 'draft') as ContentItemStatus,
+        createdAt: item.created_at || '',
+        updatedAt: item.updated_at || '',
+        publishedAt: item.published_at || undefined,
+        data: (item.data as Record<string, unknown>) || {}
+      }));
+      await downloadContent(convertedItems, format);
       
       toast({
         title: "Download complete",
@@ -396,7 +416,7 @@ const ContentManagerPage: React.FC = () => {
       
       // Delete each item
       for (const id of ids) {
-        await deleteContentItem(id);
+        await deleteContentItem(id, currentWorkspace!.id);
       }
       
       // Mutate SWR cache to refresh data
@@ -428,7 +448,7 @@ const ContentManagerPage: React.FC = () => {
         const item = allItems.find(item => item.id === id);
         if (item) {
           // Save to API - unpublish by setting published_at to null
-          await updateContentItem(item.id, {
+          await updateContentItem(item.id!, {
             published_at: null,
           }, currentWorkspace.id);
         }
@@ -499,7 +519,7 @@ const ContentManagerPage: React.FC = () => {
     <div className="space-y-6">
       <ContentListHeader 
         handleCreateNew={handleCreateNew}
-        schemas={schemas} 
+        schemas={convertedSchemas} 
       />
       
       <div className="rounded-md border bg-white">
@@ -507,7 +527,7 @@ const ContentManagerPage: React.FC = () => {
           <FilterForm
             onSubmitFilters={onSubmitFilters}
             resetFilters={resetFilters}
-            schemas={schemas}
+            schemas={convertedSchemas}
             uniqueAuthors={[]}
             initialValues={filterValues}
           />

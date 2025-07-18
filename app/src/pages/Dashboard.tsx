@@ -17,6 +17,8 @@ const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<"ecommerce" | "blogging" | "tutorials" | null>(null);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [recentlyEditedContent, setRecentlyEditedContent] = useState<ContentItem[]>([]);
+  const [recentlyPublishedContent, setRecentlyPublishedContent] = useState<ContentItem[]>([]);
   const [schemas] = useState<ContentSchemaRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   // Track approval state by item id instead of a single global state
@@ -40,14 +42,33 @@ const Dashboard: React.FC = () => {
     };
 
     const loadData = async () => {
-      try{
+      try {
         setIsLoading(true);
-        const {data: items} = await listContentItems(currentWorkspace?.id);
-        // const schemaData = await getSchemas(currentWorkspace?.id);
+        const { data: items } = await listContentItems(currentWorkspace!.id);
         if (items) {
           setContentItems(items);
         }
-        // setSchemas(schemaData);
+
+        const { data: recent } = await listContentItems(currentWorkspace!.id, {
+          limit: 8,
+          offset: 0,
+          orderBy: "updated_at",
+          orderDirection: "desc",
+        });
+        if (recent) {
+          setRecentlyEditedContent(recent);
+        }
+
+        const { data: published } = await listContentItems(currentWorkspace!.id, {
+          status: "published",
+          limit: 8,
+          offset: 0,
+          orderBy: "published_at",
+          orderDirection: "desc",
+        });
+        if (published) {
+          setRecentlyPublishedContent(published);
+        }
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -62,25 +83,18 @@ const Dashboard: React.FC = () => {
   }, [currentWorkspace, navigate]);
 
   // Filter content by status
-  const publishedContent = contentItems
-    .filter(item => item.status === 'published')
-    .sort((a, b) => new Date(b.publishedAt || b.updatedAt).getTime() - new Date(a.publishedAt || a.updatedAt).getTime())
-    .slice(0, 5);
-  
+  const publishedContent = recentlyPublishedContent;
+
   const draftContent = contentItems
     .filter(item => item.status === 'draft')
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
-  
+
   const pendingReviewContent = contentItems
     .filter(item => item.status === 'pending_review')
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
-  
-  // Get most recently edited content
-  const recentlyEditedContent = [...contentItems]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5);
+
 
   // Find schema name
   const getSchemaName = (schemaId: string) => {

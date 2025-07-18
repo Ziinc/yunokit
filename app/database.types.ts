@@ -163,8 +163,55 @@ export type Database = {
   }
   yunocontent: {
     Tables: {
+      content_item_versions: {
+        Row: {
+          content_item_id: number
+          created_at: string
+          data: Json | null
+          id: number
+          schema_id: number
+        }
+        Insert: {
+          content_item_id: number
+          created_at?: string
+          data?: Json | null
+          id?: number
+          schema_id: number
+        }
+        Update: {
+          content_item_id?: number
+          created_at?: string
+          data?: Json | null
+          id?: number
+          schema_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_versions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_versions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items_vw"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_versions_schema_id_fkey"
+            columns: ["schema_id"]
+            isOneToOne: false
+            referencedRelation: "schemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_items: {
         Row: {
+          archived_at: string | null
           created_at: string
           data: Json | null
           deleted_at: string | null
@@ -176,6 +223,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           data?: Json | null
           deleted_at?: string | null
@@ -187,6 +235,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           data?: Json | null
           deleted_at?: string | null
@@ -260,7 +309,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      content_items_vw: {
+        Row: {
+          archived_at: string | null
+          created_at: string | null
+          data: Json | null
+          deleted_at: string | null
+          id: number | null
+          published_at: string | null
+          schema_id: number | null
+          status: string | null
+          title: string | null
+          uid: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string | null
+          data?: Json | null
+          deleted_at?: string | null
+          id?: number | null
+          published_at?: string | null
+          schema_id?: number | null
+          status?: never
+          title?: string | null
+          uid?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string | null
+          data?: Json | null
+          deleted_at?: string | null
+          id?: number | null
+          published_at?: string | null
+          schema_id?: number | null
+          status?: never
+          title?: string | null
+          uid?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_items_schema_id_fkey"
+            columns: ["schema_id"]
+            isOneToOne: false
+            referencedRelation: "schemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

@@ -6,7 +6,11 @@ sidebar_label: Introduction
 title: Introduction
 ---
 
-Supacontent is a Content Management System with a batteries-included admin dashboard. Each core feature integrates seamlessly into existing Supabase stack.
+YunoContent is a Content Management System with a batteries-included admin dashboard. Each core feature integrates seamlessly into existing Supabase stack.
+
+### Micro-apps
+
+Yunokit connects to your Supabase projects and installs micro-apps on dedicated schemas. Each schema exposes a full data API, letting you add features with a single click. Manage these micro-apps through the Yunokit admin panel without building custom interfaces. Think of them as PostgreSQL extensions for entire features.
 
 ### Why?
 

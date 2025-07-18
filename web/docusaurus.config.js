@@ -3,7 +3,7 @@
 
 const {themes} = require('prism-react-renderer');
 const autoprefixer = require("autoprefixer")
-const tailwindConfig = require("../app/tailwind.config");
+const tailwindConfig = require("../shared/tailwind.config");
 const tailwind = require("tailwindcss");
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
@@ -11,7 +11,7 @@ const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Supacontent",
+  title: "YunoContent",
   tagline: "Dinosaurs are cool",
   url: "https://www.yunocontent.com",
   baseUrl: "/",
@@ -70,7 +70,12 @@ const config = {
             label: "Pricing",
           },
           {
-            href: "https://github.com/Ziinc/yunocontent",
+            to: "/about",
+            position: "left",
+            label: "About",
+          },
+          {
+            href: "https://github.com/Ziinc/yunokit",
             label: "GitHub",
             position: "right",
           },
@@ -91,13 +96,17 @@ const config = {
                 to: "/pricing",
               },
               {
+                label: "About",
+                to: "/about",
+              },
+              {
                 label: "Github",
-                href: "https://github.com/Ziinc/yunocontent",
+                href: "https://github.com/Ziinc/yunokit",
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Supacontent`,
+        copyright: `Copyright © ${new Date().getFullYear()} YunoContent`,
       },
       prism: {
         theme: lightCodeTheme,

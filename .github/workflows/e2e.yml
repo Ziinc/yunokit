@@ -1,0 +1,48 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "app/**"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "app/**"
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.9
+          cache: npm
+          cache-dependency-path: |
+            app/package-lock.json
+            web/package-lock.json
+            shared/package-lock.json
+      - name: Install dependencies on shared
+        run: npm ci
+        working-directory: shared
+      - name: Install dependencies on app
+        run: npm ci
+        working-directory: app
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Install browsers
+        run: npx playwright install --with-deps
+        working-directory: app
+      - name: Start app
+        run: make start.ci
+      - name: Wait for server
+        run: ./scripts/wait-for-port.sh 8080
+      - name: Run e2e tests
+        run: npm run test:e2e
+        working-directory: app

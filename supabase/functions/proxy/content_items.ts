@@ -8,21 +8,30 @@ type SupabaseClient = ReturnType<typeof createClient>;
 export const listContentItems = async (
   client: SupabaseClient,
   options?: {
-    // filter by schema id
-    schemaId?: string;
-    // pagination
-    limit: number;
-    offset: number;
-    // sorting
-    orderBy: "created_at" | "updated_at";
-    orderDirection: "asc" | "desc";
+    schemaIds?: number[];
+    authorIds?: number[];
+    status?: string;
+    limit?: number;
+    offset?: number;
+    orderBy?: "created_at" | "updated_at" | "published_at";
+    orderDirection?: "asc" | "desc";
   }
 ) => {
-  let query = client.from("content_items").select("*");
+  let query = client.from("content_items_vw").select();
 
   // Apply schema filter
-  if (options?.schemaId) {
-    query = query.eq("schema_id", options.schemaId);
+  if (options?.schemaIds) {
+    query = query.in("schema_id", options.schemaIds);
+  }
+
+  // Apply author filter
+  if (options?.authorIds) {
+    query = query.in("author_id", options.authorIds);
+  }
+
+  // Apply status filter
+  if (options?.status) {
+    query = query.eq("status", options.status);
   }
 
   if (options?.orderBy) {
@@ -42,7 +51,7 @@ export const getContentItem = async (
   contentItemId: string
 ) => {
   return await client
-    .from("content_items")
+    .from("content_items_vw")
     .select("*")
     .eq("id", contentItemId)
     .single()
@@ -53,10 +62,21 @@ export const createContentItem = async (
   client: SupabaseClient,
   contentItem: TablesInsert<{ schema: "yunocontent" }, "content_items">
 ) => {
-  return await client
+  const result = await client
     .from("content_items")
     .insert(contentItem)
+    .select("id")
+    .single()
+    .then(handleResponse);
+
+  if (result.error) {
+    return result;
+  }
+
+  return await client
+    .from("content_items_vw")
     .select()
+    .eq("id", result.data.id)
     .single()
     .then(handleResponse);
 };
@@ -66,11 +86,15 @@ export const updateContentItem = async (
   contentItemId: string,
   contentItem: TablesUpdate<{ schema: "yunocontent" }, "content_items">
 ) => {
-  return await client
+  await client
     .from("content_items")
     .update(contentItem)
-    .eq("id", contentItemId)
+    .eq("id", contentItemId);
+
+  return await client
+    .from("content_items_vw")
     .select()
+    .eq("id", contentItemId)
     .single()
     .then(handleResponse);
 };
