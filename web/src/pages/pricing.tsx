@@ -202,7 +202,7 @@ function PricingCard({ plan }) {
         </div>
       )}
 
-      <Button asChild className="w-full" variant="default" size="lg">
+      <Button asChild className="block w-full" variant="default" size="lg">
         <Link to="/docs/intro" className="flex items-center justify-center gap-2">
           <Rocket className="w-4 h-4" />
           {plan.cta}
