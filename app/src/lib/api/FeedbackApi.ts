@@ -1,8 +1,6 @@
 import { supabase } from "../supabase";
 import type { Database } from "../../../database.types";
 
-export type FeedbackBoardRow =
-  Database["yunofeedback"]["Tables"]["boards"]["Row"];
 export type FeedbackIssueRow =
   Database["yunofeedback"]["Tables"]["issues"]["Row"];
 export type FeedbackIssueInsert =
@@ -18,64 +16,10 @@ export type FeedbackTicketUpdate =
 export type TicketCommentInsert =
   Database["yunofeedback"]["Tables"]["ticket_comments"]["Insert"];
 
-export const listFeedbackBoards = async (workspaceId: number) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-    schema: "yunofeedback",
-  });
-  return await supabase.functions.invoke<FeedbackBoardRow[]>(
-    `proxy/feedback/boards?${qp.toString()}`,
-    { method: "GET" },
-  );
-};
 
-export const createFeedbackBoard = async (
-  board: FeedbackBoardRow,
-  workspaceId: number,
-) => {
+export const listFeedbackIssues = async (workspaceId: number) => {
   const qp = new URLSearchParams({
     workspaceId: workspaceId.toString(),
-    schema: "yunofeedback",
-  });
-  return await supabase.functions.invoke<FeedbackBoardRow>(
-    `proxy/feedback/boards?${qp.toString()}`,
-    { method: "POST", body: board },
-  );
-};
-
-export const updateFeedbackBoard = async (
-  id: string,
-  board: Partial<FeedbackBoardRow>,
-  workspaceId: number,
-) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-    schema: "yunofeedback",
-  });
-  return await supabase.functions.invoke<FeedbackBoardRow>(
-    `proxy/feedback/boards/${id}?${qp.toString()}`,
-    { method: "PUT", body: board },
-  );
-};
-
-export const deleteFeedbackBoard = async (id: string, workspaceId: number) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-    schema: "yunofeedback",
-  });
-  return await supabase.functions.invoke(
-    `proxy/feedback/boards/${id}?${qp.toString()}`,
-    { method: "DELETE" },
-  );
-};
-
-export const listFeedbackIssues = async (
-  boardId: string,
-  workspaceId: number,
-) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-    boardId,
     schema: "yunofeedback",
   });
   return await supabase.functions.invoke<FeedbackIssueRow[]>(

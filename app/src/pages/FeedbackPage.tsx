@@ -2,10 +2,8 @@ import React, { useState } from "react";
 import useSWR from "swr";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import {
-  listFeedbackBoards,
   listFeedbackIssues,
   voteOnIssue,
-  createFeedbackBoard,
   createFeedbackIssue,
   listTickets,
   createTicket,
@@ -21,17 +19,11 @@ import { getCommentsByContentItem } from "@/lib/api/CommentsApi";
 const FeedbackPage: React.FC = () => {
   const { currentWorkspace } = useWorkspace();
   const workspaceId = currentWorkspace?.id;
-  const { data: boards, mutate: mutateBoards } = useSWR(
-    workspaceId ? ["boards", workspaceId] : null,
-    () => listFeedbackBoards(workspaceId!),
-  );
-
   const { data: tickets, mutate: mutateTickets } = useSWR(
     workspaceId ? ["tickets", workspaceId] : null,
     () => listTickets(workspaceId!),
   );
 
-  const [newBoard, setNewBoard] = useState("");
   const [newIssue, setNewIssue] = useState("");
   const [newTicketTitle, setNewTicketTitle] = useState("");
   const [newTicketDesc, setNewTicketDesc] = useState("");
@@ -43,10 +35,8 @@ const FeedbackPage: React.FC = () => {
   );
 
   const { data: issues, mutate: mutateIssues } = useSWR(
-    workspaceId && boards && boards.data?.[0]
-      ? ["issues", boards.data[0].id]
-      : null,
-    () => listFeedbackIssues(boards!.data![0].id, workspaceId!),
+    workspaceId ? ["issues", workspaceId] : null,
+    () => listFeedbackIssues(workspaceId!),
   );
 
   const handleVote = async (issueId: string) => {
@@ -55,17 +45,10 @@ const FeedbackPage: React.FC = () => {
     mutateIssues();
   };
 
-  const handleCreateBoard = async () => {
-    if (!workspaceId || !newBoard) return;
-    await createFeedbackBoard({ name: newBoard } as any, workspaceId);
-    setNewBoard("");
-    mutateBoards();
-  };
-
-  const handleCreateIssue = async (boardId: string) => {
+  const handleCreateIssue = async () => {
     if (!workspaceId || !newIssue) return;
     await createFeedbackIssue(
-      { board_id: boardId, title: newIssue } as any,
+      { title: newIssue } as any,
       workspaceId,
     );
     setNewIssue("");
@@ -106,70 +89,50 @@ const FeedbackPage: React.FC = () => {
       <h1 className="text-3xl font-bold tracking-tight">Feedback</h1>
       <div className="flex gap-2">
         <Input
-          value={newBoard}
-          onChange={(e) => setNewBoard(e.target.value)}
-          placeholder="New board name"
+          value={newIssue}
+          onChange={(e) => setNewIssue(e.target.value)}
+          placeholder="New feature"
         />
-        <Button size="sm" onClick={handleCreateBoard}>
-          Add Board
+        <Button size="sm" onClick={handleCreateIssue}>
+          Add Feature
         </Button>
       </div>
-      {boards?.data?.map((board) => (
-        <div key={board.id} className="space-y-4">
-          <h2 className="text-xl font-semibold">{board.name}</h2>
-          <div className="flex gap-2">
-            <Input
-              value={newIssue}
-              onChange={(e) => setNewIssue(e.target.value)}
-              placeholder="New feature"
-            />
-            <Button size="sm" onClick={() => handleCreateIssue(board.id)}>
-              Add Feature
-            </Button>
+      {issues?.data?.map((issue) => (
+        <div
+          key={issue.id}
+          className="border p-3 rounded-md flex justify-between"
+        >
+          <div>
+            <p className="font-medium">{issue.title}</p>
+            <p className="text-sm text-muted-foreground">
+              {issue.description}
+            </p>
           </div>
-          {issues?.data
-            ?.filter((i) => i.board_id === board.id)
-            .map((issue) => (
-              <div
-                key={issue.id}
-                className="border p-3 rounded-md flex justify-between"
-              >
-                <div>
-                  <p className="font-medium">{issue.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {issue.description}
-                  </p>
-                </div>
-                {issue.enable_voting && issue.approved && (
-                  <Button size="sm" onClick={() => handleVote(issue.id)}>
-                    Upvote
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setExpandedIssue(
-                      expandedIssue === issue.id ? null : issue.id,
-                    )
-                  }
-                >
-                  Comments
-                </Button>
-              </div>
-            ))}
-          {expandedIssue &&
-            issues?.data?.find((i) => i.id === expandedIssue) && (
-              <div className="ml-4 space-y-2">
-                {comments?.map((c) => (
-                  <div key={c.id} className="text-sm border-b pb-1">
-                    {c.content}
-                  </div>
-                ))}
-              </div>
-            )}
+          {issue.enable_voting && issue.approved && (
+            <Button size="sm" onClick={() => handleVote(issue.id)}>
+              Upvote
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              setExpandedIssue(expandedIssue === issue.id ? null : issue.id)
+            }
+          >
+            Comments
+          </Button>
         </div>
       ))}
+      {expandedIssue && issues?.data?.find((i) => i.id === expandedIssue) && (
+        <div className="ml-4 space-y-2">
+          {comments?.map((c) => (
+            <div key={c.id} className="text-sm border-b pb-1">
+              {c.content}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Tickets</h2>

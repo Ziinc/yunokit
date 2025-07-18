@@ -5,12 +5,8 @@ import { handleResponse } from "./_utils.ts";
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
-export const listIssues = async (client: SupabaseClient, boardId?: string) => {
-  let query = client.from("issues").select();
-  if (boardId) {
-    query = query.eq("board_id", boardId);
-  }
-  return await query.then(handleResponse);
+export const listIssues = async (client: SupabaseClient) => {
+  return await client.from("issues").select().then(handleResponse);
 };
 
 export const createIssue = async (

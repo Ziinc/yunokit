@@ -11,13 +11,6 @@ import {
   listContentItems,
 } from "./content_items.ts";
 import {
-  listBoards,
-  getBoard,
-  createBoard,
-  updateBoard,
-  deleteBoard,
-} from "./feedback_boards.ts";
-import {
   listIssues,
   createIssue,
   updateIssue,
@@ -150,34 +143,10 @@ app.delete("/proxy/content_items/:id", async (req: any, res: any) => {
   res.json(data);
 });
 
-// Feedback Boards
-app.get("/proxy/feedback/boards", async (req: any, res: any) => {
-  const data = await listBoards(req.dataClient);
-  res.set({ ...corsHeaders }).json(data);
-});
-
-app.post("/proxy/feedback/boards", async (req: any, res: any) => {
-  const data = await createBoard(req.dataClient, req.body);
-  res.set({ ...corsHeaders }).json(data);
-});
-
-app.put("/proxy/feedback/boards/:id", async (req: any, res: any) => {
-  const data = await updateBoard(req.dataClient, req.params.id, req.body);
-  res.set({ ...corsHeaders }).json(data);
-});
-
-app.delete("/proxy/feedback/boards/:id", async (req: any, res: any) => {
-  const data = await deleteBoard(req.dataClient, req.params.id);
-  res.set({ ...corsHeaders }).json(data);
-});
-
-app.get("/proxy/feedback/boards/:id", async (req: any, res: any) => {
-  const data = await getBoard(req.dataClient, req.params.id);
-  res.set({ ...corsHeaders }).json(data);
-});
+// Feedback Issues
 
 app.get("/proxy/feedback/issues", async (req: any, res: any) => {
-  const data = await listIssues(req.dataClient, req.query.boardId as string);
+  const data = await listIssues(req.dataClient);
   res.set({ ...corsHeaders }).json(data);
 });
 
