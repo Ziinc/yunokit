@@ -33,12 +33,13 @@ jobs:
           node-version: "22.9"
           cache: npm
           cache-dependency-path: '**/package-lock.json'
-      - name: Restore cache
+      - name: Restore node_modules cache
         uses: actions/cache@v3
         with:
           path: |
             node_modules
-          key: ${{ runner.os }}-web-build-${{ hashFiles('**/package-lock.json') }}
+            ../shared/node_modules
+          key: ${{ runner.os }}-web-build-${{ hashFiles('web/package-lock.json', 'shared/package-lock.json') }}
       - name: Install dependencies on shared
         run: npm ci
         working-directory: shared
