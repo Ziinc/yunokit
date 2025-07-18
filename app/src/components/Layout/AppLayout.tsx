@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
@@ -7,10 +7,9 @@ import { WorkspaceSwitcherModal } from "@/components/Workspace/WorkspaceSwitcher
 import { useAuth } from "@/contexts/AuthContext";
 
 export const AppLayout: React.FC = () => {
-  const { currentWorkspace, isLoading, workspaces } = useWorkspace();
+  const { currentWorkspace, isLoading } = useWorkspace();
   const { isAuthenticated } = useAuth();
   const [showSwitcher, setShowSwitcher] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     // Only show workspace switcher if authenticated, not loading, and has no current workspace
