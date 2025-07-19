@@ -136,6 +136,125 @@ const CommentsPage: React.FC = () => {
     }
   };
 
+  const handleFlagComment = async (commentId: string) => {
+    try {
+      // TODO: Implement flagComment API call
+      const updatedComments = comments.map(comment =>
+        comment.id === commentId ? { ...comment, status: "flagged" as const } : comment
+      );
+      
+      setComments(updatedComments);
+      
+      toast({
+        title: "Comment flagged",
+        description: "The comment has been flagged for review.",
+      });
+    } catch (error) {
+      console.error("Error flagging comment:", error);
+      toast({
+        title: "Action failed",
+        description: "There was an error flagging the comment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      // TODO: Implement deleteComment API call
+      const updatedComments = comments.filter(comment => comment.id !== commentId);
+      setComments(updatedComments);
+      
+      toast({
+        title: "Comment deleted",
+        description: "The comment has been permanently deleted.",
+      });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast({
+        title: "Action failed",
+        description: "There was an error deleting the comment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBanUser = async (userId: string) => {
+    try {
+      // TODO: Implement banUser API call
+      const updatedComments = comments.map(comment =>
+        comment.author.id === userId 
+          ? { ...comment, author: { ...comment.author, status: "banned" as const } }
+          : comment
+      );
+      
+      setComments(updatedComments);
+      
+      toast({
+        title: "User banned",
+        description: "The user has been banned from commenting.",
+      });
+    } catch (error) {
+      console.error("Error banning user:", error);
+      toast({
+        title: "Action failed",
+        description: "There was an error banning the user. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkAction = async (action: string, commentIds: string[]) => {
+    try {
+      let updatedComments = [...comments];
+      
+      switch (action) {
+        case "approve":
+          // TODO: Implement bulk approve API call
+          updatedComments = comments.map(comment =>
+            commentIds.includes(comment.id) 
+              ? { ...comment, status: "approved" as const }
+              : comment
+          );
+          break;
+        case "reject":
+          // TODO: Implement bulk reject API call
+          updatedComments = comments.map(comment =>
+            commentIds.includes(comment.id) 
+              ? { ...comment, status: "deleted" as const }
+              : comment
+          );
+          break;
+        case "flag":
+          // TODO: Implement bulk flag API call
+          updatedComments = comments.map(comment =>
+            commentIds.includes(comment.id) 
+              ? { ...comment, status: "flagged" as const }
+              : comment
+          );
+          break;
+        case "delete":
+          // TODO: Implement bulk delete API call
+          updatedComments = comments.filter(comment => !commentIds.includes(comment.id));
+          break;
+      }
+      
+      setComments(updatedComments);
+      
+      toast({
+        title: "Bulk action completed",
+        description: `${commentIds.length} comments ${action}d successfully.`,
+      });
+    } catch (error) {
+      console.error("Error performing bulk action:", error);
+      toast({
+        title: "Bulk action failed",
+        description: "There was an error performing the bulk action. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
 
   const handleSubmitReply = async () => {
     if (!selectedComment || !replyText.trim()) return;
@@ -201,6 +320,10 @@ const CommentsPage: React.FC = () => {
           onSearchQueryChange={setCommentSearchQuery}
           currentTab={currentTab}
           onTabChange={setCurrentTab}
+          onBanUser={handleBanUser}
+          onFlagComment={handleFlagComment}
+          onDeleteComment={handleDeleteComment}
+          onBulkAction={handleBulkAction}
         />
       )}
     </>

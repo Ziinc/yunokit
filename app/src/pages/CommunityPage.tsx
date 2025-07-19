@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useLocation, Navigate, Outlet } from "react-router-dom";
-import { MessageCircle, Users, Settings as SettingsIcon, MessageSquare } from "lucide-react";
+import { MessageCircle, Users, Settings as SettingsIcon, MessageSquare, MessageSquareMore, FileText } from "lucide-react";
 
 const CommunityPage: React.FC = () => {
   const location = useLocation();
@@ -24,6 +24,18 @@ const CommunityPage: React.FC = () => {
             <Link to="/community/comments" className="flex items-center gap-2">
               <MessageCircle size={16} />
               Comments
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="chat" asChild>
+            <Link to="/community/chat" className="flex items-center gap-2">
+              <MessageSquareMore size={16} />
+              Chat
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="posts" asChild>
+            <Link to="/community/posts" className="flex items-center gap-2">
+              <FileText size={16} />
+              Posts
             </Link>
           </TabsTrigger>
           <TabsTrigger value="forums" asChild>
