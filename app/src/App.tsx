@@ -24,6 +24,8 @@ import CommentsPage from "./pages/CommentsPage";
 import ForumManagementPage from "./pages/ForumManagementPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import CommunityConfigPage from "./pages/CommunityConfigPage";
+import ChatManagementPage from "./pages/ChatManagementPage";
+import PostsManagementPage from "./pages/PostsManagementPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
@@ -83,6 +85,8 @@ const AppContent: React.FC = () => {
           <Route path="/community" element={<CommunityPage />}>
             <Route index element={<Navigate to="comments" replace />} />
             <Route path="comments" element={<CommentsPage />} />
+            <Route path="chat" element={<ChatManagementPage />} />
+            <Route path="posts" element={<PostsManagementPage />} />
             <Route path="forums" element={<ForumManagementPage />} />
             <Route path="users" element={<UserManagementPage />} />
             <Route path="config" element={<CommunityConfigPage />} />
