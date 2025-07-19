@@ -12,6 +12,7 @@ import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isAuthenticated } from "@/lib/api/auth";
+import { formatDate } from "@/utils/formatDate";
 import type { ContentSchemaRow } from "@/lib/api/SchemaApi";
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
@@ -171,7 +172,7 @@ const Dashboard: React.FC = () => {
             <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
           </Link>
           <p className="text-xs text-muted-foreground">
-            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {new Date(item.updatedAt).toLocaleDateString()}
+            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {formatDate(item.updatedAt)}
           </p>
         </div>
       </div>
@@ -197,7 +198,7 @@ const Dashboard: React.FC = () => {
             <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
           </Link>
           <p className="text-xs text-muted-foreground">
-            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {new Date(item.updatedAt).toLocaleDateString()}
+            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {formatDate(item.updatedAt)}
           </p>
         </div>
       </div>
