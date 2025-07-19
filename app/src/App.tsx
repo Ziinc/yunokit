@@ -19,6 +19,7 @@ const SignInPage = lazy(() => import("./pages/SignInPage"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const ContentSearchPage = lazy(() => import("./pages/ContentSearchPage"));
+const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const CommentsPage = lazy(() => import("./pages/CommentsPage"));
 const ForumManagementPage = lazy(() => import("./pages/ForumManagementPage"));
 const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
