@@ -19,23 +19,23 @@ describe('ModerationApi', () => {
 
   it('listBans calls supabase', async () => {
     await listBans();
-    expect(invoke).toHaveBeenCalledWith('community/bans', { method: 'GET' });
+    expect(invoke).toHaveBeenCalledWith('proxy/community/bans', { method: 'GET' });
   });
 
   it('banUser calls supabase', async () => {
     const ban = { user_id: '1' };
     await banUser(ban as any);
-    expect(invoke).toHaveBeenCalledWith('community/bans', { method: 'POST', body: ban });
+    expect(invoke).toHaveBeenCalledWith('proxy/community/bans', { method: 'POST', body: ban });
   });
 
   it('updateBan calls supabase', async () => {
     const ban = { reason: 'x' };
     await updateBan(1, ban as any);
-    expect(invoke).toHaveBeenCalledWith('community/bans/1', { method: 'PUT', body: ban });
+    expect(invoke).toHaveBeenCalledWith('proxy/community/bans/1', { method: 'PUT', body: ban });
   });
 
   it('unbanUser calls supabase', async () => {
     await unbanUser(1);
-    expect(invoke).toHaveBeenCalledWith('community/bans/1', { method: 'DELETE' });
+    expect(invoke).toHaveBeenCalledWith('proxy/community/bans/1', { method: 'DELETE' });
   });
 });

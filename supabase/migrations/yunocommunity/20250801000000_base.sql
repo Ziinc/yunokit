@@ -5,6 +5,7 @@ create table "yunocommunity"."forums" (
     workspace_id bigint not null,
     name text not null,
     description text,
+    archived boolean default false,
     created_at timestamp with time zone default now()
 );
 
@@ -14,6 +15,7 @@ create table "yunocommunity"."posts" (
     author_id uuid references auth.users(id) on delete cascade,
     title text not null,
     content text,
+    multi_thread boolean default true,
     created_at timestamp with time zone default now(),
     approved boolean default false
 );
@@ -24,6 +26,7 @@ create table "yunocommunity"."comments" (
     id bigserial primary key,
     post_id bigint references yunocommunity.posts(id) on delete cascade,
     author_id uuid references auth.users(id) on delete cascade,
+    parent_comment_id bigint references yunocommunity.comments(id),
     content text not null,
     status yunocommunity.comment_status default 'pending',
     created_at timestamp with time zone default now()
