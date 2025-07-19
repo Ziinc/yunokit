@@ -38,6 +38,11 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: npm ci
 
+      - name: TypeScript compilation check
+        if: matrix.dir == 'app'
+        working-directory: ${{ matrix.dir }}
+        run: npm run compile
+
       - name: Build ${{ matrix.dir }}
         working-directory: ${{ matrix.dir }}
         run: npm run build

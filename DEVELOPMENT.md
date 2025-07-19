@@ -24,6 +24,53 @@ make deploy
 make diff f=my_migration
 ```
 
+## Database Types & Data Transformations
+
+### Database vs Frontend Types
+
+**Use database types directly when possible to avoid unnecessary transformations.**
+
+```typescript
+// Good: Use ContentItemRow directly from API
+import { type ContentItemRow } from '@/lib/api/ContentApi';
+const [items, setItems] = useState<ContentItemRow[]>([]);
+
+// Avoid: Unnecessary transformation layer
+const transformContentItem = (item: ContentItemRow): ContentItem => ({ ... });
+```
+
+**Key differences between database and frontend types:**
+
+- Database: `snake_case` fields (`schema_id`, `created_at`, `updated_at`)
+- Frontend: `camelCase` fields (`schemaId`, `createdAt`, `updatedAt`)
+- Database: Numeric IDs (`id: number`, `schema_id: number`)
+- Frontend: String IDs (`id: string`, `schemaId: string`)
+
+### When to Transform Data
+
+**Transform only when the component explicitly requires the frontend format:**
+
+```typescript
+// Transform when component expects ContentItem
+const contentItem: ContentItem = {
+  id: dbItem.id?.toString() || '',
+  schemaId: dbItem.schema_id?.toString() || '',
+  title: dbItem.title || 'Untitled',
+  status: (dbItem.status as ContentItemStatus) || 'draft',
+  createdAt: dbItem.created_at || '',
+  updatedAt: dbItem.updated_at || dbItem.created_at || '',
+  publishedAt: dbItem.published_at || undefined,
+  data: (dbItem.data as Record<string, unknown>) || {},
+};
+```
+
+### Views vs Tables
+
+- Views use the `_vw` suffix (e.g., `content_items_vw`)
+- Views provide computed fields like `status`
+- Use views for read operations, tables for write operations
+- Always import the correct type: `ContentItemRow` from views, `ContentItemInsert`/`ContentItemUpdate` for mutations
+
 ## Data Mutations with useSWR
 
 ### Core Pattern: Optimistic Updates
@@ -119,6 +166,8 @@ const updateField = async (updatedSchema) => {
 3. **Call `mutate()` without arguments** to revert and fetch fresh data
 4. **Close dialogs immediately** after optimistic updates
 5. **Handle both API errors and exceptions** with proper fallbacks
+6. **Use database types directly** to avoid transformation overhead
+7. **Transform data only when components require specific formats**
 
 ### Anti-Patterns
 
@@ -154,6 +203,22 @@ if (response.error) {
   /* handle error */ return;
 }
 ```
+
+❌ **Don't transform unnecessarily:**
+
+```typescript
+// Bad: Unnecessary transformation
+const items = dbItems.map(transformItem);
+setItems(items);
+```
+
+✅ **Do use database types directly:**
+
+```typescript
+// Good: Use database types
+setItems(dbItems);
+```
+
 ## Database
 
 - Views use the `_vw` suffix for db tables.
