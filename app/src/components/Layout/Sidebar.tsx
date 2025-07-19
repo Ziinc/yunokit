@@ -33,7 +33,7 @@ export const Sidebar: React.FC = () => {
       ? [
           {
             name: "Community",
-            path: "/comments",
+            path: "/community",
             icon: <MessageCircle size={20} />,
           },
         ]
@@ -80,7 +80,7 @@ export const Sidebar: React.FC = () => {
             to={item.path}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-              location.pathname === item.path
+              location.pathname === item.path || location.pathname.startsWith(item.path + "/")
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted"
             )}

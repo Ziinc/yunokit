@@ -19,6 +19,7 @@ import SignInPage from "./pages/SignInPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ContentSearchPage from "./pages/ContentSearchPage";
+import CommunityPage from "./pages/CommunityPage";
 import CommentsPage from "./pages/CommentsPage";
 import ForumManagementPage from "./pages/ForumManagementPage";
 import UserManagementPage from "./pages/UserManagementPage";
@@ -79,10 +80,13 @@ const AppContent: React.FC = () => {
             <Route path="billing" element={<SettingsBillingPage />} />
           </Route>
           <Route path="/search" element={<ContentSearchPage />} />
-          <Route path="/comments" element={<CommentsPage />} />
-          <Route path="/community/forums" element={<ForumManagementPage />} />
-          <Route path="/community/users" element={<UserManagementPage />} />
-          <Route path="/community/config" element={<CommunityConfigPage />} />
+          <Route path="/community" element={<CommunityPage />}>
+            <Route index element={<Navigate to="comments" replace />} />
+            <Route path="comments" element={<CommentsPage />} />
+            <Route path="forums" element={<ForumManagementPage />} />
+            <Route path="users" element={<UserManagementPage />} />
+            <Route path="config" element={<CommunityConfigPage />} />
+          </Route>
         </Route>
       </Routes>
       <Toaster />

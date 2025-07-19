@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Flag, Shield, MessageSquare, Users, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Comment } from "@/types/comments";
 import CommentsTab from "@/components/Comments/CommentsTab";
@@ -26,7 +25,8 @@ const CommentsPage: React.FC = () => {
     const loadComments = async () => {
       try {
         setLoading(true);
-        const fetchedComments = await getComments();
+        const response = await getComments();
+        const fetchedComments = response.data || [];
         setComments(fetchedComments);
       } catch (error) {
         console.error("Error loading comments:", error);
@@ -46,7 +46,7 @@ const CommentsPage: React.FC = () => {
 
   // Filter comments based on search query and tab
   const filteredComments = useMemo(() => {
-    let filtered = comments;
+    let filtered = comments || [];
     
     // Filter by search query
     if (commentSearchQuery) {
@@ -150,7 +150,8 @@ const CommentsPage: React.FC = () => {
       };
       
       // Save the comment using CommentsApi
-      const savedComment = await saveComment(newComment);
+      const response = await saveComment(newComment);
+      const savedComment = response.data;
       
       // Update UI
       setComments([savedComment, ...comments]);
@@ -177,69 +178,32 @@ const CommentsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Comments & Community</h1>
-      </div>
-      
-      <Tabs defaultValue="comments" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="comments" className="flex items-center gap-2">
-            <MessageCircle size={16} />
-            <span className="hidden sm:inline">Comments</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <Flag size={16} />
-            <span className="hidden sm:inline">Reports</span>
-          </TabsTrigger>
-          <TabsTrigger value="moderation" className="flex items-center gap-2">
-            <Shield size={16} />
-            <span className="hidden sm:inline">Moderation</span>
-          </TabsTrigger>
-          <TabsTrigger value="forum" className="flex items-center gap-2">
-            <MessageSquare size={16} />
-            <span className="hidden sm:inline">Forum</span>
-          </TabsTrigger>
-          <TabsTrigger value="chat" className="flex items-center gap-2">
-            <MessageCircle size={16} />
-            <span className="hidden sm:inline">Chat</span>
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users size={16} />
-            <span className="hidden sm:inline">Users</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="comments">
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <CommentsTab
-              comments={paginatedComments}
-              onApprove={handleApproveComment}
-              onReject={handleRejectComment}
-              onReply={handleReply}
-              selectedComment={selectedComment}
-              replyText={replyText}
-              onReplyTextChange={setReplyText}
-              onSubmitReply={handleSubmitReply}
-              onCancelReply={() => {
-                setSelectedComment(null);
-                setReplyText("");
-              }}
-              searchQuery={commentSearchQuery}
-              onSearchQueryChange={setCommentSearchQuery}
-              currentTab={currentTab}
-              onTabChange={setCurrentTab}
-            />
-          )}
-        </TabsContent>
-        
-        {/* Other TabsContent components remain the same */}
-      </Tabs>
-    </div>
+    <>
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <CommentsTab
+          comments={paginatedComments}
+          onApprove={handleApproveComment}
+          onReject={handleRejectComment}
+          onReply={handleReply}
+          selectedComment={selectedComment}
+          replyText={replyText}
+          onReplyTextChange={setReplyText}
+          onSubmitReply={handleSubmitReply}
+          onCancelReply={() => {
+            setSelectedComment(null);
+            setReplyText("");
+          }}
+          searchQuery={commentSearchQuery}
+          onSearchQueryChange={setCommentSearchQuery}
+          currentTab={currentTab}
+          onTabChange={setCurrentTab}
+        />
+      )}
+    </>
   );
 };
 
