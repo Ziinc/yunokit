@@ -31,3 +31,13 @@ export const updateForum = async (
 export const deleteForum = async (client: SupabaseClient, id: number) => {
   return await client.from("forums").delete().eq("id", id).then(handleResponse);
 };
+
+export const archiveForum = async (client: SupabaseClient, id: number) => {
+  return await client
+    .from("forums")
+    .update({ archived: true })
+    .eq("id", id)
+    .select()
+    .single()
+    .then(handleResponse);
+};

@@ -1,7 +1,7 @@
 import { supabase } from '../supabase';
 import type { Comment } from '@/types/comments';
 
-const base = 'community/comments';
+const base = 'proxy/community/comments';
 
 export const getComments = async () => {
   return await supabase.functions.invoke<Comment[]>(base, { method: 'GET' });
