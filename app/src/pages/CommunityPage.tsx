@@ -5,11 +5,11 @@ import { MessageCircle, Users, Settings as SettingsIcon, MessageSquare, MessageS
 
 const CommunityPage: React.FC = () => {
   const location = useLocation();
-  const currentTab = location.pathname.split("/community/")[1] || "comments";
+  const currentTab = location.pathname.split("/community/")[1] || "forums";
 
-  // Redirect /community to /community/comments
+  // Redirect /community to /community/forums
   if (location.pathname === '/community') {
-    return <Navigate to="/community/comments" replace />;
+    return <Navigate to="/community/forums" replace />;
   }
 
   return (
@@ -20,6 +20,12 @@ const CommunityPage: React.FC = () => {
       
       <Tabs value={currentTab} className="space-y-4">
         <TabsList>
+          <TabsTrigger value="forums" asChild>
+            <Link to="/community/forums" className="flex items-center gap-2">
+              <MessageSquare size={16} />
+              Forums
+            </Link>
+          </TabsTrigger>
           <TabsTrigger value="comments" asChild>
             <Link to="/community/comments" className="flex items-center gap-2">
               <MessageCircle size={16} />
@@ -36,12 +42,6 @@ const CommunityPage: React.FC = () => {
             <Link to="/community/posts" className="flex items-center gap-2">
               <FileText size={16} />
               Posts
-            </Link>
-          </TabsTrigger>
-          <TabsTrigger value="forums" asChild>
-            <Link to="/community/forums" className="flex items-center gap-2">
-              <MessageSquare size={16} />
-              Forums
             </Link>
           </TabsTrigger>
           <TabsTrigger value="users" asChild>

@@ -138,7 +138,7 @@ async function addSchemaToPostgrest(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        db_schema: currentConfig.db_schema + ",yunocontent",
+        db_schema: currentConfig.db_schema + ",yunocontent,yunocommunity",
       }),
     }
   );
@@ -198,23 +198,12 @@ app.use("/migrations", async (req: any, res: any, next: any) => {
   if (Deno.env.get("USE_SUPABASE_LOCAL") === "true") {
     req.dataClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      {
-        db: {
-          schema: "yunocontent",
-        },
-      }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
   } else {
     req.dataClient = createClient(
       `https://${workspace.project_ref}.supabase.co`,
-      workspace.api_key,
-      {
-        db: {
-          schema: "yunocontent",
-        },
-      }
-    );
+      workspace.api_key);
   }
 
   next();
@@ -230,7 +219,12 @@ const getPendingMigrations = async (
     workspace,
     `
     CREATE SCHEMA IF NOT EXISTS yunocontent;
+    CREATE SCHEMA IF NOT EXISTS yunocommunity;
     CREATE TABLE IF NOT EXISTS yunocontent.schema_migrations (
+      version bigint NOT NULL, 
+      inserted_at timestamp with time zone DEFAULT now() NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS yunocommunity.schema_migrations (
       version bigint NOT NULL, 
       inserted_at timestamp with time zone DEFAULT now() NOT NULL
     );
@@ -275,8 +269,12 @@ app.get("/migrations/pending", async (req: any, res: any) => {
 });
 
 // Run all pending migrations
-app.post("/migrations", async (req: any, res: any) => {
+app.post("/migrations/:schema", async (req: any, res: any) => {
   try {
+    const schema = req.params.schema;
+    if (!["yunocontent", "yunocommunity"].includes(schema)) {
+      return res.status(400).set(corsHeaders).json({ error: "Invalid schema" });
+    }
     const pendingMigrations = await getPendingMigrations(
       req.supabaseConnection,
       req.workspace
@@ -290,22 +288,9 @@ app.post("/migrations", async (req: any, res: any) => {
       const sqlResult = await executeSql(
         req.supabaseConnection,
         req.workspace,
-        migration.sql + `; INSERT INTO yunocontent.schema_migrations (version) VALUES (${migration.version});`
+        migration.sql + `; INSERT INTO ${schema}.schema_migrations (version) VALUES (${migration.version});`
       );
 
-      // if (sqlResult.success) {
-      //   // Record the migration as applied
-      //   const { error: insertError } = await req.dataClient
-      //     .from("schema_migrations")
-      //     .insert({
-      //       version: migration.version,
-      //       inserted_at: new Date().toISOString(),
-      //     });
-
-      //   if (insertError) {
-      //     throw new Error("Failed to record migration: " + insertError.message);
-      //   }
-      // }
       if (sqlResult.error) {
         throw new Error("Failed to execute migration: " + sqlResult.error);
       }

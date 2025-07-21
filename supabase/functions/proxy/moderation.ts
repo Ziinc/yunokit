@@ -26,4 +26,4 @@ export const updateBan = async (
 
 export const unbanUser = async (client: SupabaseClient, id: number) => {
   return await client.from("user_bans").delete().eq("id", id).then(handleResponse);
-};
+}; 

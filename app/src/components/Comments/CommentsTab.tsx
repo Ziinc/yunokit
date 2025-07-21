@@ -14,7 +14,6 @@ import {
   X,
   Ban,
   Search,
-  Mail,
   Flag,
   Trash2,
   MoreHorizontal
@@ -128,10 +127,6 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                 className="pl-9 w-[240px]"
               />
             </div>
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Mail size={16} />
-              <span>Notify All</span>
-            </Button>
           </div>
         </div>
         

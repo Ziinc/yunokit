@@ -30,4 +30,4 @@ export const updatePost = async (
 
 export const deletePost = async (client: SupabaseClient, id: number) => {
   return await client.from("posts").delete().eq("id", id).then(handleResponse);
-};
+}; 

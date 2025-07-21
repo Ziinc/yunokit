@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Settings, Trash2 } from "lucide-react";
+import { Loader2, Settings, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { listForums, createForum } from '@/lib/api/ForumsApi';
+import { listForums } from '@/lib/api/ForumsApi';
+import CreateForumModal from '@/components/Community/CreateForumModal';
 
 interface Forum {
   id: string;
@@ -22,8 +22,6 @@ const ForumManagementPage: React.FC = () => {
   const { toast } = useToast();
   const [forums, setForums] = useState<Forum[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newForumName, setNewForumName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -45,64 +43,24 @@ const ForumManagementPage: React.FC = () => {
     load();
   }, [toast]);
 
-  const handleCreate = async () => {
-    if (!newForumName.trim()) return;
-    
-    try {
-      setIsCreating(true);
-      const response = await createForum({ name: newForumName.trim() });
-      
-      if (response.data) {
-        setForums([response.data, ...forums]);
-        setNewForumName("");
-        toast({
-          title: "Forum created",
-          description: "New forum has been created successfully.",
-        });
-      }
-    } catch (error) {
-      console.error("Error creating forum:", error);
-      toast({
-        title: "Creation failed",
-        description: "There was an error creating the forum. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreating(false);
-    }
+  const handleForumCreated = (newForum: Forum) => {
+    setForums([newForum, ...forums]);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Forum Management</CardTitle>
-        <CardDescription>
-          Create and manage community forums for discussions and topics
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Forum Management</CardTitle>
+            <CardDescription>
+              Create and manage community forums for discussions and topics
+            </CardDescription>
+          </div>
+          <CreateForumModal onForumCreated={handleForumCreated} />
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Create new forum */}
-        <div className="flex gap-2">
-          <Input
-            placeholder="Forum name..."
-            value={newForumName}
-            onChange={(e) => setNewForumName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            className="flex-1"
-          />
-          <Button 
-            onClick={handleCreate} 
-            disabled={!newForumName.trim() || isCreating}
-            className="flex items-center gap-2"
-          >
-            {isCreating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            Create Forum
-          </Button>
-        </div>
 
         {/* Forums list */}
         {loading ? (

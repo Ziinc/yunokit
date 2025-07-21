@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Comment } from "@/types/comments";
 import CommentsTab from "@/components/Comments/CommentsTab";
 import { getComments, approveComment, rejectComment, saveComment } from '@/lib/api/CommentsApi';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const CommentsPage: React.FC = () => {
   const { toast } = useToast();
@@ -303,28 +304,92 @@ const CommentsPage: React.FC = () => {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <CommentsTab
-          comments={paginatedComments}
-          onApprove={handleApproveComment}
-          onReject={handleRejectComment}
-          onReply={handleReply}
-          selectedComment={selectedComment}
-          replyText={replyText}
-          onReplyTextChange={setReplyText}
-          onSubmitReply={handleSubmitReply}
-          onCancelReply={() => {
-            setSelectedComment(null);
-            setReplyText("");
-          }}
-          searchQuery={commentSearchQuery}
-          onSearchQueryChange={setCommentSearchQuery}
-          currentTab={currentTab}
-          onTabChange={setCurrentTab}
-          onBanUser={handleBanUser}
-          onFlagComment={handleFlagComment}
-          onDeleteComment={handleDeleteComment}
-          onBulkAction={handleBulkAction}
-        />
+        <div className="space-y-6">
+          {/* Comment Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2 pt-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    Total Comments
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0 pb-4">
+                <div className="text-2xl font-bold">{comments.length}</div>
+                <CardDescription className="text-xs text-muted-foreground">
+                  All comments across content
+                </CardDescription>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 pb-4">
+                <div className="text-2xl font-bold text-amber-600">
+                  {comments.filter(comment => comment.status === "pending").length}
+                </div>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Awaiting review
+                </CardDescription>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-sm font-medium">Approved</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 pb-4">
+                <div className="text-2xl font-bold text-green-600">
+                  {comments.filter(comment => comment.status === "approved").length}
+                </div>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Live comments
+                </CardDescription>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-sm font-medium">Flagged</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 pb-4">
+                <div className="text-2xl font-bold text-red-600">
+                  {comments.filter(comment => comment.status === "flagged").length}
+                </div>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Need attention
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+
+          <CommentsTab
+            comments={paginatedComments}
+            onApprove={handleApproveComment}
+            onReject={handleRejectComment}
+            onReply={handleReply}
+            selectedComment={selectedComment}
+            replyText={replyText}
+            onReplyTextChange={setReplyText}
+            onSubmitReply={handleSubmitReply}
+            onCancelReply={() => {
+              setSelectedComment(null);
+              setReplyText("");
+            }}
+            searchQuery={commentSearchQuery}
+            onSearchQueryChange={setCommentSearchQuery}
+            currentTab={currentTab}
+            onTabChange={setCurrentTab}
+            onBanUser={handleBanUser}
+            onFlagComment={handleFlagComment}
+            onDeleteComment={handleDeleteComment}
+            onBulkAction={handleBulkAction}
+          />
+        </div>
       )}
     </>
   );

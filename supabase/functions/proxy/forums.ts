@@ -40,4 +40,4 @@ export const archiveForum = async (client: SupabaseClient, id: number) => {
     .select()
     .single()
     .then(handleResponse);
-};
+}; 

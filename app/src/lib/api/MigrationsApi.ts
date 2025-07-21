@@ -18,8 +18,8 @@ export interface MigrationResult {
 }
 
 
-export const listMigrations = async (workspaceId: number) => {
-  const { data } = await supabase.functions.invoke<{ versions: string[] }>("migrations/pending?workspaceId=" + workspaceId, {
+export const listMigrations = async (workspaceId: number, schema: "yunocontent" | "yunocommunity") => {
+  const { data } = await supabase.functions.invoke<{ versions: string[] }>("migrations/" + schema + "?workspaceId=" + workspaceId, {
     method: "GET",
   })
   const pendingVersions = data?.versions || [];
