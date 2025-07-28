@@ -28,10 +28,6 @@ const CommentsPage: React.FC = () => {
         setLoading(true);
         const fetchedComments = await getComments();
         setComments(fetchedComments);
-
-        // For now, we'll keep using mock data for reports and banned words
-        // In a real app, these would come from their own API endpoints
-        // In a real app, report data would come from an API
       } catch (error) {
         console.error("Error loading comments:", error);
         toast({
@@ -47,7 +43,6 @@ const CommentsPage: React.FC = () => {
     loadComments();
   }, [toast]);
 
-  // ... existing chat messages and users mock data
 
   // Filter comments based on search query and tab
   const filteredComments = useMemo(() => {
@@ -151,14 +146,7 @@ const CommentsPage: React.FC = () => {
         content: replyText.trim(),
         contentId: selectedComment.contentId,
         contentTitle: selectedComment.contentTitle,
-        contentType: selectedComment.contentType,
-        author: {
-          id: "admin1", // In a real app, this would be the current user
-          name: "Admin User",
-          email: "admin@example.com",
-          avatar: "/placeholder.svg",
-          status: "active"
-        }
+        contentType: selectedComment.contentType
       };
       
       // Save the comment using CommentsApi

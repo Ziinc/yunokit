@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft,
   Plus,
   Type,
   Hash,
@@ -62,6 +61,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { BackIconButton } from "@/components/ui/BackIconButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -147,7 +147,7 @@ const SchemaEditorPage: React.FC = () => {
 
   const {
     data: schemaResponse,
-    isLoading: isLoading,
+    isLoading,
     mutate: mutateSchema,
   } = useSWR(
     currentWorkspace && schemaId ? `schema-${schemaId}` : null,
@@ -896,15 +896,7 @@ const SchemaEditorPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="gap-2"
-            >
-              <ArrowLeft size={16} />
-              Back
-            </Button>
+            <BackIconButton label="Back" onClick={() => navigate(-1)} />
             <h1 className="text-2xl font-bold">{schema.name}</h1>
             <Badge
               variant={schema.type === "collection" ? "default" : "outline"}

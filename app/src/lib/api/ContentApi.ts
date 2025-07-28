@@ -7,10 +7,30 @@ export type ContentItemUpdate = Database['yunocontent']['Tables']['content_items
 export type ContentItemVersionRow = Database['yunocontent']['Tables']['content_item_versions']['Row'];
 
 // Content Item Operations
-export const listContentItems = async (workspaceId?: number) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId?.toString() || '',
-  });
+export interface ListContentItemsOptions {
+  schemaIds?: number[];
+  authorIds?: number[];
+  status?: string;
+  limit?: number;
+  offset?: number;
+  orderBy?: "created_at" | "updated_at" | "published_at";
+  orderDirection?: "asc" | "desc";
+}
+
+export const listContentItems = async (
+  workspaceId: number,
+  options?: ListContentItemsOptions
+) => {
+  const qp = new URLSearchParams();
+  qp.set("workspaceId", workspaceId.toString());
+  if (options?.schemaIds) qp.set("schemaIds", options.schemaIds.join(","));
+  if (options?.authorIds) qp.set("authorIds", options.authorIds.join(","));
+  if (options?.status) qp.set("status", options.status);
+  if (options?.limit !== undefined) qp.set("limit", options.limit.toString());
+  if (options?.offset !== undefined) qp.set("offset", options.offset.toString());
+  if (options?.orderBy) qp.set("orderBy", options.orderBy);
+  if (options?.orderDirection)
+    qp.set("orderDirection", options.orderDirection);
 
   return await supabase.functions.invoke<ContentItemRow[]>(
     `proxy/content_items?${qp.toString()}`,

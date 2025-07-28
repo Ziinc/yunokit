@@ -4,11 +4,11 @@ name: Tests
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main", "develop"]
+    branches: ["main"]
     paths:
       - "app/**"
   pull_request:
-    branches: ["main", "develop"]
+    branches: ["main"]
     paths:
       - "app/**"
 
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        command: [test, lint]
+        command: [test, lint, compile]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -32,7 +32,10 @@ jobs:
           cache-dependency-path: |
             app/package-lock.json
             web/package-lock.json
-
+            shared/package-lock.json
+      - name: Install dependencies on shared
+        run: npm ci
+        working-directory: shared
       - name: Run ${{ matrix.command }}
         working-directory: ./app
         run: npm ci && npm run ${{ matrix.command }}

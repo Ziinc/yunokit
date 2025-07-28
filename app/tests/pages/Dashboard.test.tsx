@@ -5,7 +5,7 @@ import type { Mock } from "vitest";
 import { screen, within } from "@testing-library/react";
 import { render } from "../utils/test-utils";
 import Dashboard from "../../src/pages/Dashboard";
-import { ContentApi } from "../../src/lib/api/ContentApi";
+import * as ContentApi from "../../src/lib/api/ContentApi";
 import { useWorkspace } from "../../src/lib/contexts/WorkspaceContext";
 import { isFeatureEnabled } from "../../src/lib/featureFlags";
 import { Workspace } from "../../src/lib/workspaceSchema";
@@ -117,7 +117,7 @@ describe("Dashboard", () => {
 
   describe("Content Rendering", () => {
     beforeEach(() => {
-      (ContentApi.listContentItems as Mock).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as Mock).mockResolvedValue({ data: mockContentItems });
     });
 
     test("renders content items in Last Edited widget", async () => {
@@ -184,7 +184,7 @@ describe("Dashboard", () => {
 
   describe("View More Navigation", () => {
     beforeEach(() => {
-      (ContentApi.listContentItems as Mock).mockResolvedValue(mockContentItems);
+      (ContentApi.listContentItems as Mock).mockResolvedValue({ data: mockContentItems });
     });
 
     test("navigates to correct route when clicking View More in Last Edited widget", async () => {

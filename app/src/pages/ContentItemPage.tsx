@@ -3,8 +3,10 @@ import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
 import { ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight } from "lucide-react";
+import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight, FileX2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+import { BackIconButton } from "@/components/ui/BackIconButton";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -59,7 +61,12 @@ const ContentItemPage: React.FC = () => {
     isLoading: isLoadingSchema 
   } = useSWR(
     currentWorkspace && contentItemData?.schema_id ? `schema-${contentItemData.schema_id}` : null,
-    () => getSchema(contentItemData?.schema_id!, currentWorkspace!.id),
+    () => {
+      if (contentItemData?.schema_id && currentWorkspace) {
+        return getSchema(contentItemData.schema_id, currentWorkspace.id);
+      }
+      return null;
+    },
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -390,17 +397,7 @@ const ContentItemPage: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-destructive mb-4">Error loading content</p>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button onClick={() => navigate('/manager')} variant="ghost" size="icon">
-                  <ChevronLeft className="h-4 w-4" />
-                  <span className="sr-only">Back</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent />
-            </Tooltip>
-          </TooltipProvider>
+          <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
         </div>
       </div>
     );
@@ -412,17 +409,38 @@ const ContentItemPage: React.FC = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Schema not found</p>
+          <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
+        </div>
+      </div>
+    );
+  }
+
+  // Show content item not found
+  if (contentId && !contentItem) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="flex items-center gap-4">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button onClick={() => navigate('/manager')} variant="ghost" size="icon">
-                  <ChevronLeft className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate('/manager')}
+                >
+                  <ChevronLeft size={16} />
                   <span className="sr-only">Back</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent />
             </Tooltip>
           </TooltipProvider>
+        </div>
+        <div className="flex items-center justify-center h-[50vh]">
+          <div className="text-center">
+            <FileX2 className="h-12 w-12 text-muted-foreground mx-auto" />
+            <p className="mt-4 text-muted-foreground">Content item not found</p>
+          </div>
         </div>
       </div>
     );
@@ -441,21 +459,7 @@ const ContentItemPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/manager')}
-              >
-                <ChevronLeft size={16} />
-                <span className="sr-only">Back</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent />
-          </Tooltip>
-        </TooltipProvider>
+        <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
         
         <div className="flex-1">
           <h1 className="text-2xl font-bold">

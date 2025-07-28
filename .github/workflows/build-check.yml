@@ -1,0 +1,48 @@
+name: Build Check
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [shared, app, web]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.9
+          cache: npm
+          cache-dependency-path: |
+            app/package-lock.json
+            web/package-lock.json
+            shared/package-lock.json
+      - name: Restore node_modules cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            app/node_modules
+            web/node_modules
+            shared/node_modules
+          key: ${{ runner.os }}-build-${{ hashFiles('app/package-lock.json', 'web/package-lock.json', 'shared/package-lock.json') }}
+      - name: Install dependencies on shared
+        run: npm ci
+        working-directory: shared
+      - name: Install dependencies in ${{ matrix.dir }}
+        working-directory: ${{ matrix.dir }}
+        run: npm ci
+
+      - name: TypeScript compilation check
+        if: matrix.dir == 'app'
+        working-directory: ${{ matrix.dir }}
+        run: npm run compile
+
+      - name: Build ${{ matrix.dir }}
+        working-directory: ${{ matrix.dir }}
+        run: npm run build

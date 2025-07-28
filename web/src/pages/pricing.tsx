@@ -2,11 +2,11 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import { Check, DollarSign, ChevronDown, Rocket, Zap } from 'lucide-react';
-import { Button } from '../../../app/src/components/ui/button';
-import { Alert, AlertDescription } from '../../../app/src/components/ui/alert';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../app/src/components/ui/collapsible';
-import { cn } from '../../../app/src/lib/utils';
+import { Check, DollarSign, ChevronDown, Rocket, Zap, X } from 'lucide-react';
+import { Button } from '../../../shared/src/ui/button';
+import { Alert, AlertDescription } from '../../../shared/src/ui/alert';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../shared/src/ui/collapsible';
+import { cn } from '../lib/utils';
 
 const plans = [
   {
@@ -14,11 +14,10 @@ const plans = [
     description: "Perfect for individuals getting started",
     price: 0,
     features: [
-      "1 user included",
+      "1 user included per workspace",
       "1 workspace",
       "Basic content management",
-      "Standard support",
-      "Basic analytics"
+      "Standard support"
     ],
     limitations: [
       "No community features",
@@ -33,13 +32,12 @@ const plans = [
     description: "For growing teams that need more power",
     price: 15,
     features: [
-      { text: "3 users included", highlight: true },
-      { text: "2 workspace included", highlight: true },
+      { text: "3 users included per workspace", highlight: true },
+      { text: "2 workspaces included", highlight: true },
       { text: "Community features", highlight: true },
       "System authors",
       "Content approval flow",
-      "Priority support",
-      "Advanced analytics"
+      "Priority support"
     ],
     addOns: [
       { name: "Additional Workspace User", price: 5 },
@@ -204,16 +202,153 @@ function PricingCard({ plan }) {
         </div>
       )}
 
-      <Button
-        asChild
-        className="w-full font-medium bg-cms-purple hover:bg-cms-purple/90 text-white"
-        variant="default">
-        <Link to="/docs/getting-started" className="flex items-center justify-center gap-2">
+      <Button asChild className="block w-full" variant="default" size="lg">
+        <Link to="/docs/intro" className="flex items-center justify-center gap-2">
           <Rocket className="w-4 h-4" />
           {plan.cta}
         </Link>
       </Button>
     </Alert>
+  );
+}
+
+function FeatureComparisonTable() {
+  const comparison = [
+    {
+      app: "Content Manager",
+      features: [
+        {
+          name: "Workspaces",
+          free: { available: true, note: "1 workspace" },
+          pro: { available: true, note: "Unlimited" }
+        },
+        {
+          name: "Revision history",
+          free: { available: true, note: "Basic" },
+          pro: { available: true, note: "Full" }
+        },
+        {
+          name: "Publishing and Reviewing",
+          free: { available: true, note: "Drafts only" },
+          pro: { available: true, note: "Full" }
+        }
+      ]
+    },
+    {
+      app: "Schema Builder",
+      features: [
+        {
+          name: "Field types",
+          free: { available: true, note: "Core" },
+          pro: { available: true, note: "Advanced" }
+        },
+        {
+          name: "Validations",
+          free: { available: true, note: "Basic" },
+          pro: { available: true, note: "Custom" }
+        },
+        {
+          name: "Environments",
+          free: { available: true, note: "Single" },
+          pro: { available: true, note: "Multiple" }
+        }
+      ]
+    },
+    {
+      app: "Assets Library",
+      features: [
+        {
+          name: "Storage",
+          free: { available: true, note: "1GB" },
+          pro: { available: true, note: "Unlimited" }
+        },
+        {
+          name: "Optimization",
+          free: { available: true, note: "Manual" },
+          pro: { available: true, note: "Automatic" }
+        },
+        {
+          name: "Search",
+          free: { available: true, note: "Basic" },
+          pro: { available: true, note: "AI tagging" }
+        }
+      ]
+    },
+    {
+      app: "Community Management",
+      features: [
+        {
+          name: "Comments",
+          free: { available: false },
+          pro: { available: true, note: "Comments & reactions" }
+        },
+        {
+          name: "Analytics",
+          free: { available: false },
+          pro: { available: true, note: "Engagement" }
+        },
+        {
+          name: "Moderation",
+          free: { available: false },
+          pro: { available: true, note: "Tools" }
+        }
+      ]
+    }
+  ];
+
+  return (
+    <div className="py-16 bg-background">
+      <div className="container mx-auto px-4 max-w-5xl">
+        <h2 className="text-3xl font-bold text-center mb-8">Feature Comparison</h2>
+        <table className="w-full text-left border rounded-xl overflow-hidden">
+          <thead className="bg-muted/50">
+            <tr>
+              <th className="p-4" />
+              <th className="p-4">Free</th>
+              <th className="p-4">Pro</th>
+            </tr>
+          </thead>
+          {comparison.map((section, idx) => (
+            <tbody key={idx} className="divide-y">
+              <tr className="bg-muted/20">
+                <th colSpan={3} className="p-4 text-left text-lg font-semibold">
+                  {section.app}
+                </th>
+              </tr>
+              {section.features.map((feature, fIdx) => (
+                <tr key={fIdx} className="bg-card">
+                  <td className="p-4 align-top">{feature.name}</td>
+                  <td className="p-4 align-top">
+                    {feature.free.available ? (
+                      <Check className="w-4 h-4 text-cms-purple" />
+                    ) : (
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    {feature.free.note && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {feature.free.note}
+                      </p>
+                    )}
+                  </td>
+                  <td className="p-4 align-top">
+                    {feature.pro.available ? (
+                      <Check className="w-4 h-4 text-cms-purple" />
+                    ) : (
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    {feature.pro.note && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {feature.pro.note}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          ))}
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -261,6 +396,7 @@ export default function Pricing(): JSX.Element {
             ))}
           </div>
         </div>
+        <FeatureComparisonTable />
         <FAQSection />
         <QuirkyFooterBanner />
       </main>

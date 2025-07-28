@@ -69,6 +69,7 @@ vi.mock('../src/lib/api/AuthApi');
 vi.mock('../src/lib/api/TemplateGenerators');
 vi.mock('../src/lib/api/TemplateService');
 vi.mock('../src/lib/featureFlags');
+vi.mock('../src/lib/api/auth');
 
 // Mock Context modules
 vi.mock('../src/contexts/AuthContext');

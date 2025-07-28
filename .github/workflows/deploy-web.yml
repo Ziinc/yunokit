@@ -5,7 +5,13 @@ on:
   push:
     branches:
       - main
-
+    paths:
+      - "web/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "web/**"
 defaults:
   run:
     shell: bash
@@ -15,6 +21,9 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      url: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'https://yunokit.com' || format('https://preview-{0}.yunokit-web.pages.dev', github.event.pull_request.number) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -24,21 +33,35 @@ jobs:
           node-version: "22.9"
           cache: npm
           cache-dependency-path: '**/package-lock.json'
-      - name: Restore cache
+      - name: Restore node_modules cache
         uses: actions/cache@v3
         with:
           path: |
             node_modules
-          key: ${{ runner.os }}-web-build-${{ hashFiles('**/package-lock.json') }}
+            ../shared/node_modules
+          key: ${{ runner.os }}-web-build-${{ hashFiles('web/package-lock.json', 'shared/package-lock.json') }}
+      - name: Install dependencies on shared
+        run: npm ci
+        working-directory: shared
       - name: Install dependencies on web
         run: npm ci
       - name: Build web
         run: npm run build
-      - name: Publish
+      - name: Publish to Production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build --project-name=yunokit-web --branch=${{ github.ref_name }}
+          command: pages deploy build --project-name=yunokit-web --branch=main
+          workingDirectory: web
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Preview
+        if: github.event_name == 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build --project-name=yunokit-web --branch=preview-${{ github.event.pull_request.number }}
           workingDirectory: web
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

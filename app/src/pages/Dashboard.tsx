@@ -4,27 +4,98 @@ import { Button } from "@/components/ui/button";
 import { FileText, Clock, CheckCircle, AlertCircle, ShoppingBag, BookOpen, GraduationCap, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { listContentItems, updateContentItem } from '@/lib/api/ContentApi';
-import { ContentItem } from "@/lib/contentSchema";
+import { listContentItems, updateContentItem, type ContentItemRow } from '@/lib/api/ContentApi';
 import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTemplateDialog";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isAuthenticated } from "@/lib/api/auth";
-import type { ContentSchemaRow } from "@/lib/api/SchemaApi";
+import { formatDate } from "@/utils/formatDate";
+import { listSchemas, type ContentSchemaRow } from "@/lib/api/SchemaApi";
+import useSWR from "swr";
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<"ecommerce" | "blogging" | "tutorials" | null>(null);
-  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
-  const [schemas] = useState<ContentSchemaRow[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   // Track approval state by item id instead of a single global state
   const [approvingItems, setApprovingItems] = useState<Record<string, boolean>>({});
   const { currentWorkspace } = useWorkspace();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Load content items and schemas
+  // Fetch all content items
+  const { 
+    data: contentResponse, 
+    error: contentError, 
+    isLoading: contentLoading, 
+    mutate: mutateContent 
+  } = useSWR(
+    currentWorkspace ? `content-${currentWorkspace.id}` : null,
+    () => listContentItems(currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+  const contentItems = contentResponse?.data || [];
+
+  // Fetch recently edited content
+  const { 
+    data: recentEditedResponse, 
+    isLoading: recentEditedLoading 
+  } = useSWR(
+    currentWorkspace ? `recent-edited-${currentWorkspace.id}` : null,
+    () => listContentItems(currentWorkspace!.id, {
+      limit: 8,
+      offset: 0,
+      orderBy: "updated_at",
+      orderDirection: "desc",
+    }),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+  const recentlyEditedContent = recentEditedResponse?.data || [];
+
+  // Fetch recently published content
+  const { 
+    data: recentPublishedResponse, 
+    isLoading: recentPublishedLoading 
+  } = useSWR(
+    currentWorkspace ? `recent-published-${currentWorkspace.id}` : null,
+    () => listContentItems(currentWorkspace!.id, {
+      status: "published",
+      limit: 8,
+      offset: 0,
+      orderBy: "published_at",
+      orderDirection: "desc",
+    }),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+  const recentlyPublishedContent = recentPublishedResponse?.data || [];
+
+  // Fetch schemas
+  const { 
+    data: schemasResponse, 
+    error: schemasError, 
+    isLoading: schemasLoading 
+  } = useSWR(
+    currentWorkspace ? `schemas-${currentWorkspace.id}` : null,
+    () => listSchemas(currentWorkspace!.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
+  const schemas = schemasResponse?.data || [];
+
+  const isLoading = contentLoading || recentEditedLoading || recentPublishedLoading || schemasLoading;
+
+  // Handle authentication check
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -39,60 +110,52 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    const loadData = async () => {
-      try{
-        setIsLoading(true);
-        const {data: items} = await listContentItems(currentWorkspace?.id);
-        // const schemaData = await getSchemas(currentWorkspace?.id);
-        if (items) {
-          setContentItems(items);
-        }
-        // setSchemas(schemaData);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadUser();
-    if (currentWorkspace) { 
-      loadData();
+  }, [navigate]);
+
+  // Handle errors
+  useEffect(() => {
+    if (contentError) {
+      console.error("Error loading content:", contentError);
+      toast({
+        title: "Error loading content",
+        description: "There was a problem loading your content.",
+        variant: "destructive"
+      });
     }
-  }, [currentWorkspace, navigate]);
+    if (schemasError) {
+      console.error("Error loading schemas:", schemasError);
+      toast({
+        title: "Error loading schemas", 
+        description: "There was a problem loading your schemas.",
+        variant: "destructive"
+      });
+    }
+  }, [contentError, schemasError, toast]);
 
   // Filter content by status
-  const publishedContent = contentItems
-    .filter(item => item.status === 'published')
-    .sort((a, b) => new Date(b.publishedAt || b.updatedAt).getTime() - new Date(a.publishedAt || a.updatedAt).getTime())
-    .slice(0, 5);
-  
+  const publishedContent = recentlyPublishedContent;
+
   const draftContent = contentItems
     .filter(item => item.status === 'draft')
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5);
-  
-  const pendingReviewContent = contentItems
-    .filter(item => item.status === 'pending_review')
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5);
-  
-  // Get most recently edited content
-  const recentlyEditedContent = [...contentItems]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .sort((a, b) => new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime())
     .slice(0, 5);
 
+  const pendingReviewContent = contentItems
+    .filter(item => item.status === 'pending_review')
+    .sort((a, b) => new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime())
+    .slice(0, 5);
+
+
   // Find schema name
-  const getSchemaName = (schemaId: string) => {
+  const getSchemaName = (schemaId: number) => {
     const schema = schemas.find(s => s.id === schemaId);
-    return schema?.name || schemaId;
+    return schema?.name || schemaId.toString();
   };
 
   // Helper function to extract author name from email or use a default
-  const getAuthorName = (item: ContentItem) => {
-    if (item.author?.name) return item.author.name;
-    if (item.updatedBy) return item.updatedBy.split('@')[0];
-    if (item.createdBy) return item.createdBy.split('@')[0];
+  const getAuthorName = (item: ContentItemRow) => {
+    // ContentItemRow doesn't have updatedBy/createdBy, so return a default
     return 'Unknown';
   };
 
@@ -103,27 +166,46 @@ const Dashboard: React.FC = () => {
   };
 
   // Handle approval of content item
-  const handleApproveContent = async (item: ContentItem) => {
-    if (!currentWorkspace) return;
+  const handleApproveContent = async (item: ContentItemRow) => {
+    if (!currentWorkspace || !item.id) return;
     
     try {
       // Set approving state for this specific item only
-      setApprovingItems(prev => ({ ...prev, [item.id]: true }));
+      setApprovingItems(prev => ({ ...prev, [item.id!]: true }));
       
       // Get the current timestamp
       const now = new Date().toISOString();
       
+      // Optimistic update for all content lists
+      const updatedItem = { ...item, status: 'published' as const, published_at: now };
+      
+      // Update all relevant SWR caches optimistically
+      mutateContent(
+        contentResponse ? { ...contentResponse, data: contentResponse.data?.map(prevItem => 
+          prevItem.id === item.id ? updatedItem : prevItem
+        )} : undefined, 
+        false
+      );
+      
       // Update the content item with published status
-      await updateContentItem(Number(item.id), {
+      const response = await updateContentItem(item.id, {
         published_at: now,
       }, currentWorkspace.id);
       
-      // Update the local state to remove the approved item from the list
-      setContentItems(prevItems => 
-        prevItems.map(prevItem => 
-          prevItem.id === item.id ? { ...prevItem, status: 'published', publishedAt: now } : prevItem
-        )
-      );
+      if (response.error) {
+        // Revert optimistic updates on error
+        mutateContent();
+        console.error("Error approving content:", response.error);
+        toast({
+          title: "Error",
+          description: "Failed to approve content. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Revalidate all content data to ensure consistency
+      mutateContent();
       
       toast({
         title: "Content approved",
@@ -131,6 +213,8 @@ const Dashboard: React.FC = () => {
         variant: "default",
       });
     } catch (error) {
+      // Revert optimistic updates on exception
+      mutateContent();
       console.error("Error approving content:", error);
       toast({
         title: "Error",
@@ -141,23 +225,23 @@ const Dashboard: React.FC = () => {
       // Clear approving state for this specific item
       setApprovingItems(prev => {
         const newState = { ...prev };
-        delete newState[item.id];
+        delete newState[item.id!];
         return newState;
       });
     }
   };
 
   // Render content list item
-  const renderContentItem = (item: ContentItem) => (
+  const renderContentItem = (item: ContentItemRow) => (
     <div className="flex items-center justify-between py-3 group">
       <div className="flex items-center gap-3">
         <FileText className="h-5 w-5 text-primary" />
         <div>
-          <Link to={`/manager/editor/${item.schemaId}/${item.id}`} className="hover:underline">
+          <Link to={`/manager/editor/${item.schema_id}/${item.id}`} className="hover:underline">
             <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
           </Link>
           <p className="text-xs text-muted-foreground">
-            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {new Date(item.updatedAt).toLocaleDateString()}
+            {getSchemaName(item.schema_id!)} • {getAuthorName(item)} • Updated {formatDate(item.updated_at!)}
           </p>
         </div>
       </div>
@@ -174,16 +258,16 @@ const Dashboard: React.FC = () => {
   );
 
   // Special render function for approval requests without status badge
-  const renderApprovalItem = (item: ContentItem) => (
+  const renderApprovalItem = (item: ContentItemRow) => (
     <div className="flex items-center justify-between py-3 group">
       <div className="flex items-center gap-3">
         <FileText className="h-5 w-5 text-primary" />
         <div>
-          <Link to={`/manager/editor/${item.schemaId}/${item.id}`} className="hover:underline">
+          <Link to={`/manager/editor/${item.schema_id}/${item.id}`} className="hover:underline">
             <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
           </Link>
           <p className="text-xs text-muted-foreground">
-            {getSchemaName(item.schemaId)} • {getAuthorName(item)} • Updated {new Date(item.updatedAt).toLocaleDateString()}
+            {getSchemaName(item.schema_id!)} • {getAuthorName(item)} • Updated {formatDate(item.updated_at!)}
           </p>
         </div>
       </div>
@@ -192,9 +276,9 @@ const Dashboard: React.FC = () => {
           size="sm" 
           className="bg-green-600 hover:bg-green-700" 
           onClick={() => handleApproveContent(item)}
-          disabled={!!approvingItems[item.id]}
+          disabled={!!approvingItems[item.id!]}
         >
-          {approvingItems[item.id] ? (
+          {approvingItems[item.id!] ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Approving...
@@ -261,7 +345,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quickstart Templates Section */}
-      {isFeatureEnabled(FeatureFlags.QUICKSTART_TEMPLATES) && (
+      {false && (
         <Card className="w-full">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">

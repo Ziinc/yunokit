@@ -1,36 +1,37 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import NotFound from "./pages/NotFound";
-import ContentSchemaBuilderPage from "./pages/ContentSchemaBuilderPage";
-import SchemaEditorPage from "./pages/SchemaEditorPage";
-import ContentManagerPage from "./pages/ContentManagerPage";
-import ContentItemPage from "./pages/ContentItemPage";
-import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
-import SettingsAccountPage from "./pages/Settings/SettingsAccountPage";
-import SettingsWorkspacesPage from "./pages/Settings/SettingsWorkspacesPage";
-import SettingsMembersPage from "./pages/Settings/SettingsMembersPage";
-import SettingsDatabasePage from "./pages/Settings/SettingsDatabasePage";
-import SettingsBillingPage from "./pages/Settings/SettingsBillingPage";
-import AssetsLibraryPage from "./pages/AssetsLibraryPage";
-import SignInPage from "./pages/SignInPage";
-import AuthCallbackPage from "./pages/AuthCallbackPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import ContentSearchPage from "./pages/ContentSearchPage";
-import CommentsPage from "./pages/CommentsPage";
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ContentSchemaBuilderPage = lazy(() => import("./pages/ContentSchemaBuilderPage"));
+const SchemaEditorPage = lazy(() => import("./pages/SchemaEditorPage"));
+const ContentManagerPage = lazy(() => import("./pages/ContentManagerPage"));
+const ContentItemPage = lazy(() => import("./pages/ContentItemPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const SettingsAccountPage = lazy(() => import("./pages/Settings/SettingsAccountPage"));
+const SettingsWorkspacesPage = lazy(() => import("./pages/Settings/SettingsWorkspacesPage"));
+const SettingsMembersPage = lazy(() => import("./pages/Settings/SettingsMembersPage"));
+const SettingsDatabasePage = lazy(() => import("./pages/Settings/SettingsDatabasePage"));
+const SettingsBillingPage = lazy(() => import("./pages/Settings/SettingsBillingPage"));
+const AssetsLibraryPage = lazy(() => import("./pages/AssetsLibraryPage"));
+const SignInPage = lazy(() => import("./pages/SignInPage"));
+const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const ContentSearchPage = lazy(() => import("./pages/ContentSearchPage"));
+// import CommentsPage from "./pages/CommentsPage";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { WorkspaceProvider } from "@/lib/contexts/WorkspaceContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 const AppContent: React.FC = () => {
   return (
     <>
+      <Suspense fallback={null}>
       <Routes>
         {/* Public Routes */}
         <Route path="/sign-in" element={<SignInPage />} />
@@ -76,9 +77,10 @@ const AppContent: React.FC = () => {
             <Route path="billing" element={<SettingsBillingPage />} />
           </Route>
           <Route path="/search" element={<ContentSearchPage />} />
-          <Route path="/comments" element={<CommentsPage />} />
+          {/* <Route path="/comments" element={<CommentsPage />} /> */}
         </Route>
       </Routes>
+      </Suspense>
       <Toaster />
     </>
   );

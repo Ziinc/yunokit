@@ -1,198 +1,82 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import type { Mock } from 'vitest';
-import type { Comment } from '@/types/comments';
-import { initializeStorage, getComments, getCommentById, getCommentsByContentItem, getPendingComments, saveComment, approveComment, getThreadedComments } from '../../src/lib/api/CommentsApi';
+import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import { supabase } from '../../src/lib/supabase';
+import {
+  getComments,
+  getCommentById,
+  getCommentsByContentItem,
+  getPendingComments,
+  saveComment,
+  saveComments,
+  deleteComment,
+  approveComment,
+  rejectComment,
+  getThreadedComments
+} from '../../src/lib/api/CommentsApi';
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: vi.fn(() => {
-      store = {};
-    }),
-  };
-})();
+vi.mock('../../src/lib/supabase', () => ({
+  supabase: {
+    functions: {
+      invoke: vi.fn()
+    }
+  }
+}));
 
-// Mock global methods
-Object.defineProperty(global, 'localStorage', {
-  value: localStorageMock,
-  configurable: true,
-});
-Object.defineProperty(global, 'crypto', {
-  value: {
-    randomUUID: vi.fn(() => 'test-uuid'),
-  },
-  configurable: true,
-});
-
+const invoke = supabase.functions.invoke as Mock;
 
 describe('CommentsApi', () => {
-  // Test comment
-  const testComment = {
-    id: 'test-comment-id',
-    contentItemId: 'test-content-item-id',
-    author: {
-      id: 'test-user-id',
-      name: 'Test User',
-      avatar: 'https://example.com/avatar.png',
-      email: 'test@example.com',
-    },
-    text: 'This is a test comment',
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: '2023-01-01T00:00:00Z',
-    status: 'pending' as const,
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it('getComments calls supabase', async () => {
+    await getComments();
+    expect(invoke).toHaveBeenCalledWith('proxy/comments', { method: 'GET' });
   });
 
-  describe('initializeStorage', () => {
-    it('should initialize storage with mock comments if empty', async () => {
-      await initializeStorage();
-      expect(localStorage.setItem).toHaveBeenCalled();
-    });
-
-    it('should not initialize storage if already populated', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      await initializeStorage();
-      expect(localStorage.setItem).not.toHaveBeenCalled();
-    });
+  it('getCommentById calls supabase', async () => {
+    await getCommentById('1');
+    expect(invoke).toHaveBeenCalledWith('proxy/comments/1', { method: 'GET' });
   });
 
-  describe('getComments', () => {
-    it('should return empty array if no comments exist', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(null);
-      const result = await getComments();
-      expect(result).toEqual([]);
-    });
-
-    it('should return comments from storage', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await getComments();
-      expect(result).toEqual([testComment]);
-    });
+  it('getCommentsByContentItem calls supabase', async () => {
+    await getCommentsByContentItem('2');
+    expect(invoke).toHaveBeenCalledWith('proxy/comments?contentItemId=2', { method: 'GET' });
   });
 
-  describe('getCommentById', () => {
-    it('should return null if comment does not exist', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await getCommentById('non-existent-id');
-      expect(result).toBeNull();
-    });
-
-    it('should return comment by id', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await getCommentById('test-comment-id');
-      expect(result).toEqual(testComment);
-    });
+  it('getPendingComments calls supabase', async () => {
+    await getPendingComments();
+    expect(invoke).toHaveBeenCalledWith('proxy/comments/pending', { method: 'GET' });
   });
 
-  describe('getCommentsByContentItem', () => {
-    it('should return empty array if no comments exist for content item', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await getCommentsByContentItem('non-existent-content-id');
-      expect(result).toEqual([]);
-    });
-
-    it('should return comments for a specific content item', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const result = await getCommentsByContentItem('test-content-item-id');
-      expect(result).toEqual([testComment]);
-    });
+  it('saveComment calls supabase', async () => {
+    const comment = { content: 'hi' };
+    await saveComment(comment);
+    expect(invoke).toHaveBeenCalledWith('proxy/comments', { method: 'POST', body: comment });
   });
 
-  describe('getPendingComments', () => {
-    it('should return only pending comments', async () => {
-      const approvedComment = { ...testComment, id: 'approved-comment', status: 'approved' as const };
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment, approvedComment]));
-      
-      const result = await getPendingComments();
-      
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe('test-comment-id');
-      expect(result[0].status).toBe('pending');
-    });
+  it('saveComments calls supabase', async () => {
+    const comments = [];
+    await saveComments(comments as any);
+    expect(invoke).toHaveBeenCalledWith('proxy/comments/bulk', { method: 'POST', body: comments });
   });
 
-  describe('saveComment', () => {
-    it('should add a new comment', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([]));
-      const newComment: Partial<Comment> = { ...testComment, id: undefined };
-      
-      await saveComment(newComment);
-      
-      expect(localStorage.setItem).toHaveBeenCalled();
-      const savedComments = JSON.parse((localStorage.setItem as Mock).mock.calls[0][1] as string);
-      expect(savedComments.length).toBe(1);
-      expect(savedComments[0].id).toBe('test-uuid');
-    });
-
-    it('should update an existing comment', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      const updatedComment = { 
-        ...testComment, 
-        text: 'Updated comment text',
-        updatedAt: '2023-01-02T00:00:00Z'
-      };
-      
-      await saveComment(updatedComment);
-      
-      expect(localStorage.setItem).toHaveBeenCalled();
-      const savedComments = JSON.parse((localStorage.setItem as Mock).mock.calls[0][1] as string);
-      expect(savedComments.length).toBe(1);
-      expect(savedComments[0].text).toBe('Updated comment text');
-      expect(new Date(savedComments[0].updatedAt).toISOString()).toBe(savedComments[0].updatedAt);
-    });
+  it('deleteComment calls supabase', async () => {
+    await deleteComment('1');
+    expect(invoke).toHaveBeenCalledWith('proxy/comments/1', { method: 'DELETE' });
   });
 
-  describe('approveComment', () => {
-    it('should update a comment status to approved', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      
-      await approveComment('test-comment-id');
-      
-      expect(saveComment).toHaveBeenCalled();
-      const savedComment = (saveComment as Mock).mock.calls[0][0];
-      expect(savedComment.status).toBe('approved');
-    });
-
-    it('should throw an error if comment does not exist', async () => {
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([testComment]));
-      
-      await expect(approveComment('non-existent-id')).rejects.toThrow();
-    });
+  it('approveComment calls supabase', async () => {
+    await approveComment('1');
+    expect(invoke).toHaveBeenCalledWith('proxy/comments/1/approve', { method: 'POST' });
   });
 
-  describe('getThreadedComments', () => {
-    it('should return comments in threaded order', async () => {
-      const parentComment = testComment;
-      const childComment = {
-        ...testComment,
-        id: 'child-comment',
-        parentId: 'test-comment-id',
-        createdAt: '2023-01-02T00:00:00Z'
-      };
-      
-      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify([parentComment, childComment]));
-      
-      const result = await getThreadedComments('test-content-item-id');
-      
-      expect(result).toHaveLength(2);
-      expect(result[0].id).toBe('test-comment-id'); // Parent comment first
-      expect(result[1].id).toBe('child-comment'); // Child comment second
-    });
+  it('rejectComment calls supabase', async () => {
+    await rejectComment('1');
+    expect(invoke).toHaveBeenCalledWith('proxy/comments/1/reject', { method: 'POST' });
   });
-}); 
+
+  it('getThreadedComments calls supabase', async () => {
+    await getThreadedComments('2');
+    expect(invoke).toHaveBeenCalledWith('proxy/comments/thread?contentItemId=2', { method: 'GET' });
+  });
+});

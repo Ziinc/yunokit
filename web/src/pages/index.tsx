@@ -74,13 +74,13 @@ function HomepageHeader() {
           <div className="flex justify-center gap-4">
             <Link
               className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-purple-600 font-semibold hover:bg-yellow-50 transition-colors"
-              to="/docs/getting-started">
+              to="/docs/intro">
               Get Started
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
             <Link
               className="inline-flex items-center px-6 py-3 rounded-lg bg-purple-700 text-white font-semibold hover:bg-purple-800 transition-colors"
-              to="/docs/introduction">
+              to="/docs/intro">
               Learn More
             </Link>
           </div>
