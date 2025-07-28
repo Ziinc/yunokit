@@ -125,7 +125,7 @@ const UserManagementPage: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Community Users</CardTitle>
+          <CardTitle>Users</CardTitle>
           <CardDescription>
             Manage community members, their roles, and moderation status
           </CardDescription>

@@ -26,22 +26,22 @@ export const migrations: Migration[] = compileTime(async () => {
 
 
     console.log(files)
-    for (const file of files) {
-      if (typeof file === "string") {
-        const filePath = path.join(supabaseMigrationsPath, file);
-        const content = fs.readFileSync(filePath, "utf8");
-        const match = file.match(/^(\d{14})_(.+)\.sql$/);
+          for (const file of files) {
+        if (typeof file === "string") {
+          const filePath = path.join(supabaseMigrationsPath, schema, file);
+          const content = fs.readFileSync(filePath, "utf8");
+          const match = file.match(/^(\d{14})_(.+)\.sql$/);
 
-        if (match) {
-          results.push({
-            version: match[1],
-            name: match[2],
-            filename: `supabase/migrations/${schema}/${file}`,
-            sql: content,
-            schema,
-            workspace: "supabase",
-          })
-        }
+          if (match) {
+            results.push({
+              version: match[1],
+              name: match[2],
+              filename: `supabase/migrations/${schema}/${file}`,
+              sql: content,
+              schema,
+              workspace: "supabase",
+            })
+          }
         }
       }
     })

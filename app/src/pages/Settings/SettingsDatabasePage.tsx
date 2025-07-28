@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   ChevronRight,
 } from "lucide-react";
+import { groupBy } from "lodash";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -195,10 +196,7 @@ const MigrationSkeleton: React.FC = () => {
 const SettingsDatabasePage: React.FC = () => {
   const { toast } = useToast();
   const { currentWorkspace, setCurrentWorkspace } = useWorkspace();
-  const [migrations, setMigrations] = useState<{
-    yunocontent: Migration[];
-    yunocommunity: Migration[];
-  }>({ yunocontent: [], yunocommunity: [] });
+  const [migrations, setMigrations] = useState<Record<string, Migration[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [sqlModalOpen, setSqlModalOpen] = useState(false);
@@ -322,16 +320,14 @@ const SettingsDatabasePage: React.FC = () => {
     try {
       setIsLoading(true);
       setIsAppliedMigrationsOpen({ yunocontent: false, yunocommunity: false });
-      
-      const [yunocontentMigrations, yunocommunityMigrations] = await Promise.all([
-        listMigrations(currentWorkspace.id, "yunocontent"),
-        listMigrations(currentWorkspace.id, "yunocommunity"),
-      ]);
-      
-      setMigrations({
-        yunocontent: yunocontentMigrations,
-        yunocommunity: yunocommunityMigrations,
-      });
+
+      const migrations = await listMigrations(currentWorkspace.id);
+
+      const groupedMigrations: Record<string, Migration[]> = groupBy(
+        migrations,
+        "schema"
+      );
+      setMigrations(groupedMigrations);
     } catch (error) {
       console.error("Error loading migrations:", error);
       toast({
@@ -354,10 +350,10 @@ const SettingsDatabasePage: React.FC = () => {
     try {
       setIsLoading(true);
       const result = await runAllMigrations(currentWorkspace.id);
-      
+
       const totalPending = Object.values(migrations).reduce(
-        (acc, schemaMigrations) => 
-          acc + schemaMigrations.filter((m) => m.status === "pending").length, 
+        (acc, schemaMigrations) =>
+          acc + schemaMigrations.filter((m) => m.status === "pending").length,
         0
       );
 
@@ -468,12 +464,16 @@ const SettingsDatabasePage: React.FC = () => {
 
   const pendingMigrations = {
     yunocontent: migrations.yunocontent.filter((m) => m.status === "pending"),
-    yunocommunity: migrations.yunocommunity.filter((m) => m.status === "pending"),
+    yunocommunity: migrations.yunocommunity.filter(
+      (m) => m.status === "pending"
+    ),
   };
-  
+
   const appliedMigrations = {
     yunocontent: migrations.yunocontent.filter((m) => m.status === "applied"),
-    yunocommunity: migrations.yunocommunity.filter((m) => m.status === "applied"),
+    yunocommunity: migrations.yunocommunity.filter(
+      (m) => m.status === "applied"
+    ),
   };
 
   const totalPendingCount = Object.values(pendingMigrations).reduce(
@@ -722,9 +722,7 @@ const SettingsDatabasePage: React.FC = () => {
                         disabled={isLoading}
                       >
                         <Play size={16} />
-                        <span>
-                          Apply All Pending ({totalPendingCount})
-                        </span>
+                        <span>Apply All Pending ({totalPendingCount})</span>
                       </Button>
                     )}
                   </div>
@@ -742,115 +740,133 @@ const SettingsDatabasePage: React.FC = () => {
                 ) : (
                   <>
                     {/* Pending Migrations by Schema */}
-                    {(Object.keys(pendingMigrations) as Array<keyof typeof pendingMigrations>).map(
-                      (schema) => {
-                        const schemaPendingMigrations = pendingMigrations[schema];
-                        if (schemaPendingMigrations.length === 0) return null;
+                    {(
+                      Object.keys(pendingMigrations) as Array<
+                        keyof typeof pendingMigrations
+                      >
+                    ).map((schema) => {
+                      const schemaPendingMigrations = pendingMigrations[schema];
+                      if (schemaPendingMigrations.length === 0) return null;
 
-                        return (
-                          <div key={`pending-${schema}`} className="space-y-4">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="font-mono">
-                                {schema}
-                              </Badge>
-                              <h4 className="font-medium text-sm">
-                                Pending Migrations ({schemaPendingMigrations.length})
-                              </h4>
-                            </div>
-                            <div className="space-y-4 ml-4 border-l-2 border-muted-foreground/20 pl-4">
-                              {schemaPendingMigrations.map((migration) => (
-                                <MigrationListItem
-                                  key={migration.version}
-                                  migration={migration}
-                                  onViewSql={handleViewSql}
-                                  isLoading={isLoading}
-                                />
-                              ))}
-                            </div>
+                      return (
+                        <div key={`pending-${schema}`} className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="font-mono">
+                              {schema}
+                            </Badge>
+                            <h4 className="font-medium text-sm">
+                              Pending Migrations (
+                              {schemaPendingMigrations.length})
+                            </h4>
                           </div>
-                        );
-                      }
-                    )}
+                          <div className="space-y-4 ml-4 border-l-2 border-muted-foreground/20 pl-4">
+                            {schemaPendingMigrations.map((migration) => (
+                              <MigrationListItem
+                                key={migration.version}
+                                migration={migration}
+                                onViewSql={handleViewSql}
+                                isLoading={isLoading}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
 
                     {/* Applied Migrations by Schema */}
-                    {(Object.keys(appliedMigrations) as Array<keyof typeof appliedMigrations>).map(
-                      (schema) => {
-                        const schemaAppliedMigrations = appliedMigrations[schema];
-                        if (schemaAppliedMigrations.length === 0) return null;
+                    {(
+                      Object.keys(appliedMigrations) as Array<
+                        keyof typeof appliedMigrations
+                      >
+                    ).map((schema) => {
+                      const schemaAppliedMigrations = appliedMigrations[schema];
+                      if (schemaAppliedMigrations.length === 0) return null;
 
-                        const hasPendingMigrations = pendingMigrations[schema].length > 0;
+                      const hasPendingMigrations =
+                        pendingMigrations[schema].length > 0;
 
-                        return (
-                          <div key={`applied-${schema}`} className="space-y-4">
-                            {!hasPendingMigrations ? (
-                              <Collapsible
-                                open={isAppliedMigrationsOpen[schema]}
-                                onOpenChange={(open) =>
-                                  setIsAppliedMigrationsOpen((prev) => ({
-                                    ...prev,
-                                    [schema]: open,
-                                  }))
-                                }
-                              >
-                                <CollapsibleTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className="w-full justify-between"
-                                  >
-                                    <span className="flex items-center gap-2">
-                                      <Badge variant="secondary" className="font-mono">
-                                        {schema}
-                                      </Badge>
-                                      Applied Migrations ({schemaAppliedMigrations.length})
-                                    </span>
-                                    <ChevronRight
-                                      className={`h-4 w-4 transition-transform duration-200 ${
-                                        isAppliedMigrationsOpen[schema] ? "rotate-90" : ""
-                                      }`}
-                                    />
-                                  </Button>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="mt-4">
-                                  <div className="bg-muted/30 rounded-lg p-4 ml-4 border-l-2 border-muted-foreground/20">
-                                    <div className="space-y-4">
-                                      {schemaAppliedMigrations.map((migration) => (
+                      return (
+                        <div key={`applied-${schema}`} className="space-y-4">
+                          {!hasPendingMigrations ? (
+                            <Collapsible
+                              open={isAppliedMigrationsOpen[schema]}
+                              onOpenChange={(open) =>
+                                setIsAppliedMigrationsOpen((prev) => ({
+                                  ...prev,
+                                  [schema]: open,
+                                }))
+                              }
+                            >
+                              <CollapsibleTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-between"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Badge
+                                      variant="secondary"
+                                      className="font-mono"
+                                    >
+                                      {schema}
+                                    </Badge>
+                                    Applied Migrations (
+                                    {schemaAppliedMigrations.length})
+                                  </span>
+                                  <ChevronRight
+                                    className={`h-4 w-4 transition-transform duration-200 ${
+                                      isAppliedMigrationsOpen[schema]
+                                        ? "rotate-90"
+                                        : ""
+                                    }`}
+                                  />
+                                </Button>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="mt-4">
+                                <div className="bg-muted/30 rounded-lg p-4 ml-4 border-l-2 border-muted-foreground/20">
+                                  <div className="space-y-4">
+                                    {schemaAppliedMigrations.map(
+                                      (migration) => (
                                         <MigrationListItem
                                           key={migration.version}
                                           migration={migration}
                                           onViewSql={handleViewSql}
                                           isLoading={isLoading}
                                         />
-                                      ))}
-                                    </div>
+                                      )
+                                    )}
                                   </div>
-                                </CollapsibleContent>
-                              </Collapsible>
-                            ) : (
-                              <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="secondary" className="font-mono">
-                                    {schema}
-                                  </Badge>
-                                  <h4 className="font-medium text-sm">
-                                    Applied Migrations ({schemaAppliedMigrations.length})
-                                  </h4>
                                 </div>
-                                <div className="space-y-4 ml-4 border-l-2 border-muted-foreground/20 pl-4">
-                                  {schemaAppliedMigrations.map((migration) => (
-                                    <MigrationListItem
-                                      key={migration.version}
-                                      migration={migration}
-                                      onViewSql={handleViewSql}
-                                      isLoading={isLoading}
-                                    />
-                                  ))}
-                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          ) : (
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="secondary"
+                                  className="font-mono"
+                                >
+                                  {schema}
+                                </Badge>
+                                <h4 className="font-medium text-sm">
+                                  Applied Migrations (
+                                  {schemaAppliedMigrations.length})
+                                </h4>
                               </div>
-                            )}
-                          </div>
-                        );
-                      }
-                    )}
+                              <div className="space-y-4 ml-4 border-l-2 border-muted-foreground/20 pl-4">
+                                {schemaAppliedMigrations.map((migration) => (
+                                  <MigrationListItem
+                                    key={migration.version}
+                                    migration={migration}
+                                    onViewSql={handleViewSql}
+                                    isLoading={isLoading}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
 
                     {totalMigrationsCount === 0 && (
                       <Card>
