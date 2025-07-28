@@ -2,26 +2,43 @@
 
 ## Repository Structure
 
-- app: webapp for Yunokit
-- design: design assets
-- shared: shared logic and assets between webapp and docapp
-- web: documentation and static content app
-- supabase: db schema, migrations
-  - supabase/schemas/app.sql: schema for app db
-  - supabase/schemas/yuno\*.sql: schema for respective Yunokit module
+- **app/**: React web application (Vite + TypeScript + SWR)
+- **web/**: Docusaurus documentation site  
+- **shared/**: Shared UI components with Storybook
+- **supabase/**: Database schemas, migrations, Edge Functions
+- **comp/strapi/**: Strapi CMS (legacy)
 
-- All developer documentation should be written in /web
+## Architecture
+
+### Frontend Stack
+- React 19 + TypeScript + Vite + TailwindCSS
+- Radix UI (consolidated package) + SWR + React Router
+- Vitest + Playwright for testing
+
+### Backend Stack  
+- Supabase (auth, database, edge functions)
+- PostgreSQL schemas: `public` (app), `yunocontent` (CMS), `yunocommunity` (forums)
+- API modules in `app/src/lib/api/` wrap `supabase.functions.invoke()` calls
 
 ## Commands
 
+### Development
 ```bash
-make start
-make stop
-make restart
-make types
-make deploy
-# generate a migration
-make diff f=my_migration
+make start           # Start Supabase + React app
+make stop            # Stop all services
+make restart         # Restart all services
+make db.reset        # Reset local database
+
+# App commands (from app/ directory)
+npm run dev          # Development server
+npm run build        # Production build
+npm run lint         # oxlint + eslint
+npm run test         # Vitest unit tests
+npm run test:e2e     # Playwright e2e tests
+
+# Documentation (from web/ directory)
+npm run start        # Docusaurus dev server
+npm run build        # Build docs
 ```
 
 ## Database Types & Data Transformations
@@ -73,9 +90,9 @@ const contentItem: ContentItem = {
 
 ## Data Mutations with useSWR
 
-### Core Pattern: Optimistic Updates
+## Data Mutations with SWR
 
-**All data mutations must use useSWR's `mutate` function for consistency and cache management.**
+**All data mutations must use SWR's optimistic update pattern:**
 
 ```typescript
 const { data, mutate } = useSWR(key, fetcher);
@@ -84,24 +101,22 @@ const handleMutation = async () => {
   try {
     // 1. Optimistic update
     mutate(optimisticData, false);
-
+    
     // 2. Close UI immediately
     setShowDialog(false);
-
+    
     // 3. API call
     const response = await apiCall();
-
+    
     // 4. Handle errors
     if (response.error) {
       mutate(); // Revert
-      //log the technical error to console for debugging
-      console.error("Error performing action: ", response.error);
-      //   show appropriate error toast, don't show user the backend technical error
+      console.error("Error:", response.error);
       showErrorToast("Could not perform action");
       return;
     }
-
-    // 5. Update with real data, don't revalidate the data
+    
+    // 5. Update with real data
     mutate(response.data, { revalidate: false });
     showSuccessToast();
   } catch (error) {
@@ -111,55 +126,24 @@ const handleMutation = async () => {
 };
 ```
 
-**Benefits:** Instant UI feedback, automatic error recovery, cache consistency.
-
 ### Error Handling for Supabase Functions
-
-**Always check `response.error` before proceeding:**
+Always check `response.error` before proceeding. Supabase functions return `{ data: T | null, error: { message: string } | null }`.
 
 ```typescript
 const response = await supabase.functions.invoke("endpoint");
-
 if (response.error) {
-  toast({
-    title: "Operation failed",
-    description: response.error.message,
-    variant: "destructive",
-  });
+  toast({ title: "Operation failed", description: response.error.message, variant: "destructive" });
   return;
 }
-
-// Handle success
-if (response.data) {
-  mutate(response.data);
-}
+// Handle success with response.data
 ```
-
-**Supabase functions return:** `{ data: T | null, error: { message: string } | null }`
-
-### Schema Editor Operations
-
-**All field operations follow the same pattern:**
-
-```typescript
-const { data: schema, mutate: mutateSchema } = useSWR(schemaKey, fetcher);
-
-// Add/Delete/Reorder fields
-const updateField = async (updatedSchema) => {
-  mutateSchema({ ...schemaResponse, data: updatedSchema }, false);
-
-  const response = await updateSchema(schemaId, updatedSchema, workspaceId);
-  if (response.error) {
-    mutateSchema(); // Revert
-    showError(response.error.message);
-    return;
-  }
-};
-```
-
-**Key points:** Use temporary IDs for new fields, filter arrays for deletions, apply drag-drop results for reordering.
 
 ### Best Practices
+1. Always use useSWR's `mutate` for data updates
+2. Check `response.error` before success logic
+3. Call `mutate()` without arguments to revert and fetch fresh data
+4. Close dialogs immediately after optimistic updates
+5. Handle both API errors and exceptions
 
 1. **Always use useSWR's `mutate`** for data updates
 2. **Check `response.error`** before success logic
@@ -169,14 +153,20 @@ const updateField = async (updatedSchema) => {
 6. **Use database types directly** to avoid transformation overhead
 7. **Transform data only when components require specific formats**
 
-### Anti-Patterns
+- Tests in `app/tests/` directory
+- Use automocks in `__mocks__/` folders, never `vi.mock()`
+- Use `screen.findBy*` for assertions, avoid `.toHaveAttribute()`
+- Never import `@testing-library/jest-dom`
 
-❌ **Don't update state directly:**
+## UI Components & Code Style
 
-```typescript
-// Bad: Bypasses SWR cache
-setState(newData);
-```
+- Use consolidated `radix-ui` package: `import { Dialog, Button } from "radix-ui"`
+- For Slot usage: `Slot.Slot` from radix-ui package  
+- Components in `app/src/components/ui/` follow shadcn/ui patterns
+- Pages with tabs must use nested routes for each tab
+- Remove unused imports always
+- Use `useEffect` callbacks created outside the effect
+- Never use `npm install` suggestions, only recommend packages
 
 ✅ **Do use mutate:**
 
@@ -221,24 +211,7 @@ setItems(dbItems);
 
 ## Database
 
-- Views use the `_vw` suffix for db tables.
-
-
-## Testing of App
-
-- Tests should always be written under the `app/tests` directory. 
-- When working on files under `app/src/lib/**`, always ensure that there are appropriate tests written.
-
-- Tests should always be written under the `app/tests` directory. 
-- Use the global setup file to perform common app-level setup.
-
-### mocks
-- always use automocks in __mocks__ folder
-- never use `vi.mock()`
-
-## Coding Style & Architecture
-
-- API modules wrap `supabase.functions.invoke` calls
-- Pages consume these helpers and update data through `useSWR`
+- Reference `app/database.types.ts` for current schema
+- Views use `_vw` suffix
+- Migration files organized by schema in `supabase/migrations/`
 - Keep domain types in `/types` and share across modules
-- Remove prototype code and mock data from production files

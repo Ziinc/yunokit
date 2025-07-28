@@ -1,0 +1,13 @@
+---
+title: YunoCommunity
+description: Manage forums and user interactions
+sidebar_position: 8
+---
+
+# YunoCommunity
+
+YunoCommunity handles forums, posts, comments and user moderation. It runs in its own `yunocommunity` schema and exposes APIs via the community function. Use it to create forums, approve posts, ban users and configure community options.
+
+## Posts and Comments
+
+Each forum contains many posts. Posts support `multi_thread` mode allowing a Reddit style tree of comments, or single-thread mode for classic linear discussions. Comments reference optional `parent_comment_id` to build the hierarchy.
