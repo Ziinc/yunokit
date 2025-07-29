@@ -181,7 +181,16 @@ const ContentItemPage: React.FC = () => {
       return;
     }
 
-      try {
+    if (!contentIdNumber && schema?.archived_at) {
+      toast({
+        title: "Schema archived",
+        description: "Cannot create content for an archived schema.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
       const newStatus = status || 'draft';
       const title = content.title || 'Untitled';
       

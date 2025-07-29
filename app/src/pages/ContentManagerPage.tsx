@@ -172,7 +172,7 @@ const ContentManagerPage: React.FC = () => {
     }
   );
   const schemas = schemasResponse?.data || [];
-  
+
   // Convert ContentSchemaRow[] to ContentSchema[] for components that expect string IDs
   const convertedSchemas = schemas.map(schema => ({
     id: schema.id.toString(),
@@ -183,6 +183,18 @@ const ContentManagerPage: React.FC = () => {
     type: schema.type || 'collection',
     strict: schema.strict
   }));
+
+  const activeSchemas = schemas
+    .filter(s => !s.archived_at)
+    .map(s => ({
+      id: s.id.toString(),
+      name: s.name,
+      description: s.description || undefined,
+      fields: (s.fields as Record<string, unknown>[]) || [],
+      isCollection: s.type === 'collection',
+      type: s.type || 'collection',
+      strict: s.strict
+    }));
 
   const isLoading = contentLoading || schemasLoading;
   
@@ -517,9 +529,9 @@ const ContentManagerPage: React.FC = () => {
   
   return (
     <div className="space-y-6">
-      <ContentListHeader 
+      <ContentListHeader
         handleCreateNew={handleCreateNew}
-        schemas={convertedSchemas} 
+        schemas={activeSchemas}
       />
       
       <div className="rounded-md border bg-white">

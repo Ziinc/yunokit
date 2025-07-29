@@ -23,6 +23,7 @@ import {
   Settings,
   MoreHorizontal,
   FileEdit,
+  Archive,
 } from "lucide-react";
 import { ContentSchema } from "@/lib/contentSchema";
 import { listSchemas, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
@@ -176,10 +177,23 @@ const SchemaEditorPage: React.FC = () => {
   );
 
   const schema = schemaResponse?.data;
+  const isArchived = !!schema?.archived_at;
   const contentItems = contentItemsResponse?.data || [];
   const contentCount = Array.isArray(contentItems) ? contentItems.length : 0;
 
   console.log("schema", schema);
+
+  const ensureNotArchived = () => {
+    if (isArchived) {
+      toast({
+        title: "Schema archived",
+        description: "Archived schemas cannot be modified.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     const loadAvailableSchemas = async () => {
@@ -215,6 +229,8 @@ const SchemaEditorPage: React.FC = () => {
 
   const handleDragEnd = async (result: DropResult) => {
     if (!schema || !result.destination) return;
+
+    if (!ensureNotArchived()) return;
 
     // Check if there's actually a change in position
     if (result.source.index === result.destination.index) {
@@ -292,6 +308,8 @@ const SchemaEditorPage: React.FC = () => {
 
   const handleAddField = async () => {
     if (!schema || !newField.label.trim()) return;
+
+    if (!ensureNotArchived()) return;
 
     try {
       const field: SchemaField = {
@@ -383,6 +401,8 @@ const SchemaEditorPage: React.FC = () => {
   const handleDeleteField = async (field: SchemaField) => {
     if (!schema) return;
 
+    if (!ensureNotArchived()) return;
+
     try {
       const updatedFields = schema.fields.filter((f) => f !== field);
 
@@ -448,6 +468,8 @@ const SchemaEditorPage: React.FC = () => {
 
   const handleRenameField = async () => {
     if (!schema || !selectedField || !newFieldName.trim()) return;
+
+    if (!ensureNotArchived()) return;
 
     try {
       const updatedFields = schema.fields.map((f) =>
@@ -519,6 +541,8 @@ const SchemaEditorPage: React.FC = () => {
   const handleEditSchemaName = async () => {
     if (!schema || !newSchemaName.trim()) return;
 
+    if (!ensureNotArchived()) return;
+
     try {
       // Optimistic update
       mutateSchema(
@@ -583,6 +607,8 @@ const SchemaEditorPage: React.FC = () => {
 
   const handleEditSchemaDescription = async () => {
     if (!schema) return;
+
+    if (!ensureNotArchived()) return;
 
     try {
       // Optimistic update
@@ -675,6 +701,8 @@ const SchemaEditorPage: React.FC = () => {
   const handleChangeSchemaType = async () => {
     if (!schema) return;
 
+    if (!ensureNotArchived()) return;
+
     const newType = schema.type === "collection" ? "single" : "collection";
 
     try {
@@ -747,6 +775,55 @@ const SchemaEditorPage: React.FC = () => {
       toast({
         title: "Error changing schema type",
         description: "There was a problem changing the schema type.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArchiveSchema = async () => {
+    if (!schema) return;
+
+    if (!ensureNotArchived()) return;
+
+    try {
+      const archivedAt = new Date().toISOString();
+      mutateSchema(
+        {
+          ...schemaResponse,
+          data: { ...schema, archived_at: archivedAt },
+        },
+        false,
+      );
+
+      const updated = await updateSchema(
+        schema.id,
+        { archived_at: archivedAt },
+        currentWorkspace!.id,
+      );
+
+      if (updated.error) {
+        mutateSchema();
+        toast({
+          title: "Error archiving schema",
+          description:
+            updated.error.message || "There was a problem archiving the schema.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      mutateSchema({ ...schemaResponse, data: updated.data });
+
+      toast({
+        title: "Schema archived",
+        description: `${schema.name} has been archived successfully.`,
+      });
+    } catch (error) {
+      console.error("Error archiving schema:", error);
+      mutateSchema();
+      toast({
+        title: "Error archiving schema",
+        description: "There was a problem archiving the schema.",
         variant: "destructive",
       });
     }
@@ -907,6 +984,11 @@ const SchemaEditorPage: React.FC = () => {
               <Table className="h-4 w-4 mr-1" />
               {(schema.fields || []).length} Fields
             </Badge>
+            {isArchived && (
+              <Badge variant="destructive" className="ml-2">
+                <Archive className="h-4 w-4 mr-1" /> Archived
+              </Badge>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -922,10 +1004,14 @@ const SchemaEditorPage: React.FC = () => {
           {schema.description && (
             <p className="text-muted-foreground">{schema.description}</p>
           )}
+          {isArchived && (
+            <p className="text-destructive">This schema is archived and read only.</p>
+          )}
         </div>
 
         <div className="flex gap-2">
-          <Dialog open={showAddField} onOpenChange={setShowAddField}>
+          {!isArchived && (
+            <Dialog open={showAddField} onOpenChange={setShowAddField}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus size={16} />
@@ -1101,7 +1187,8 @@ const SchemaEditorPage: React.FC = () => {
                 <Button onClick={handleAddField}>Add Field</Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1119,20 +1206,28 @@ const SchemaEditorPage: React.FC = () => {
                 Browse Content
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowEditSchemaName(true)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Rename Schema
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowEditSchemaDescription(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Description
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowChangeSchemaType(true)}>
-                <Settings className="mr-2 h-4 w-4" />
-                Change Type
-              </DropdownMenuItem>
+              {!isArchived && (
+                <>
+                  <DropdownMenuItem onClick={() => setShowEditSchemaName(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Rename Schema
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowEditSchemaDescription(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Description
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowChangeSchemaType(true)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Change Type
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleArchiveSchema}>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive Schema
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => setShowDeleteSchema(true)}
                 className="text-red-600 focus:text-red-600"
               >
