@@ -2,7 +2,7 @@
 \set ON_ERROR_STOP true
 BEGIN;
 
-SELECT plan(8);
+SELECT plan(10);
 
 -- Test 1: Insert schema and verify created_at is set
 INSERT INTO yunocontent.schemas (type, name, fields)
@@ -95,6 +95,31 @@ SELECT throws_ok(
     '23503',
     NULL,
     'Schema deletion restricted when content items exist'
+);
+
+-- Test 9: Prevent updates to archived schemas
+UPDATE yunocontent.schemas SET archived_at = now() WHERE name = 'posts';
+
+PREPARE update_archived_schema AS
+    UPDATE yunocontent.schemas SET name = 'archived_posts' WHERE name = 'posts';
+
+SELECT throws_ok(
+    'update_archived_schema',
+    'P0001',
+    NULL,
+    'Archived schema cannot be modified'
+);
+
+-- Test 10: Prevent content creation with archived schema
+PREPARE insert_archived_content AS
+    INSERT INTO yunocontent.content_items (title, schema_id)
+    SELECT 'Blocked', id FROM yunocontent.schemas WHERE name = 'posts';
+
+SELECT throws_ok(
+    'insert_archived_content',
+    'P0001',
+    NULL,
+    'Cannot create content for archived schema'
 );
 
 SELECT * FROM finish();
