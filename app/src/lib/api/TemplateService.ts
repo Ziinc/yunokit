@@ -3,6 +3,8 @@ import {
   generateBloggingTemplate,
   generateTutorialsTemplate
 } from "./TemplateGenerators";
+import { createSchema, SchemaFieldType } from "./SchemaApi";
+import { createContentItem } from "./ContentApi";
 
 export type TemplateType = 'ecommerce' | 'blogging' | 'tutorials';
 
@@ -15,24 +17,72 @@ export class TemplateService {
    * @param templateType The type of template to apply
    * @returns Promise that resolves when the template is applied
    */
-  static async applyTemplate(templateType: TemplateType): Promise<void> {
-    
+  static async applyTemplate(
+    templateType: TemplateType,
+    workspaceId: number
+  ): Promise<void> {
+    let template;
+
     switch (templateType) {
       case 'ecommerce':
-        generateEcommerceTemplate();
+        template = generateEcommerceTemplate();
         break;
       case 'blogging':
-        generateBloggingTemplate();
+        template = generateBloggingTemplate();
         break;
       case 'tutorials':
-        generateTutorialsTemplate();
+        template = generateTutorialsTemplate();
         break;
       default:
         throw new Error(`Unknown template type: ${templateType}`);
     }
-    
-    // TODO: Implement template application using proper API calls
-    // when template functionality is needed
+
+    const schemaMap = new Map<string, number>();
+
+    for (const schema of template.schemas) {
+      const fields = schema.fields.map(field => ({
+        id: field.id,
+        label: field.name,
+        description: field.description ?? null,
+        type: field.type as SchemaFieldType,
+        required: field.required ?? false,
+        default_value: (field as any).defaultValue ?? null,
+        options: field.options ?? [],
+        relation_schema_id: (field as any).relationSchemaId ?? null,
+      }));
+      const response = await createSchema(
+        {
+          name: schema.name,
+          description: schema.description,
+          fields,
+          strict: schema.strict ?? true,
+          type: schema.schemaType,
+        },
+        workspaceId
+      );
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      schemaMap.set(schema.id, response.data!.id);
+    }
+
+    for (const item of template.contentItems) {
+      const response = await createContentItem(
+        {
+          uid: item.id,
+          title: item.title,
+          schema_id: schemaMap.get(item.schemaId),
+          data: item.content as unknown as object,
+          created_at: item.createdAt,
+          updated_at: item.updatedAt,
+          published_at: item.publishedAt,
+        },
+        workspaceId
+      );
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+    }
   }
   
   /**
@@ -45,11 +95,12 @@ export class TemplateService {
       case 'ecommerce':
         return {
           title: "E-commerce Template",
-          description: "Create a complete e-commerce content structure with products, categories, orders, and customers.",
+          description:
+            "Creates product, category, customer, order and cart schemas with sample entries.",
           features: [
             "Product catalog with variants",
             "Product categories and tags",
-            "Customer profiles", 
+            "Customer profiles",
             "Order management",
             "Shopping cart"
           ]
@@ -57,7 +108,8 @@ export class TemplateService {
       case 'blogging':
         return {
           title: "Blogging Template",
-          description: "Set up a complete blog with posts, categories, authors, and comments.",
+          description:
+            "Adds post, author, category and comment schemas populated with sample data.",
           features: [
             "Blog posts with rich text editing",
             "Author profiles",
@@ -69,7 +121,8 @@ export class TemplateService {
       case 'tutorials':
         return {
           title: "Tutorials Platform Template",
-          description: "Create educational content with courses, lessons, quizzes, and student tracking.",
+          description:
+            "Seeds course, module, lesson and instructor schemas along with a demo course.",
           features: [
             "Course structure with modules",
             "Video and text lessons",

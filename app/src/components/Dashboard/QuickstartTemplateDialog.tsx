@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TemplateService, TemplateType } from "@/lib/api/TemplateService";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 interface QuickstartTemplateDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ export const QuickstartTemplateDialog: React.FC<QuickstartTemplateDialogProps> =
 }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { currentWorkspace } = useWorkspace();
   const [isLoading, setIsLoading] = useState(false);
   
   if (!templateType) return null;
@@ -36,11 +38,12 @@ export const QuickstartTemplateDialog: React.FC<QuickstartTemplateDialogProps> =
   };
   
   const handleCreateTemplate = async () => {
+    if (!currentWorkspace) return;
     try {
       setIsLoading(true);
-      
+
       // Apply the template
-      await TemplateService.applyTemplate(templateType);
+      await TemplateService.applyTemplate(templateType, currentWorkspace.id);
       
       toast({
         title: "Template installed",
