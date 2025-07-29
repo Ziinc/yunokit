@@ -95,6 +95,8 @@ const Dashboard: React.FC = () => {
 
   const isLoading = contentLoading || recentEditedLoading || recentPublishedLoading || schemasLoading;
 
+  const showQuickstart = schemas.length === 0 && contentItems.length === 0;
+
   // Handle authentication check
   useEffect(() => {
     const loadUser = async () => {
@@ -345,7 +347,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quickstart Templates Section */}
-      {false && (
+      {showQuickstart && (
         <Card className="w-full">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
