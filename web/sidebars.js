@@ -29,13 +29,14 @@ const sidebars = {
         "features/api-reference",
         "features/database-migrations",
         "features/best-practices",
-        "features/guides"
+    "features/guides"
       ],
       link: {
         type: "generated-index",
         description: "The main pluggable features of YunoContent",
       },
     },
+    "developer-guide",
   ],
 };
 
