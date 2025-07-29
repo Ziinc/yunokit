@@ -8,6 +8,13 @@ import { createWorkspace } from "@/lib/api/WorkspaceApi";
 import { listProjects } from "@/lib/supabase";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 interface CreateWorkspaceFormProps {
   onSuccess?: () => void;
@@ -20,6 +27,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
 }) => {
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [newWorkspaceDescription, setNewWorkspaceDescription] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const { refreshWorkspaces, setCurrentWorkspace, workspaces } = useWorkspace();
@@ -45,8 +53,14 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
     return projects.filter(project => !linkedProjectIds.includes(project.id));
   }, [projects, workspaces]);
 
-  // Use the first available project automatically
-  const selectedProject = availableProjects[0];
+  // Auto-select first available project when projects load
+  React.useEffect(() => {
+    if (availableProjects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(availableProjects[0].id);
+    }
+  }, [availableProjects, selectedProjectId]);
+
+  const selectedProject = availableProjects.find(p => p.id === selectedProjectId);
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,10 +74,10 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
       return;
     }
 
-    if (!selectedProject) {
+    if (!selectedProjectId) {
       toast({
-        title: "No available project",
-        description: "No Supabase project available to link to this workspace",
+        title: "Project selection required",
+        description: "Please select a Supabase project to link to this workspace",
         variant: "destructive",
       });
       return;
@@ -74,7 +88,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
       const newWorkspace = await createWorkspace({
         name: newWorkspaceName,
         description: newWorkspaceDescription,
-        project_ref: selectedProject.id,
+        project_ref: selectedProjectId,
       });
 
       await refreshWorkspaces();
@@ -125,17 +139,34 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label>Connected Supabase Project</Label>
+        <Label htmlFor="project-select">Supabase Project</Label>
         {isLoadingProjects ? (
           <div className="flex items-center gap-2 py-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm text-muted-foreground">Loading projects...</span>
           </div>
-        ) : selectedProject ? (
-          <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-2 text-sm font-medium text-muted-foreground">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-            {selectedProject.name} ({selectedProject.region})
-          </div>
+        ) : availableProjects.length > 0 ? (
+          <Select
+            value={selectedProjectId}
+            onValueChange={setSelectedProjectId}
+            disabled={isCreating}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a Supabase project..." />
+            </SelectTrigger>
+            <SelectContent>
+              {availableProjects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-block w-2 h-2 rounded-full ${
+                      project.status === "ACTIVE_HEALTHY" ? "bg-green-500" : "bg-red-500"
+                    }`} />
+                    {project.name} ({project.region})
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         ) : (
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-2 text-sm font-medium text-amber-700">
@@ -158,7 +189,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isCreating || !selectedProject} className="gap-2">
+        <Button type="submit" disabled={isCreating || !selectedProjectId} className="gap-2">
           {isCreating ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />

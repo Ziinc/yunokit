@@ -4,3 +4,6 @@ export * from './AssetsApi';
 export * from './TemplateService';
 export * from './TemplateGenerators'; 
 export * from './SystemAuthorApi';
+export * from './ForumsApi';
+export * from './ModerationApi';
+export * from './CommunityConfigApi';

@@ -5,7 +5,7 @@
   "type": "module",
   "featureFlags": {
     "approvalFlows": false,
-    "community": false,
+    "community": true,
     "crossProjectDataMigrations": true,
     "systemAuthors": false,
     "search": false,

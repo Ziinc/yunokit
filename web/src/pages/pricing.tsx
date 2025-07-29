@@ -17,8 +17,7 @@ const plans = [
       "1 user included per workspace",
       "1 workspace",
       "Basic content management",
-      "Standard support",
-      "Basic analytics"
+      "Standard support"
     ],
     limitations: [
       "No community features",
@@ -38,8 +37,7 @@ const plans = [
       { text: "Community features", highlight: true },
       "System authors",
       "Content approval flow",
-      "Priority support",
-      "Advanced analytics"
+      "Priority support"
     ],
     addOns: [
       { name: "Additional Workspace User", price: 5 },
@@ -204,11 +202,8 @@ function PricingCard({ plan }) {
         </div>
       )}
 
-      <Button
-        asChild
-        className="w-full font-medium bg-cms-purple hover:bg-cms-purple/90 text-white"
-        variant="default">
-                    <Link to="/docs/intro" className="flex items-center justify-center gap-2">
+      <Button asChild className="block w-full" variant="default" size="lg">
+        <Link to="/docs/intro" className="flex items-center justify-center gap-2">
           <Rocket className="w-4 h-4" />
           {plan.cta}
         </Link>

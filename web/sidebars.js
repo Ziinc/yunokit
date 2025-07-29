@@ -29,7 +29,8 @@ const sidebars = {
         "features/api-reference",
         "features/database-migrations",
         "features/best-practices",
-    "features/guides"
+        "features/guides",
+        "features/yunocommunity"
       ],
       link: {
         type: "generated-index",

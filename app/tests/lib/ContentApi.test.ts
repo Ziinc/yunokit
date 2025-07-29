@@ -9,6 +9,7 @@ vi.mock('../../src/lib/api/ContentApi', () => ({
   createContentItem: vi.fn(),
   updateContentItem: vi.fn(),
   listContentItemsBySchema: vi.fn(),
+  listContentItemVersions: vi.fn(),
 }));
 
 // Mock supabase functions
@@ -51,10 +52,22 @@ describe('ContentApi', () => {
     it('should call supabase functions with correct parameters', async () => {
       const mockDeleteContentItem = ContentApi.deleteContentItem as Mock;
       mockDeleteContentItem.mockResolvedValue(undefined);
-      
+
       await ContentApi.deleteContentItem(1, 1);
-      
+
       expect(mockDeleteContentItem).toHaveBeenCalledWith(1, 1);
     });
   });
-}); 
+
+  describe('listContentItemVersions', () => {
+    it('should call supabase functions with correct parameters', async () => {
+      const mockListContentItemVersions = ContentApi.listContentItemVersions as Mock;
+      mockListContentItemVersions.mockResolvedValue({ data: [] });
+
+      await ContentApi.listContentItemVersions(1, 1);
+
+      expect(mockListContentItemVersions).toHaveBeenCalledWith(1, 1);
+    });
+  });
+});
+

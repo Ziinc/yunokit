@@ -4,6 +4,7 @@ import path from "path";
 export type Migration = {
   version: string
   name: string
+  schema: "yunocontent" | "yunocommunity"
   filename: string
   sql: string
   workspace: string
@@ -17,29 +18,33 @@ export const migrations: Migration[] = compileTime(async () => {
     "../../supabase/migrations"
   );
   if (fs.existsSync(supabaseMigrationsPath)) {
-    const files = fs
-      .readdirSync(supabaseMigrationsPath)
-      .filter((file) => file.endsWith(".sql"))
+    ["yunocontent", "yunocommunity"].forEach((schema: Migration["schema"]) => {
+      const files = fs
+        .readdirSync(path.join(supabaseMigrationsPath, schema))
+        .filter((file) => file.endsWith(".sql"))
       .sort();
 
 
-    for (const file of files) {
-      if (typeof file === "string") {
-        const filePath = path.join(supabaseMigrationsPath, file);
-        const content = fs.readFileSync(filePath, "utf8");
-        const match = file.match(/^(\d{14})_(.+)\.sql$/);
+    console.log(files)
+          for (const file of files) {
+        if (typeof file === "string") {
+          const filePath = path.join(supabaseMigrationsPath, schema, file);
+          const content = fs.readFileSync(filePath, "utf8");
+          const match = file.match(/^(\d{14})_(.+)\.sql$/);
 
-        if (match) {
-          results.push({
-            version: match[1],
-            name: match[2],
-            filename: `supabase/migrations/${file}`,
-            sql: content,
-            workspace: "supabase",
-          })
+          if (match) {
+            results.push({
+              version: match[1],
+              name: match[2],
+              filename: `supabase/migrations/${schema}/${file}`,
+              sql: content,
+              schema,
+              workspace: "supabase",
+            })
+          }
         }
       }
-    }
+    })
   }
   return results;
 });

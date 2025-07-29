@@ -1,10 +1,10 @@
 import { createClient, PostgrestResponse } from "npm:@supabase/supabase-js@2.39.3";
 import type { Database } from "../_shared/database.types.ts";
 
-export const dataSbClient = (url: string, apiKey: string) =>
+export const dataSbClient = (url: string, apiKey: string, schema: "yunocontent" | "yunocommunity" = "yunocontent") =>
   createClient<Database>(url, apiKey, {
     db: {
-      schema: "yunocontent",
+      schema,
     },
   });
 
