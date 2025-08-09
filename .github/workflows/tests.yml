@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        command: [test, lint, compile]
+        command: [test, lint, compile, ss]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -37,5 +37,33 @@ jobs:
         run: npm ci
         working-directory: shared
       - name: Run ${{ matrix.command }}
+        if: matrix.command != 'ss'
         working-directory: ./app
         run: npm ci && npm run ${{ matrix.command }}
+      - name: Capture screenshots
+        if: matrix.command == 'ss'
+        working-directory: app
+        shell: bash
+        run: |
+          npm ci
+          npm run dev &
+          echo $! > vite.pid
+          ../scripts/wait-for-port.sh 8080
+          npx playwright install --with-deps
+          node scripts/screenshot.mjs
+          kill $(cat vite.pid)
+      - name: Upload screenshots
+        if: matrix.command == 'ss'
+        id: upload-screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/screenshots
+      - name: Add screenshots to summary
+        if: matrix.command == 'ss'
+        working-directory: app
+        shell: bash
+        run: |
+          for img in screenshots/*; do
+            echo "![$(basename "$img")](${{ steps.upload-screenshots.outputs.artifact-url }}/$(basename "$img"))" >> "$GITHUB_STEP_SUMMARY"
+          done
