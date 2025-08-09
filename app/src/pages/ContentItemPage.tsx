@@ -466,7 +466,8 @@ const ContentItemPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <>
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
         <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
         
@@ -702,12 +703,13 @@ const ContentItemPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-    <ContentItemHistoryPanel
-      open={historyOpen}
-      onOpenChange={setHistoryOpen}
-      versions={history}
-    />
+      </div>
+      <ContentItemHistoryPanel
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        versions={history}
+      />
+    </>
   );
 };
 

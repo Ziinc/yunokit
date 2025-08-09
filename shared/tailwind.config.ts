@@ -1,5 +1,6 @@
 
 import type { Config } from "tailwindcss";
+import { createRequire } from "module";
 
 export default {
 	darkMode: ["class"],
@@ -118,5 +119,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+        plugins: [createRequire(process.cwd() + "/")("tailwindcss-animate")],
 } satisfies Config;
