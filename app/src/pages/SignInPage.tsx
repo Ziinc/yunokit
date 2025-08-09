@@ -20,6 +20,8 @@ import {
   Users,
   Database,
   Wand2,
+  Github,
+  ExternalLink,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -720,6 +722,18 @@ const SignInPage: React.FC = () => {
                       Privacy Policy
                     </a>
                     .
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    <a
+                      href="https://github.com/yunokit/yunokit"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <Github className="h-3 w-3" />
+                      <span>View on GitHub</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
                   </p>
                 </div>
               </CardFooter>
