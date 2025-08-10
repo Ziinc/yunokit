@@ -111,7 +111,11 @@ const CommunityConfigPage: React.FC = () => {
     }
   };
 
-  const updateConfigField = (section: keyof CommunityConfig, field: string, value: unknown) => {
+  const updateConfigField = (
+    section: keyof CommunityConfig,
+    field: string,
+    value: string | number | boolean
+  ) => {
     setConfig(prev => ({
       ...prev,
       [section]: {
