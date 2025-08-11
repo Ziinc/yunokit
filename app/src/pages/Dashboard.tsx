@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isAuthenticated } from "@/lib/api/auth";
 import { formatDate } from "@/utils/formatDate";
-import { listSchemas, type ContentSchemaRow } from "@/lib/api/SchemaApi";
+import { listSchemas } from "@/lib/api/SchemaApi";
 import useSWR from "swr";
 const Dashboard: React.FC = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
@@ -156,7 +156,7 @@ const Dashboard: React.FC = () => {
   };
 
   // Helper function to extract author name from email or use a default
-  const getAuthorName = (item: ContentItemRow) => {
+  const getAuthorName = () => {
     // ContentItemRow doesn't have updatedBy/createdBy, so return a default
     return 'Unknown';
   };
@@ -243,7 +243,7 @@ const Dashboard: React.FC = () => {
             <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
           </Link>
           <p className="text-xs text-muted-foreground">
-            {getSchemaName(item.schema_id!)} • {getAuthorName(item)} • Updated {formatDate(item.updated_at!)}
+            {getSchemaName(item.schema_id!)} • {getAuthorName()} • Updated {formatDate(item.updated_at!)}
           </p>
         </div>
       </div>
@@ -269,7 +269,7 @@ const Dashboard: React.FC = () => {
             <p className="font-medium group-hover:text-primary transition-colors">{item.title}</p>
           </Link>
           <p className="text-xs text-muted-foreground">
-            {getSchemaName(item.schema_id!)} • {getAuthorName(item)} • Updated {formatDate(item.updated_at!)}
+            {getSchemaName(item.schema_id!)} • {getAuthorName()} • Updated {formatDate(item.updated_at!)}
           </p>
         </div>
       </div>

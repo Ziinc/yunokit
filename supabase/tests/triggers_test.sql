@@ -45,14 +45,14 @@ SELECT isnt(
     'Content item updated_at changes on update'
 ) FROM yunocontent.content_items WHERE title = 'Updated Test Post';
 
--- Test 5: Verify schema foreign key constraint
+-- Test 5: Verify schema foreign key constraint - use proper signature for has_fk
 SELECT has_fk(
     'yunocontent',
     'content_items',
-    'schema_id',
+    ARRAY['schema_id'],
     'yunocontent',
     'schemas',
-    'id'
+    ARRAY['id']
 );
 
 -- Test 6: Test schema type enum constraint

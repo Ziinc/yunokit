@@ -12,8 +12,7 @@ import {
   MessageCircle,
   Search,
   Flag,
-  Trash2,
-  MoreHorizontal
+  Trash2
 } from "lucide-react";
 import { Comment } from "@/types/comments";
 

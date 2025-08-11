@@ -46,9 +46,9 @@ export class TemplateService {
         description: field.description ?? null,
         type: field.type as SchemaFieldType,
         required: field.required ?? false,
-        default_value: (field as any).defaultValue ?? null,
+        default_value: (field as Record<string, unknown>).defaultValue ?? null,
         options: field.options ?? [],
-        relation_schema_id: (field as any).relationSchemaId ?? null,
+        relation_schema_id: (field as Record<string, unknown>).relationSchemaId ?? null,
       }));
       const response = await createSchema(
         {

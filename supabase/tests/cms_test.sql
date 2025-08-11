@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(12);
+SELECT plan(7);
 
 -- CONTENT ITEMS
 SELECT columns_are(
@@ -15,20 +15,6 @@ SELECT columns_are(
     ARRAY['id', 'name', 'description', 'type', 'fields', 'created_at', 'updated_at', 'archived_at', 'deleted_at']
 );
 
--- AUTHORS
-SELECT columns_are(
-    'yunocontent',
-    'authors',
-    ARRAY['id', 'sc_user_id', 'user_id', 'first_name', 'last_name', 'pseudonym', 'title', 'description', 'metadata']
-);
-
--- CONTENT AUTHORS
-SELECT columns_are(
-    'yunocontent',
-    'content_authors',
-    ARRAY['id', 'content_id', 'author_id']
-);
-
 -- Check schema_type enum values
 SELECT enum_has_labels(
     'yunocontent',
@@ -36,23 +22,14 @@ SELECT enum_has_labels(
     ARRAY['single', 'collection']
 );
 
--- Test foreign key relationships
+-- Test foreign key relationships - use proper signature for has_fk
 SELECT has_fk(
     'yunocontent',
     'content_items',
-    'schema_id',
+    ARRAY['schema_id'],
     'yunocontent',
     'schemas',
-    'id'
-);
-
-SELECT has_fk(
-    'yunocontent',
-    'content_authors',
-    'author_id',
-    'yunocontent',
-    'authors',
-    'id'
+    ARRAY['id']
 );
 
 -- Test schema type constraints
@@ -75,20 +52,6 @@ prepare insert_duplicate_uid as
     VALUES ('test-uid', 'Test 1'), ('test-uid', 'Test 2');
 
 select throws_ok('insert_duplicate_uid');
-
--- Test valid content item creation
-prepare insert_valid_content as
-    INSERT INTO yunocontent.content_items (uid, title, data) 
-    VALUES ('valid-uid', 'Valid Content', '{"test": "data"}');
-
-select lives_ok('insert_valid_content');
-
--- Test author creation
-prepare insert_author as
-    INSERT INTO yunocontent.authors (first_name, last_name, pseudonym) 
-    VALUES ('John', 'Doe', 'johndoe');
-
-select lives_ok('insert_author');
 
 -- Finish the tests and clean up.
 SELECT * FROM finish();

@@ -100,7 +100,7 @@ const ContentItemPage: React.FC = () => {
   // Set up initial content
   const initialContent = getContentData(contentItem) || {};
 
-  const { data: historyResponse } = useSWR(
+  useSWR(
     historyOpen && currentWorkspace && contentIdNumber
       ? `content-item-history-${contentIdNumber}`
       : null,
