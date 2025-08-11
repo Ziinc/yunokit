@@ -5,21 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserMinus, Shield, Search, Loader2, MoreHorizontal } from "lucide-react";
+import { Shield, Search, Loader2, MoreHorizontal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { listBans, banUser } from '@/lib/api/ModerationApi';
 
-interface BanRecord {
-  id: string;
-  user_id: string;
-  user_name: string;
-  user_email: string;
-  reason: string;
-  banned_at: string;
-  banned_by: string;
-  status: 'active' | 'lifted';
-}
 
 interface CommunityUser {
   id: string;
@@ -35,7 +24,6 @@ interface CommunityUser {
 
 const UserManagementPage: React.FC = () => {
   const { toast } = useToast();
-  const [bans, setBans] = useState<BanRecord[]>([]);
   const [users, setUsers] = useState<CommunityUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,8 +33,6 @@ const UserManagementPage: React.FC = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const { data } = await listBans();
-        setBans(data || []);
         
         // Mock users data - replace with actual API call
         const mockUsers: CommunityUser[] = [
@@ -88,28 +74,6 @@ const UserManagementPage: React.FC = () => {
     load();
   }, [toast]);
 
-  const handleBanUser = async (userId: string, reason: string = "Violation of community guidelines") => {
-    try {
-      await banUser({ user_id: userId, reason });
-      
-      // Update local state
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, status: 'banned' as const } : user
-      ));
-      
-      toast({
-        title: "User banned",
-        description: "The user has been banned from the community.",
-      });
-    } catch (error) {
-      console.error("Error banning user:", error);
-      toast({
-        title: "Action failed",
-        description: "There was an error banning the user. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
@@ -234,10 +198,6 @@ const UserManagementPage: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleBanUser(user.id)}>
-                              <UserMinus className="h-4 w-4 mr-2" />
-                              Ban User
-                            </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Shield className="h-4 w-4 mr-2" />
                               Make Moderator
@@ -254,69 +214,6 @@ const UserManagementPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Banned users section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Banned Users</CardTitle>
-          <CardDescription>
-            View and manage banned community members
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Banned By</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bans.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                    No banned users found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                bans.map((ban) => (
-                  <TableRow key={ban.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{ban.user_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {ban.user_email}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{ban.reason}</TableCell>
-                    <TableCell>{ban.banned_by}</TableCell>
-                    <TableCell>
-                      {new Date(ban.banned_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={ban.status === "active" ? "destructive" : "secondary"}
-                        className="capitalize"
-                      >
-                        {ban.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm">
-                        Lift Ban
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 };

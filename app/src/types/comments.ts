@@ -2,7 +2,7 @@
 export interface Comment {
   id: string;
   content: string;
-  status: "approved" | "pending" | "spam" | "flagged" | "deleted";
+  status: "pending" | "spam" | "flagged" | "deleted";
   parentId?: string;
   createdAt: string;
   contentId: string;
@@ -54,6 +54,8 @@ export interface ForumPost {
   views: number;
   likes: number;
   replies: number;
+  commentsCount: number; // Mock field for now
+  forumId: string;
   author: {
     id: string;
     name: string;
@@ -62,6 +64,19 @@ export interface ForumPost {
   };
   tags: string[];
   pinned: boolean;
+}
+
+export interface Forum {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at?: string;
+  deleted_at?: string;
+  archived_at?: string;
+  posts_count?: number;  // Mock field for now
+  comments_count?: number; // Mock field for now
+  members_count?: number;
 }
 
 export interface ChatMessage {

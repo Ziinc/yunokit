@@ -33,7 +33,7 @@ export const listContentItems = async (
     qp.set("orderDirection", options.orderDirection);
 
   return await supabase.functions.invoke<ContentItemRow[]>(
-    `proxy/content_items?${qp.toString()}`,
+    `proxy/content/content_items?${qp.toString()}`,
     {
       method: "GET",
     }
@@ -46,7 +46,7 @@ export const getContentItemById = async (id: number, workspaceId: number) => {
   });
 
   return await supabase.functions.invoke<ContentItemRow>(
-    `proxy/content_items/${id}?${qp.toString()}`,
+    `proxy/content/content_items/${id}?${qp.toString()}`,
     {
       method: "GET",
     }
@@ -60,7 +60,7 @@ export const listContentItemsBySchema = async (schemaId: number, workspaceId: nu
   });
 
   return await supabase.functions.invoke<ContentItemRow[]>(
-    `proxy/content_items?${qp.toString()}`,
+    `proxy/content/content_items?${qp.toString()}`,
     {
       method: "GET",
     }
@@ -76,7 +76,7 @@ export const createContentItem = async (
   });
 
   return await supabase.functions.invoke<ContentItemRow>(
-    `proxy/content_items?${qp.toString()}`,
+    `proxy/content/content_items?${qp.toString()}`,
     {
       method: "POST",
       body: item,
@@ -94,7 +94,7 @@ export const updateContentItem = async (
   });
 
   return await supabase.functions.invoke<ContentItemRow>(
-    `proxy/content_items/${itemId}?${qp.toString()}`,
+    `proxy/content/content_items/${itemId}?${qp.toString()}`,
     {
       method: "PUT",
       body: item,
@@ -107,7 +107,7 @@ export const deleteContentItem = async (id: number, workspaceId: number): Promis
     workspaceId: workspaceId.toString(),
   });
 
-  await supabase.functions.invoke(`proxy/content_items/${id}?${qp.toString()}`, {
+  await supabase.functions.invoke(`proxy/content/content_items/${id}?${qp.toString()}`, {
     method: "DELETE",
   });
 };
@@ -121,7 +121,93 @@ export const listContentItemVersions = async (
   });
 
   return await supabase.functions.invoke<ContentItemVersionRow[]>(
-    `proxy/content_items/${contentItemId}/versions?${qp.toString()}`,
+    `proxy/content/content_items/${contentItemId}/versions?${qp.toString()}`,
+    {
+      method: "GET",
+    }
+  );
+};
+
+export const getContentItemVersion = async (versionId: number, workspaceId: number) => {
+  const qp = new URLSearchParams({
+    workspaceId: workspaceId.toString(),
+  });
+
+  return await supabase.functions.invoke<ContentItemVersionRow>(
+    `proxy/content/content_item_versions/${versionId}?${qp.toString()}`,
+    {
+      method: "GET",
+    }
+  );
+};
+
+export const createContentItemVersion = async (
+  version: Database['yunocontent']['Tables']['content_item_versions']['Insert'],
+  workspaceId: number
+) => {
+  const qp = new URLSearchParams({
+    workspaceId: workspaceId.toString(),
+  });
+
+  return await supabase.functions.invoke<ContentItemVersionRow>(
+    `proxy/content/content_item_versions?${qp.toString()}`,
+    {
+      method: "POST",
+      body: version,
+    }
+  );
+};
+
+export const updateContentItemVersion = async (
+  versionId: number,
+  version: Database['yunocontent']['Tables']['content_item_versions']['Update'],
+  workspaceId: number
+) => {
+  const qp = new URLSearchParams({
+    workspaceId: workspaceId.toString(),
+  });
+
+  return await supabase.functions.invoke<ContentItemVersionRow>(
+    `proxy/content/content_item_versions/${versionId}?${qp.toString()}`,
+    {
+      method: "PUT",
+      body: version,
+    }
+  );
+};
+
+export const deleteContentItemVersion = async (versionId: number, workspaceId: number): Promise<void> => {
+  const qp = new URLSearchParams({
+    workspaceId: workspaceId.toString(),
+  });
+
+  await supabase.functions.invoke(`proxy/content/content_item_versions/${versionId}?${qp.toString()}`, {
+    method: "DELETE",
+  });
+};
+
+export const listContentItemVersionsByOptions = async (
+  workspaceId: number,
+  options?: {
+    contentItemId?: number;
+    schemaId?: number;
+    limit?: number;
+    offset?: number;
+    orderBy?: "created_at" | "id";
+    orderDirection?: "asc" | "desc";
+  }
+) => {
+  const qp = new URLSearchParams();
+  qp.set("workspaceId", workspaceId.toString());
+  if (options?.contentItemId) qp.set("contentItemId", options.contentItemId.toString());
+  if (options?.schemaId) qp.set("schemaId", options.schemaId.toString());
+  if (options?.limit !== undefined) qp.set("limit", options.limit.toString());
+  if (options?.offset !== undefined) qp.set("offset", options.offset.toString());
+  if (options?.orderBy) qp.set("orderBy", options.orderBy);
+  if (options?.orderDirection) qp.set("orderDirection", options.orderDirection);
+
+  return await supabase.functions.invoke<ContentItemVersionRow[]>(
+    `proxy/content/content_item_versions?${qp.toString()}`,
     {
       method: "GET",
     }

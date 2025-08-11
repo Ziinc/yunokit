@@ -3,7 +3,7 @@ import { Loader2, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Comment } from "@/types/comments";
 import CommentsTab from "@/components/Comments/CommentsTab";
-import { getComments, approveComment, rejectComment, saveComment } from '@/lib/api/CommentsApi';
+import { getComments, saveComment } from '@/lib/api/CommentsApi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const CommentsPage: React.FC = () => {
@@ -63,9 +63,6 @@ const CommentsPage: React.FC = () => {
       case "pending":
         filtered = filtered.filter(comment => comment.status === "pending");
         break;
-      case "approved":
-        filtered = filtered.filter(comment => comment.status === "approved");
-        break;
       case "flagged":
         filtered = filtered.filter(comment => comment.status === "flagged");
         break;
@@ -89,53 +86,7 @@ const CommentsPage: React.FC = () => {
   }, [filteredComments, currentCommentsPage, commentsPerPage]);
 
 
-  const handleApproveComment = async (commentId: string) => {
-    try {
-      await approveComment(commentId);
-      
-      const updatedComments = comments.map(comment =>
-        comment.id === commentId ? { ...comment, status: "approved" as const } : comment
-      );
-      
-      setComments(updatedComments);
-      
-      toast({
-        title: "Comment approved",
-        description: "The comment has been approved and is now visible.",
-      });
-    } catch (error) {
-      console.error("Error approving comment:", error);
-      toast({
-        title: "Action failed",
-        description: "There was an error approving the comment. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
 
-  const handleRejectComment = async (commentId: string) => {
-    try {
-      await rejectComment(commentId);
-      
-      const updatedComments = comments.map(comment =>
-        comment.id === commentId ? { ...comment, status: "deleted" as const } : comment
-      );
-      
-      setComments(updatedComments);
-      
-      toast({
-        title: "Comment rejected",
-        description: "The comment has been rejected and is now hidden.",
-      });
-    } catch (error) {
-      console.error("Error rejecting comment:", error);
-      toast({
-        title: "Action failed",
-        description: "There was an error rejecting the comment. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleFlagComment = async (commentId: string) => {
     try {
@@ -210,22 +161,6 @@ const CommentsPage: React.FC = () => {
       let updatedComments = [...comments];
       
       switch (action) {
-        case "approve":
-          // TODO: Implement bulk approve API call
-          updatedComments = comments.map(comment =>
-            commentIds.includes(comment.id) 
-              ? { ...comment, status: "approved" as const }
-              : comment
-          );
-          break;
-        case "reject":
-          // TODO: Implement bulk reject API call
-          updatedComments = comments.map(comment =>
-            commentIds.includes(comment.id) 
-              ? { ...comment, status: "deleted" as const }
-              : comment
-          );
-          break;
         case "flag":
           // TODO: Implement bulk flag API call
           updatedComments = comments.map(comment =>
@@ -338,19 +273,6 @@ const CommentsPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-sm font-medium">Approved</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 pb-4">
-                <div className="text-2xl font-bold text-green-600">
-                  {comments.filter(comment => comment.status === "approved").length}
-                </div>
-                <CardDescription className="text-xs text-muted-foreground">
-                  Live comments
-                </CardDescription>
-              </CardContent>
-            </Card>
             
             <Card>
               <CardHeader className="pb-2 pt-4">
@@ -369,8 +291,6 @@ const CommentsPage: React.FC = () => {
 
           <CommentsTab
             comments={paginatedComments}
-            onApprove={handleApproveComment}
-            onReject={handleRejectComment}
             onReply={handleReply}
             selectedComment={selectedComment}
             replyText={replyText}

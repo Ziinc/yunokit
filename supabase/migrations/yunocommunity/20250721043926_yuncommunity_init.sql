@@ -1,3 +1,4 @@
+create schema if not exists "yunocommunity";
 GRANT USAGE ON SCHEMA yunocommunity TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA yunocommunity TO anon, authenticated, service_role;
 GRANT ALL ON ALL ROUTINES IN SCHEMA yunocommunity TO anon, authenticated, service_role;

@@ -60,7 +60,6 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
     }
   }, [availableProjects, selectedProjectId]);
 
-  const selectedProject = availableProjects.find(p => p.id === selectedProjectId);
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();

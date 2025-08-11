@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
-import { ContentItem, ContentItemStatus, ContentItemComment } from "@/lib/contentSchema";
+import { ContentItem, ContentItemStatus, ContentItemComment, ContentField } from "@/lib/contentSchema";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight, FileX2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { getSchema } from "@/lib/api/SchemaApi";
+import { getSchema, ContentSchemaRow } from "@/lib/api/SchemaApi";
 import {
   createContentItem,
   updateContentItem,
@@ -23,9 +23,10 @@ import {
 import ContentItemHistoryPanel from "@/components/Content/ContentItemHistoryPanel";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
+import type { Json } from "../../database.types";
 
 const ContentItemPage: React.FC = () => {
-  const { contentId } = useParams<{ contentId?: string }>();
+  const { contentId, schemaId } = useParams<{ contentId?: string; schemaId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
@@ -36,6 +37,7 @@ const ContentItemPage: React.FC = () => {
   const [historyOpen, setHistoryOpen] = useState(false);
   
   const contentIdNumber = contentId ? Number(contentId) : null;
+  const schemaIdNumber = schemaId ? Number(schemaId) : null;
   
   // Load content item if editing existing
   const { 
@@ -60,10 +62,12 @@ const ContentItemPage: React.FC = () => {
     error: schemaError, 
     isLoading: isLoadingSchema 
   } = useSWR(
-    currentWorkspace && contentItemData?.schema_id ? `schema-${contentItemData.schema_id}` : null,
+    currentWorkspace && (contentItemData?.schema_id || schemaIdNumber) ? 
+      `schema-${contentItemData?.schema_id || schemaIdNumber}` : null,
     () => {
-      if (contentItemData?.schema_id && currentWorkspace) {
-        return getSchema(contentItemData.schema_id, currentWorkspace.id);
+      const targetSchemaId = contentItemData?.schema_id || schemaIdNumber;
+      if (targetSchemaId && currentWorkspace) {
+        return getSchema(targetSchemaId, currentWorkspace.id);
       }
       return null;
     },
@@ -72,7 +76,7 @@ const ContentItemPage: React.FC = () => {
       revalidateOnReconnect: false,
     }
   );
-  const schema = schemaResponse?.data;
+  const schema: ContentSchemaRow | undefined = schemaResponse?.data;
   
 
   // Convert database row to ContentItem format
@@ -96,14 +100,13 @@ const ContentItemPage: React.FC = () => {
   // Set up initial content
   const initialContent = getContentData(contentItem) || {};
 
-  const { data: historyResponse } = useSWR(
+  useSWR(
     historyOpen && currentWorkspace && contentIdNumber
       ? `content-item-history-${contentIdNumber}`
       : null,
     () => listContentItemVersions(contentIdNumber!, currentWorkspace!.id),
     { revalidateOnFocus: false }
   );
-  const history = historyResponse?.data;
 
   // Mock previous version for diffing (for demo purposes)
   const [previousVersion] = useState<ContentItem | undefined>(() => {
@@ -115,8 +118,10 @@ const ContentItemPage: React.FC = () => {
       ...contentItem,
       data: {
         ...contentData,
-        content: contentData.content?.replace("React is a JavaScript library", "React is a popular JavaScript library")
-          .replace("helped me understand", "really helped me understand")
+        content: typeof contentData.content === 'string' 
+          ? contentData.content.replace("React is a JavaScript library", "React is a popular JavaScript library")
+              .replace("helped me understand", "really helped me understand")
+          : contentData.content
       },
       updatedAt: new Date(new Date(contentItem.updatedAt).getTime() - 86400000).toISOString() // 1 day before
     };
@@ -209,8 +214,8 @@ const ContentItemPage: React.FC = () => {
       if (contentIdNumber) {
         // Update existing content item
         const updateData = {
-          title,
-          data: content,
+          title: title as string,
+          data: content as Json,
           updated_at: new Date().toISOString(),
           ...(newStatus === 'published' && !contentItem?.publishedAt ? { 
             published_at: new Date().toISOString(),
@@ -227,8 +232,8 @@ const ContentItemPage: React.FC = () => {
         // Create new content item
         const createData = {
           schema_id: schemaIdNumber,
-          title,
-          data: content,
+          title: title as string,
+          data: content as Json,
           ...(newStatus === 'published' ? { 
             published_at: new Date().toISOString(),
           } : {})
@@ -456,14 +461,23 @@ const ContentItemPage: React.FC = () => {
   }
 
   // Convert schema to the expected format
-  const contentSchema = {
+  const contentSchema = schema ? {
     id: schema.id.toString(),
     name: schema.name || 'Untitled Schema',
     description: schema.description || undefined,
-    fields: schema.fields || [],
+    fields: (schema.fields || []).map(field => ({
+      id: field.id,
+      name: field.label,
+      type: field.type,
+      required: field.required,
+      description: field.description || undefined,
+      defaultValue: field.default_value,
+      options: field.options || [],
+      relationSchemaId: field.relation_schema_id || undefined,
+    } as ContentField)),
     isCollection: schema.type === 'collection',
     type: schema.type || 'collection'
-  };
+  } : null;
 
   return (
     <>
@@ -611,6 +625,18 @@ const ContentItemPage: React.FC = () => {
                 )}
               </div>
               
+              {contentSchema && (
+                <ContentItemEditor 
+                  schema={contentSchema}
+                  initialContent={initialContent}
+                  contentItem={contentItem}
+                  onSave={handleSave}
+                  onAddComment={() => handleAddComment()}
+                />
+              )}
+            </div>
+          ) : (
+            contentSchema && (
               <ContentItemEditor 
                 schema={contentSchema}
                 initialContent={initialContent}
@@ -618,15 +644,7 @@ const ContentItemPage: React.FC = () => {
                 onSave={handleSave}
                 onAddComment={() => handleAddComment()}
               />
-            </div>
-          ) : (
-            <ContentItemEditor 
-              schema={contentSchema}
-              initialContent={initialContent}
-              contentItem={contentItem}
-              onSave={handleSave}
-              onAddComment={() => handleAddComment()}
-            />
+            )
           )}
         </div>
         
@@ -707,7 +725,6 @@ const ContentItemPage: React.FC = () => {
       <ContentItemHistoryPanel
         open={historyOpen}
         onOpenChange={setHistoryOpen}
-        versions={history}
       />
     </>
   );
