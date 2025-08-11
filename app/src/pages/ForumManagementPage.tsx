@@ -1,33 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Settings, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, MessageSquare } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { listForums } from '@/lib/api/ForumsApi';
 import CreateForumModal from '@/components/Community/CreateForumModal';
 
 interface Forum {
-  id: string;
+  id: number;
   name: string;
   description?: string;
-  status: 'active' | 'inactive';
-  posts_count: number;
-  members_count: number;
   created_at: string;
+  updated_at?: string;
+  deleted_at?: string;
+  archived_at?: string;
 }
 
 const ForumManagementPage: React.FC = () => {
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
+  const navigate = useNavigate();
   const [forums, setForums] = useState<Forum[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
+      if (!currentWorkspace?.id) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const { data } = await listForums();
+        const { data } = await listForums(currentWorkspace.id);
         setForums(data || []);
       } catch (error) {
         console.error("Error loading forums:", error);
@@ -41,11 +49,84 @@ const ForumManagementPage: React.FC = () => {
       }
     };
     load();
-  }, [toast]);
+  }, [currentWorkspace?.id, toast]);
 
   const handleForumCreated = (newForum: Forum) => {
     setForums([newForum, ...forums]);
   };
+
+  // Filter forums by status
+  const activeForums = forums.filter(forum => !forum.deleted_at && !forum.archived_at);
+  const archivedForums = forums.filter(forum => forum.archived_at && !forum.deleted_at);
+  const deletedForums = forums.filter(forum => forum.deleted_at);
+
+  const getForumStatus = (forum: Forum) => {
+    if (forum.deleted_at) return 'deleted';
+    if (forum.archived_at) return 'archived';
+    return 'active';
+  };
+
+  const renderForumTable = (forumList: Forum[], emptyMessage: string) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Forum Name</TableHead>
+          <TableHead>Created</TableHead>
+          {forumList.some(f => f.archived_at) && <TableHead>Archived</TableHead>}
+          {forumList.some(f => f.deleted_at) && <TableHead>Deleted</TableHead>}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {forumList.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+              {emptyMessage}
+            </TableCell>
+          </TableRow>
+        ) : (
+          forumList.map((forum) => {
+            const status = getForumStatus(forum);
+            return (
+              <TableRow key={forum.id}>
+                <TableCell>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => navigate(`/community/forums/${forum.id}`)}
+                      className="font-medium text-left hover:text-blue-600 hover:underline transition-colors"
+                      disabled={status !== 'active'}
+                    >
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        {forum.name}
+                      </div>
+                    </button>
+                    {forum.description && (
+                      <div className="text-sm text-muted-foreground">
+                        {forum.description}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {new Date(forum.created_at).toLocaleDateString()}
+                </TableCell>
+                {forum.archived_at && (
+                  <TableCell>
+                    {new Date(forum.archived_at).toLocaleDateString()}
+                  </TableCell>
+                )}
+                {forum.deleted_at && (
+                  <TableCell>
+                    {new Date(forum.deleted_at).toLocaleDateString()}
+                  </TableCell>
+                )}
+              </TableRow>
+            );
+          })
+        )}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <Card>
@@ -61,72 +142,47 @@ const ForumManagementPage: React.FC = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-
-        {/* Forums list */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Forum Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Posts</TableHead>
-                <TableHead>Members</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {forums.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                    No forums found. Create your first forum to get started.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                forums.map((forum) => (
-                  <TableRow key={forum.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{forum.name}</div>
-                        {forum.description && (
-                          <div className="text-sm text-muted-foreground">
-                            {forum.description}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={forum.status === "active" ? "default" : "secondary"}
-                        className="capitalize"
-                      >
-                        {forum.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{forum.posts_count || 0}</TableCell>
-                    <TableCell>{forum.members_count || 0}</TableCell>
-                    <TableCell>
-                      {new Date(forum.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm">
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+          <Tabs defaultValue="active" className="w-full">
+            <div className="flex justify-end">
+              <TabsList className="grid grid-cols-3 w-fit">
+                <TabsTrigger value="active" className="text-xs px-2 py-1">
+                  Active
+                </TabsTrigger>
+                <TabsTrigger value="archived" className="text-xs px-2 py-1">
+                  Archived
+                </TabsTrigger>
+                <TabsTrigger value="deleted" className="text-xs px-2 py-1">
+                  Deleted
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="active" className="mt-6">
+              {renderForumTable(
+                activeForums, 
+                "No active forums found. Create your first forum to get started."
               )}
-            </TableBody>
-          </Table>
+            </TabsContent>
+            
+            <TabsContent value="archived" className="mt-6">
+              {renderForumTable(
+                archivedForums, 
+                "No archived forums found."
+              )}
+            </TabsContent>
+            
+            <TabsContent value="deleted" className="mt-6">
+              {renderForumTable(
+                deletedForums, 
+                "No deleted forums found."
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>

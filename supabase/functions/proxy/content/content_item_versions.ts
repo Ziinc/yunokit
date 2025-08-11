@@ -1,8 +1,8 @@
 // @deno-types="https://esm.sh/@supabase/supabase-js@2.39.3"
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
-import { TablesInsert, TablesUpdate } from "../_shared/database.types.ts";
+import { TablesInsert, TablesUpdate } from "../../_shared/database.types.ts";
 
-import { handleResponse } from "./_utils.ts";
+import { handleResponse } from "../_utils.ts";
 type SupabaseClient = ReturnType<typeof createClient>;
 
 export const listContentItemVersions = async (

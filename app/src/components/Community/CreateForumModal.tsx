@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createForum } from '@/lib/api/ForumsApi';
+import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 
 interface CreateForumData {
   name: string;
@@ -16,13 +17,15 @@ interface CreateForumData {
 }
 
 interface Forum {
-  id: string;
+  id: number;
   name: string;
   description?: string;
-  status: 'active' | 'inactive';
-  posts_count: number;
-  members_count: number;
   created_at: string;
+  updated_at?: string;
+  deleted_at?: string;
+  archived_at?: string;
+  posts_count?: number;
+  members_count?: number;
 }
 
 interface CreateForumModalProps {
@@ -31,6 +34,7 @@ interface CreateForumModalProps {
 
 const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) => {
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState<CreateForumData>({
@@ -48,6 +52,15 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) =
       });
       return;
     }
+
+    if (!currentWorkspace?.id) {
+      toast({
+        title: "No workspace selected",
+        description: "Please select a workspace to create a forum.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       setIsCreating(true);
@@ -58,7 +71,7 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) =
         // For now we're storing it as forum metadata if needed
       };
       
-      const response = await createForum(forumData);
+      const response = await createForum(forumData, currentWorkspace.id);
       
       if (response.data) {
         onForumCreated(response.data);

@@ -17,7 +17,6 @@ interface CommunityConfig {
     description: string;
     welcome_message: string;
     allow_registration: boolean;
-    require_approval: boolean;
   };
   moderation: {
     auto_moderation: boolean;
@@ -46,7 +45,6 @@ const CommunityConfigPage: React.FC = () => {
       description: '',
       welcome_message: '',
       allow_registration: true,
-      require_approval: false,
     },
     moderation: {
       auto_moderation: true,
@@ -189,18 +187,6 @@ const CommunityConfigPage: React.FC = () => {
             />
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Require Approval</Label>
-              <p className="text-sm text-muted-foreground">
-                New registrations require admin approval
-              </p>
-            </div>
-            <Switch
-              checked={config.general.require_approval}
-              onCheckedChange={(checked) => updateConfigField('general', 'require_approval', checked)}
-            />
-          </div>
         </CardContent>
       </Card>
 

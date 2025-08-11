@@ -10,9 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   MessageCircle,
-  Check,
-  X,
-  Ban,
   Search,
   Flag,
   Trash2,
@@ -27,8 +24,6 @@ type ExtendedComment = Comment & {
 
 interface CommentsTabProps {
   comments: Comment[];
-  onApprove: (commentId: string) => void;
-  onReject: (commentId: string) => void;
   onReply: (comment: Comment) => void;
   selectedComment: Comment | null;
   replyText: string;
@@ -39,7 +34,6 @@ interface CommentsTabProps {
   onSearchQueryChange: (query: string) => void;
   currentTab: string;
   onTabChange: (tab: string) => void;
-  onBanUser?: (userId: string) => void;
   onFlagComment?: (commentId: string) => void;
   onDeleteComment?: (commentId: string) => void;
   onBulkAction?: (action: string, commentIds: string[]) => void;
@@ -47,8 +41,6 @@ interface CommentsTabProps {
 
 const CommentsTab: React.FC<CommentsTabProps> = ({
   comments,
-  onApprove,
-  onReject,
   onReply,
   selectedComment,
   replyText,
@@ -59,7 +51,6 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
   onSearchQueryChange,
   currentTab,
   onTabChange,
-  onBanUser,
   onFlagComment,
   onDeleteComment,
   onBulkAction,
@@ -146,13 +137,6 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
             Pending
           </TabsTrigger>
           <TabsTrigger 
-            value="approved" 
-            onClick={() => onTabChange("approved")}
-            className={currentTab === "approved" ? "bg-primary text-primary-foreground" : ""}
-          >
-            Approved
-          </TabsTrigger>
-          <TabsTrigger 
             value="flagged" 
             onClick={() => onTabChange("flagged")}
             className={currentTab === "flagged" ? "bg-primary text-primary-foreground" : ""}
@@ -184,8 +168,6 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                 <SelectValue placeholder="Bulk action" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="approve">Approve</SelectItem>
-                <SelectItem value="reject">Reject</SelectItem>
                 <SelectItem value="flag">Flag</SelectItem>
                 <SelectItem value="delete">Delete</SelectItem>
               </SelectContent>
@@ -275,12 +257,11 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                   </TableCell>
                   <TableCell>
                     <Badge 
-                      variant={
-                        comment.status === "approved" ? "default" : 
+variant={
                         comment.status === "pending" ? "secondary" : 
                         comment.status === "flagged" ? "destructive" : 
                         comment.status === "spam" ? "outline" : 
-                        "outline"
+                        "default"
                       }
                       className="capitalize"
                     >
@@ -289,29 +270,6 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {comment.status !== "approved" && (
-                        <Button 
-                          onClick={() => onApprove(comment.id)}
-                          size="sm"
-                          variant="outline"
-                          className="h-8 w-8 p-0"
-                          title="Approve comment"
-                        >
-                          <Check size={16} className="text-green-500" />
-                        </Button>
-                      )}
-                      
-                      {comment.status !== "deleted" && (
-                        <Button 
-                          onClick={() => onReject(comment.id)}
-                          size="sm"
-                          variant="outline"
-                          className="h-8 w-8 p-0"
-                          title="Reject comment"
-                        >
-                          <X size={16} className="text-destructive" />
-                        </Button>
-                      )}
 
                       {onFlagComment && comment.status !== "flagged" && (
                         <Button 
@@ -383,39 +341,6 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
                         </DialogContent>
                       </Dialog>
                       
-                      {onBanUser && (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-8 p-0"
-                              title="Ban user"
-                            >
-                              <Ban size={16} />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Ban User</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to ban {comment.author.name}? This will prevent them from posting any more comments.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter className="mt-4">
-                              <Button variant="outline" onClick={onCancelReply}>
-                                Cancel
-                              </Button>
-                              <Button 
-                                variant="destructive"
-                                onClick={() => onBanUser(comment.author.id)}
-                              >
-                                Ban User
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>

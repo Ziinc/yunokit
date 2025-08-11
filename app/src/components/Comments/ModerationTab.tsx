@@ -62,7 +62,6 @@ const ModerationTab: React.FC<ModerationTabProps> = ({
                   <SelectContent>
                     <SelectItem value="flag">Flag Comment</SelectItem>
                     <SelectItem value="delete">Delete Comment</SelectItem>
-                    <SelectItem value="ban">Ban User</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -97,7 +96,7 @@ const ModerationTab: React.FC<ModerationTabProps> = ({
                       <TableCell>
                         <Badge 
                           variant={
-                            word.action === "ban" ? "destructive" : 
+ 
                             word.action === "delete" ? "default" : 
                             "secondary"
                           }
@@ -149,15 +148,6 @@ const ModerationTab: React.FC<ModerationTabProps> = ({
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between space-x-2">
-              <div className="space-y-0.5">
-                <Label htmlFor="approval-required">Pre-Approval Required</Label>
-                <p className="text-sm text-muted-foreground">
-                  Require all comments to be approved before they are published
-                </p>
-              </div>
-              <Switch id="approval-required" defaultChecked />
-            </div>
             
             <div className="flex items-center justify-between space-x-2">
               <div className="space-y-0.5">
@@ -169,15 +159,6 @@ const ModerationTab: React.FC<ModerationTabProps> = ({
               <Switch id="auto-spam" defaultChecked />
             </div>
             
-            <div className="flex items-center justify-between space-x-2">
-              <div className="space-y-0.5">
-                <Label htmlFor="ban-ip">Ban IP Addresses</Label>
-                <p className="text-sm text-muted-foreground">
-                  When banning a user, also ban their IP address
-                </p>
-              </div>
-              <Switch id="ban-ip" />
-            </div>
             
             <div className="space-y-2">
               <Label htmlFor="report-threshold">Automatic Action Threshold</Label>

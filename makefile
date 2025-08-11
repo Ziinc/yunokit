@@ -22,6 +22,9 @@ restart:
 	$(MAKE) start
 
 db.reset:
+	./scripts/cleanup.sh
+	./scripts/setup-migrations.sh $(SCHEMAS);
+	
 	supabase db reset --local
 
 check-version:

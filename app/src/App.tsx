@@ -20,10 +20,9 @@ const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const ContentSearchPage = lazy(() => import("./pages/ContentSearchPage"));
 const CommunityPage = lazy(() => import("./pages/CommunityPage"));
-const CommentsPage = lazy(() => import("./pages/CommentsPage"));
-const ChatManagementPage = lazy(() => import("./pages/ChatManagementPage"));
-const PostsManagementPage = lazy(() => import("./pages/PostsManagementPage"));
 const ForumManagementPage = lazy(() => import("./pages/ForumManagementPage"));
+const ForumDetailPage = lazy(() => import("./pages/ForumDetailPage"));
+const PostCommentsPage = lazy(() => import("./pages/PostCommentsPage"));
 const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const CommunityConfigPage = lazy(() => import("./pages/CommunityConfigPage"));
 import { AppLayout } from "./components/Layout/AppLayout";
@@ -84,14 +83,14 @@ const AppContent: React.FC = () => {
           </Route>
           <Route path="/search" element={<ContentSearchPage />} />
           <Route path="/community" element={<CommunityPage />}>
-            <Route index element={<Navigate to="comments" replace />} />
-            <Route path="comments" element={<CommentsPage />} />
-            <Route path="chat" element={<ChatManagementPage />} />
-            <Route path="posts" element={<PostsManagementPage />} />
+            <Route index element={<Navigate to="forums" replace />} />
             <Route path="forums" element={<ForumManagementPage />} />
             <Route path="users" element={<UserManagementPage />} />
             <Route path="config" element={<CommunityConfigPage />} />
           </Route>
+          <Route path="/community/forums/:forumId" element={<ForumDetailPage />} />
+          <Route path="/community/posts/:postId" element={<PostCommentsPage />} />
+          <Route path="/community/posts/:postId/:commentId" element={<PostCommentsPage />} />
         </Route>
       </Routes>
       </Suspense>

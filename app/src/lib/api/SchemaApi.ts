@@ -34,7 +34,7 @@ export const listSchemas = async (workspaceId: number) => {
   });
 
   return await supabase.functions.invoke<ContentSchemaRow[]>(
-    `proxy/schemas?${qp.toString()}`,
+    `proxy/content/schemas?${qp.toString()}`,
     {
       method: "GET",
     }
@@ -47,7 +47,7 @@ export const getSchema = async (id: number, workspaceId: number) => {
   });
 
   return await supabase.functions.invoke<ContentSchemaRow>(
-    `proxy/schemas/${id}?${qp.toString()}`,
+    `proxy/content/schemas/${id}?${qp.toString()}`,
     {
       method: "GET",
     }
@@ -63,7 +63,7 @@ export const createSchema = async (
   });
 
   return await supabase.functions.invoke<ContentSchemaRow>(
-    `proxy/schemas?${qp.toString()}`,
+    `proxy/content/schemas?${qp.toString()}`,
     {
       method: "POST",
       body: schema,
@@ -86,7 +86,7 @@ export const updateSchema = async (
   });
 
   return await supabase.functions.invoke<ContentSchemaRow>(
-    `proxy/schemas/${schemaId}?${qp.toString()}`,
+    `proxy/content/schemas/${schemaId}?${qp.toString()}`,
     {
       method: "PUT",
       body: schema,
@@ -102,7 +102,7 @@ export const deleteSchema = async (
     workspaceId: workspaceId.toString(),
   });
 
-  await supabase.functions.invoke(`proxy/schemas/${id}?${qp.toString()}`, {
+  await supabase.functions.invoke(`proxy/content/schemas/${id}?${qp.toString()}`, {
     method: "DELETE",
   });
 };
