@@ -2,7 +2,7 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import { Check, DollarSign, ChevronDown, Rocket, Zap, X } from 'lucide-react';
+import { Check, DollarSign, Rocket, Zap, X } from 'lucide-react';
 import { Button } from '../../../shared/src/ui/button';
 import { Alert, AlertDescription } from '../../../shared/src/ui/alert';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../shared/src/ui/collapsible';
