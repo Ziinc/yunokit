@@ -27,7 +27,8 @@
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",
     "coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "docs:screenshots": "node ../scripts/generate-screenshots.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

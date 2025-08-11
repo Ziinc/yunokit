@@ -3,15 +3,37 @@ export const signInWithGithub = async () => {
     throw new Error("Not implemented");
   };
   
-  export const signInWithGoogle = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + window.location.pathname,
+export const signInWithGoogle = async () => {
+  const params = new URLSearchParams(window.location.search);
+  if (import.meta.env.DEV && params.get('email') === 'demo@example.com') {
+    const session = {
+      access_token: 'token',
+      refresh_token: 'refresh',
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      token_type: 'bearer',
+      user: {
+        id: '00000000-0000-0000-0000-000000000001',
+        email: 'demo@example.com',
+        app_metadata: { provider: 'email' },
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
       },
-    });
-    return { data, error };
-  };
+    };
+    localStorage.setItem('sb-127-auth-token', JSON.stringify(session));
+    localStorage.setItem('currentWorkspaceId', '1');
+    return { data: null, error: null };
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + window.location.pathname,
+    },
+  });
+  return { data, error };
+};
   
   export const signInWithMicrosoft = async () => {
     throw new Error("Not implemented");

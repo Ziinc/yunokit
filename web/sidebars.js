@@ -37,6 +37,7 @@ const sidebars = {
         description: "The main pluggable features of YunoContent",
       },
     },
+    "developer-guide",
   ],
 };
 
