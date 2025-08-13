@@ -18,10 +18,12 @@ import {
   Zap,
   Clock,
   Users,
+  MessageCircle,
   Database,
   Wand2,
   Github,
   ExternalLink,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +44,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { isFeatureEnabled, FeatureFlags, FeatureFlag } from "@/lib/featureFlags";
+import {
+  isFeatureEnabled,
+  FeatureFlags,
+  FeatureFlag,
+} from "@/lib/featureFlags";
 import { isAuthenticated } from "@/lib/api/auth";
 const SignInPage: React.FC = () => {
   // State for OAuth loading indicators
@@ -52,28 +58,28 @@ const SignInPage: React.FC = () => {
   const testimonials = [
     {
       quote:
-        "Finally! I no longer wake up to 3am Slack messages asking me to update a typo. Yunokit gave our marketing team superpowers and gave me back my sanity.",
-      author: "Developer Who Can Sleep Again",
+        "Our Yunokit-powered forums turned passive users into an active community overnight.",
+      author: "Community Manager at StartHub",
     },
     {
       quote:
-        "Our content team went from 'Can you add this comma?' to 'We deployed three landing pages today.' My code commits are now for features, not fixing typos.",
-      author: "Engineer with Better Git History",
+        "Moderation used to drain our day. Now we handle reports in minutes and focus on growth.",
+      author: "Lead Moderator",
     },
     {
       quote:
-        "My design team used to joke that I was their personal HTML servant. With Yunokit, they're now independent content creators and I'm back to solving real engineering problems.",
-      author: "Lead Developer at AgencyX",
+        "Yunokit gave our product team a direct line to user feedback through lively discussion threads.",
+      author: "Product Owner",
     },
     {
       quote:
-        "The marketing department and I haven't had a single emergency meeting since implementing Yunokit. They're happier, I'm happier, and our website is updated faster than ever.",
-      author: "CTO Who Recovered Their Calendar",
+        "We launched a full community space in a weekend and engagement metrics have never looked better.",
+      author: "IndieApp Developer",
     },
     {
       quote:
-        "My inbox used to be a graveyard of 'urgent' content change requests. Now our non-technical team handles everything themselves, and they say it's easier than using Word.",
-      author: "Developer with Empty Inbox",
+        "Our support team now points customers to helpful forum answers instead of writing repetitive emails.",
+      author: "Customer Success Lead",
     },
   ];
 
@@ -106,16 +112,15 @@ const SignInPage: React.FC = () => {
     try {
       const isAuthed = await isAuthenticated();
       if (isAuthed) {
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error("Error checking auth status:", error);
     }
   };
   useEffect(() => {
     checkAuth();
   }, []);
-
 
   const handleOAuthSignIn = async (
     provider: "google" | "microsoft" | "github"
@@ -139,7 +144,6 @@ const SignInPage: React.FC = () => {
       if (result.error) {
         throw result.error;
       }
-
     } catch (error) {
       console.error("Sign in error:", error);
       toast({
@@ -162,16 +166,16 @@ const SignInPage: React.FC = () => {
 
       // Validate inputs
       if (!email || !password) {
-        throw new Error('Please provide both email and password');
-      } 
-      
+        throw new Error("Please provide both email and password");
+      }
+
       // Sign in with Supabase
       const { error } = await signInWithEmail(email, password);
-      
+
       if (error) {
         throw error;
       }
-      
+
       toast({
         title: "Sign in successful",
         description: `Welcome back!`,
@@ -289,19 +293,13 @@ const SignInPage: React.FC = () => {
     }
   };
 
-  // Features for marketing banner - moved to summary
-  const features = [
+  // Marketing features
+  const contentFeatures = [
     {
       icon: <Zap className="h-5 w-5 text-yellow-500" />,
       title: "Lightning Fast",
       description:
         "Dramatically accelerate your content workflow with optimized tools designed for efficiency.",
-    },
-    {
-      icon: <Users className="h-5 w-5 text-yellow-500" />,
-      title: "Community Magic",
-      description:
-        "Transform engagement with powerful moderation and interactive features your users will love.",
     },
     {
       icon: <Database className="h-5 w-5 text-yellow-500" />,
@@ -317,6 +315,56 @@ const SignInPage: React.FC = () => {
     },
   ];
 
+  const communityFeatures = [
+    {
+      icon: <Users className="h-5 w-5 text-yellow-500" />,
+      title: "Community Magic",
+      description:
+        "Transform engagement with powerful moderation and interactive features your users will love.",
+    },
+    {
+      icon: <MessageCircle className="h-5 w-5 text-yellow-500" />,
+      title: "Community Forums",
+      description: "Launch conversation hubs that keep your users coming back.",
+    },
+  ];
+
+  const slides = [
+    {
+      icon: <Sparkles className="h-7 w-7 mr-3 animate-pulse text-yellow-300" />,
+      heading: (
+        <>
+          Content Management{" "}
+          <span className="relative italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
+            Reimagined
+            <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full animate-pulse"></span>
+          </span>
+        </>
+      ),
+      description:
+        "The Strapi-alternative that transforms your Supabase database into a powerful, intuitive CMS.",
+      features: contentFeatures,
+    },
+    {
+      icon: <Users className="h-7 w-7 mr-3 animate-pulse text-yellow-300" />,
+      heading: (
+        <>
+          Community Building{" "}
+          <span className="relative italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
+            Amplified
+            <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full animate-pulse"></span>
+          </span>
+        </>
+      ),
+      description:
+        "Launch thriving forums backed by Supabase with built-in moderation and interactive community features.",
+      features: communityFeatures,
+    },
+  ];
+
+  const [slideIndex, setSlideIndex] = useState(0);
+  const currentSlide = slides[slideIndex];
+  const nextSlide = () => setSlideIndex((slideIndex + 1) % slides.length);
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
@@ -467,7 +515,9 @@ const SignInPage: React.FC = () => {
             <>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
-                  {isFeatureEnabled(FeatureFlags.GITHUB_AUTH as FeatureFlag) && (
+                  {isFeatureEnabled(
+                    FeatureFlags.GITHUB_AUTH as FeatureFlag
+                  ) && (
                     <Button
                       onClick={() => handleOAuthSignIn("github")}
                       className="w-full bg-gray-900 hover:bg-gray-800 text-white"
@@ -742,26 +792,25 @@ const SignInPage: React.FC = () => {
         </Card>
 
         {/* Marketing Banner */}
-        <div className="hidden lg:flex flex-col max-w-xl w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
+        <div className="hidden lg:flex flex-col max-w-xl w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl relative">
+          <button
+            type="button"
+            onClick={nextSlide}
+            className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
+          >
+            <ChevronRight className="h-5 w-5 text-white" />
+          </button>
+
           <div className="mb-5 flex items-center">
-            <Sparkles className="h-7 w-7 mr-3 animate-pulse text-yellow-300" />
-            <h2 className="text-3xl font-bold">
-              Content Management{" "}
-              <span className="relative italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
-                Reimagined
-                <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full animate-pulse"></span>
-              </span>
-            </h2>
+            {currentSlide.icon}
+            <h2 className="text-3xl font-bold">{currentSlide.heading}</h2>
           </div>
 
-          <p className="text-lg mb-6 font-medium">
-            The Strapi-alternative that transforms your Supabase database into a
-            powerful, intuitive CMS.
-          </p>
+          <p className="text-lg mb-6 font-medium">{currentSlide.description}</p>
 
           {/* Features grid */}
           <div className="flex flex-col gap-2 mb-6">
-            {features.map((feature, index) => (
+            {currentSlide.features.map((feature, index) => (
               <div
                 key={index}
                 className="flex items-center hover:bg-white hover:bg-opacity-10 rounded-lg p-2 transition-all"
