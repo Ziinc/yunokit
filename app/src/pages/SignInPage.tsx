@@ -18,10 +18,13 @@ import {
   Zap,
   Clock,
   Users,
+  MessageCircle,
   Database,
   Wand2,
   Github,
   ExternalLink,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -42,45 +45,117 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { isFeatureEnabled, FeatureFlags, FeatureFlag } from "@/lib/featureFlags";
+import {
+  isFeatureEnabled,
+  FeatureFlags,
+  FeatureFlag,
+} from "@/lib/featureFlags";
 import { isAuthenticated } from "@/lib/api/auth";
 const SignInPage: React.FC = () => {
   // State for OAuth loading indicators
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
-  // Testimonial quotes
-  const testimonials = [
-    {
-      quote:
-        "Finally! I no longer wake up to 3am Slack messages asking me to update a typo. Yunokit gave our marketing team superpowers and gave me back my sanity.",
-      author: "Developer Who Can Sleep Again",
-    },
-    {
-      quote:
-        "Our content team went from 'Can you add this comma?' to 'We deployed three landing pages today.' My code commits are now for features, not fixing typos.",
-      author: "Engineer with Better Git History",
-    },
-    {
-      quote:
-        "My design team used to joke that I was their personal HTML servant. With Yunokit, they're now independent content creators and I'm back to solving real engineering problems.",
-      author: "Lead Developer at AgencyX",
-    },
-    {
-      quote:
-        "The marketing department and I haven't had a single emergency meeting since implementing Yunokit. They're happier, I'm happier, and our website is updated faster than ever.",
-      author: "CTO Who Recovered Their Calendar",
-    },
-    {
-      quote:
-        "My inbox used to be a graveyard of 'urgent' content change requests. Now our non-technical team handles everything themselves, and they say it's easier than using Word.",
-      author: "Developer with Empty Inbox",
-    },
-  ];
+  // Testimonial quotes organized by micro app
+  const testimonialsByApp = {
+    yunocontent: [
+      {
+        quote: "I used to spend weekends wrestling with Strapi. Now I spend them actually relaxing. What is this sorcery?",
+        author: "Backend Developer, Eternally Grateful"
+      },
+      {
+        quote: "Yunokit turned my Supabase into a CMS so fast, I thought I accidentally hired a wizard consultant.",
+        author: "Solo Founder, Pleasantly Confused"
+      },
+      {
+        quote: "Content management went from 'please kill me' to 'please give me more content to manage.' I don't recognize myself.",
+        author: "Content Manager, Identity Crisis"
+      },
+      {
+        quote: "My schema changes now take minutes instead of migrations. My therapist says I seem happier.",
+        author: "Full-Stack Developer, Mentally Stable"
+      },
+      {
+        quote: "I built a content API in 10 minutes. Then spent 3 hours convincing my team it wasn't a demo.",
+        author: "Tech Lead, Imposter Syndrome"
+      },
+      {
+        quote: "Yunokit made content editing so intuitive, even our CEO can add blog posts. God help us all.",
+        author: "DevOps Engineer, Regretting Decisions"
+      },
+      {
+        quote: "My content workflow is now so smooth, I keep checking if I broke something. Old habits die hard.",
+        author: "Senior Developer, Trust Issues"
+      },
+      {
+        quote: "I no longer cry when clients ask for 'just a small content change.' Character development, they call it.",
+        author: "Freelancer, Emotional Growth"
+      },
+      {
+        quote: "Content versioning that actually works? I'm starting to believe in fairy tales again.",
+        author: "CTO, Cautious Optimist"
+      },
+      {
+        quote: "My Supabase database went from 'organized chaos' to 'actually organized.' My OCD is pleased.",
+        author: "Database Admin, Inner Peace"
+      }
+    ],
+    yunocommunity: [
+      {
+        quote: "Yunokit gave us 'community-led growth.' Which apparently means my users now bully me into building features.",
+        author: "Product Owner, Held Hostage"
+      },
+      {
+        quote: "Our forums are so active, I'm considering charging rent. Users practically live there now.",
+        author: "Community Manager, Accidental Landlord"
+      },
+      {
+        quote: "Moderation used to be like herding cats. Now it's like herding very well-behaved, self-moderating cats.",
+        author: "Lead Moderator, Cat Whisperer"
+      },
+      {
+        quote: "We launched a community in a weekend. My users are more engaged than I am with my own product.",
+        author: "Startup Founder, Existential Crisis"
+      },
+      {
+        quote: "Our community grew so fast, I forgot I was supposed to be running a business, not a digital village.",
+        author: "Entrepreneur, Accidental Mayor"
+      },
+      {
+        quote: "User reports went from 'nuclear meltdown' to 'polite suggestion box.' I miss the chaos, honestly.",
+        author: "Community Manager, Stockholm Syndrome"
+      },
+      {
+        quote: "Forums launched at 9 AM. By lunch, users were organizing their own meetups. I've created a monster.",
+        author: "Product Manager, Frankenstein Complex"
+      },
+      {
+        quote: "My support tickets dropped 90%. Now I spend my days watching users help each other. It's beautiful.",
+        author: "Customer Success, Unemployed But Happy"
+      },
+      {
+        quote: "Community engagement metrics broke our analytics dashboard. Apparently 'too much engagement' is a real problem.",
+        author: "Growth Hacker, Victim of Success"
+      },
+      {
+        quote: "Users are now moderating better than I ever did. I'm either really good at my job or completely useless.",
+        author: "Community Lead, Identity Crisis"
+      }
+    ]
+  };
 
-  // Memoize the random testimonial selection
-  const randomTestimonial = useMemo(() => {
-    return testimonials[Math.floor(Math.random() * testimonials.length)];
-  }, []); // Empty dependency array means this will only run once when component mounts
+  // Random testimonial selection that changes with slide
+  const [currentTestimonials, setCurrentTestimonials] = useState(() => ({
+    yunocontent: testimonialsByApp.yunocontent[Math.floor(Math.random() * testimonialsByApp.yunocontent.length)],
+    yunocommunity: testimonialsByApp.yunocommunity[Math.floor(Math.random() * testimonialsByApp.yunocommunity.length)]
+  }));
+
+  // Update testimonials when slide changes
+  const updateTestimonials = () => {
+    setCurrentTestimonials({
+      yunocontent: testimonialsByApp.yunocontent[Math.floor(Math.random() * testimonialsByApp.yunocontent.length)],
+      yunocommunity: testimonialsByApp.yunocommunity[Math.floor(Math.random() * testimonialsByApp.yunocommunity.length)]
+    });
+  };
 
   // State for email/password auth
   const [email, setEmail] = useState("");
@@ -106,16 +181,15 @@ const SignInPage: React.FC = () => {
     try {
       const isAuthed = await isAuthenticated();
       if (isAuthed) {
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error("Error checking auth status:", error);
     }
   };
   useEffect(() => {
     checkAuth();
   }, []);
-
 
   const handleOAuthSignIn = async (
     provider: "google" | "microsoft" | "github"
@@ -139,7 +213,6 @@ const SignInPage: React.FC = () => {
       if (result.error) {
         throw result.error;
       }
-
     } catch (error) {
       console.error("Sign in error:", error);
       toast({
@@ -162,16 +235,16 @@ const SignInPage: React.FC = () => {
 
       // Validate inputs
       if (!email || !password) {
-        throw new Error('Please provide both email and password');
-      } 
-      
+        throw new Error("Please provide both email and password");
+      }
+
       // Sign in with Supabase
       const { error } = await signInWithEmail(email, password);
-      
+
       if (error) {
         throw error;
       }
-      
+
       toast({
         title: "Sign in successful",
         description: `Welcome back!`,
@@ -289,19 +362,13 @@ const SignInPage: React.FC = () => {
     }
   };
 
-  // Features for marketing banner - moved to summary
-  const features = [
+  // Marketing features
+  const contentFeatures = [
     {
       icon: <Zap className="h-5 w-5 text-yellow-500" />,
       title: "Lightning Fast",
       description:
         "Dramatically accelerate your content workflow with optimized tools designed for efficiency.",
-    },
-    {
-      icon: <Users className="h-5 w-5 text-yellow-500" />,
-      title: "Community Magic",
-      description:
-        "Transform engagement with powerful moderation and interactive features your users will love.",
     },
     {
       icon: <Database className="h-5 w-5 text-yellow-500" />,
@@ -317,34 +384,99 @@ const SignInPage: React.FC = () => {
     },
   ];
 
+  const communityFeatures = [
+    {
+      icon: <Users className="h-5 w-5 text-yellow-500" />,
+      title: "Community Magic",
+      description:
+        "Transform engagement with powerful moderation and interactive features your users will love.",
+    },
+    {
+      icon: <MessageCircle className="h-5 w-5 text-yellow-500" />,
+      title: "Community Forums",
+      description: "Launch conversation hubs that keep your users coming back.",
+    },
+  ];
+
+  const slides = [
+    {
+      appName: "yunocontent",
+      appIcon: (
+        <Database className="h-8 w-8 text-indigo-600" />
+      ),
+      icon: <Sparkles className="h-10 w-10 mr-3 animate-pulse text-yellow-300" />,
+      heading: (
+        <>
+          Content Management{" "}
+          <span className="relative italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
+            Reimagined
+            <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full animate-pulse"></span>
+          </span>
+        </>
+      ),
+      description:
+        "Powerful Strapi-like CMS features for your Supabase backend",
+      features: contentFeatures,
+    },
+    {
+      appName: "yunocommunity",
+      appIcon: (
+        <Users className="h-8 w-8 text-purple-600" />
+      ),
+      icon: <Sparkles className="h-10 w-10 mr-3 animate-pulse text-yellow-300" />,
+      heading: (
+        <>
+          Community Building{" "}
+          <span className="relative italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
+            Amplified
+            <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full animate-pulse"></span>
+          </span>
+        </>
+      ),
+      description:
+        "Discourse-style community forums powered by your Supabase backend",
+      features: communityFeatures,
+    },
+  ];
+
+  const [slideIndex, setSlideIndex] = useState(0);
+  const currentSlide = slides[slideIndex];
+  const nextSlide = () => {
+    setSlideIndex((slideIndex + 1) % slides.length);
+    updateTestimonials();
+  };
+  const prevSlide = () => {
+    setSlideIndex((slideIndex - 1 + slides.length) % slides.length);
+    updateTestimonials();
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
       {/* Floating sparkles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <Sparkles className="absolute top-[10%] left-[5%] text-yellow-400 h-6 w-6 animate-pulse" />
+        <Sparkles className="absolute top-[10%] left-[5%] text-yellow-400 h-10 w-10 animate-pulse" />
         <Sparkles
-          className="absolute top-[20%] right-[8%] text-yellow-400 h-5 w-5 animate-pulse"
+          className="absolute top-[20%] right-[8%] text-yellow-400 h-8 w-8 animate-pulse"
           style={{ animationDelay: "0.5s" }}
         />
         <Sparkles
-          className="absolute top-[80%] left-[15%] text-yellow-400 h-7 w-7 animate-pulse"
+          className="absolute top-[80%] left-[15%] text-yellow-400 h-12 w-12 animate-pulse"
           style={{ animationDelay: "1.2s" }}
         />
         <Sparkles
-          className="absolute top-[65%] right-[12%] text-yellow-400 h-4 w-4 animate-pulse"
+          className="absolute top-[65%] right-[12%] text-yellow-400 h-7 w-7 animate-pulse"
           style={{ animationDelay: "0.7s" }}
         />
         <Sparkles
-          className="absolute top-[40%] left-[8%] text-yellow-400 h-5 w-5 animate-pulse"
+          className="absolute top-[40%] left-[8%] text-yellow-400 h-9 w-9 animate-pulse"
           style={{ animationDelay: "1.5s" }}
         />
         <Sparkles
-          className="absolute top-[30%] right-[20%] text-yellow-400 h-6 w-6 animate-pulse"
+          className="absolute top-[30%] right-[20%] text-yellow-400 h-11 w-11 animate-pulse"
           style={{ animationDelay: "2.0s" }}
         />
         <Sparkles
-          className="absolute top-[85%] right-[25%] text-yellow-400 h-5 w-5 animate-pulse"
+          className="absolute top-[85%] right-[25%] text-yellow-400 h-8 w-8 animate-pulse"
           style={{ animationDelay: "1.0s" }}
         />
       </div>
@@ -360,7 +492,7 @@ const SignInPage: React.FC = () => {
               />
             </div>
             <CardTitle className="text-2xl font-bold">
-              {showRegister ? "Create an account" : "Welcome back"}
+              {showRegister ? "Create an account" : "Micro-apps for your Supabase backend"}
             </CardTitle>
             <CardDescription>
               {showRegister
@@ -467,7 +599,9 @@ const SignInPage: React.FC = () => {
             <>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
-                  {isFeatureEnabled(FeatureFlags.GITHUB_AUTH as FeatureFlag) && (
+                  {isFeatureEnabled(
+                    FeatureFlags.GITHUB_AUTH as FeatureFlag
+                  ) && (
                     <Button
                       onClick={() => handleOAuthSignIn("github")}
                       className="w-full bg-gray-900 hover:bg-gray-800 text-white"
@@ -742,26 +876,68 @@ const SignInPage: React.FC = () => {
         </Card>
 
         {/* Marketing Banner */}
-        <div className="hidden lg:flex flex-col max-w-xl w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
-          <div className="mb-5 flex items-center">
-            <Sparkles className="h-7 w-7 mr-3 animate-pulse text-yellow-300" />
-            <h2 className="text-3xl font-bold">
-              Content Management{" "}
-              <span className="relative italic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
-                Reimagined
-                <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full animate-pulse"></span>
-              </span>
-            </h2>
+        <div className="hidden lg:flex flex-col max-w-xl w-full h-[800px] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl px-16 py-8 text-white shadow-xl relative">
+          {/* Micro App Icons with Navigation */}
+          <div className="flex justify-center items-center gap-6 mb-8">
+            <button
+              type="button"
+              onClick={prevSlide}
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5 text-white" />
+            </button>
+            
+            {slides.map((slide, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => {
+                  setSlideIndex(index);
+                  updateTestimonials();
+                }}
+                className={`group flex flex-col items-center transition-all duration-300 ${
+                  index === slideIndex 
+                    ? 'scale-110' 
+                    : 'scale-100 opacity-70 hover:opacity-90 hover:scale-105'
+                }`}
+              >
+                <div className={`p-4 rounded-2xl bg-white transition-all duration-300 shadow-lg ${
+                  index === slideIndex 
+                    ? 'bg-opacity-100 shadow-xl ring-4 ring-yellow-300 ring-opacity-50' 
+                    : 'bg-opacity-80 hover:bg-opacity-90'
+                }`}>
+                  {slide.appIcon}
+                </div>
+                <span className={`mt-2 text-xs font-medium transition-all duration-300 ${
+                  index === slideIndex 
+                    ? 'text-yellow-200 font-bold' 
+                    : 'text-white text-opacity-80'
+                }`}>
+                  {slide.appName}
+                </span>
+              </button>
+            ))}
+            
+            <button
+              type="button"
+              onClick={nextSlide}
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
+            >
+              <ChevronRight className="h-5 w-5 text-white" />
+            </button>
           </div>
 
-          <p className="text-lg mb-6 font-medium">
-            The Strapi-alternative that transforms your Supabase database into a
-            powerful, intuitive CMS.
-          </p>
+          <div className="mb-5 flex items-center justify-center relative">
+            {currentSlide.icon}
+            <h2 className="text-3xl font-bold text-center">{currentSlide.heading}</h2>
+            <Sparkles className="h-10 w-10 ml-3 animate-pulse text-yellow-300" />
+          </div>
+
+          <p className="text-lg mb-6 font-medium">{currentSlide.description}</p>
 
           {/* Features grid */}
           <div className="flex flex-col gap-2 mb-6">
-            {features.map((feature, index) => (
+            {currentSlide.features.map((feature, index) => (
               <div
                 key={index}
                 className="flex items-center hover:bg-white hover:bg-opacity-10 rounded-lg p-2 transition-all"
@@ -779,20 +955,29 @@ const SignInPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="bg-white bg-opacity-10 rounded-lg p-4 border border-white border-opacity-20 italic text-sm">
-            "{randomTestimonial.quote}"
-            <div className="mt-2 font-medium">— {randomTestimonial.author}</div>
+          {/* Customer Testimonials */}
+          <div className="mb-6">
+            <div className="bg-white bg-opacity-10 rounded-lg p-4 border border-white border-opacity-20 italic text-sm">
+              "{currentTestimonials[currentSlide.appName as keyof typeof currentTestimonials].quote}"
+              <div className="mt-2 font-medium">— {currentTestimonials[currentSlide.appName as keyof typeof currentTestimonials].author}</div>
+            </div>
           </div>
 
-          <div className="mt-6 flex flex-col items-center justify-center">
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 mr-2 text-yellow-300" />
-              <p className="text-sm font-medium">Save 5+ hours every week!*</p>
+          {/* Footer */}
+          <div className="mt-auto">
+            <div className="-mx-16 border-t border-white border-opacity-20"></div>
+            <div className="pt-6">
+              <div className="flex flex-col items-center justify-center">
+                <div className="flex items-center">
+                  <Clock className="h-5 w-5 mr-2 text-yellow-300" />
+                  <p className="text-sm font-medium">Save 5+ hours every week!*</p>
+                </div>
+                <p className="text-xs text-yellow-200 mt-1 italic opacity-80 text-center">
+                  *Hours measured in developer time, which somehow expands when
+                  estimating project deadlines yet shrinks during lunch breaks.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-yellow-200 mt-1 italic opacity-80">
-              *Hours measured in developer time, which somehow expands when
-              estimating project deadlines yet shrinks during lunch breaks.
-            </p>
           </div>
         </div>
       </div>
