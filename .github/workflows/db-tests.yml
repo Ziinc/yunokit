@@ -23,7 +23,10 @@ jobs:
         uses: supabase/setup-cli@v1
         with:
           version: latest
-          
+
+      - name: Setup migrations
+        run: ./scripts/setup-migrations.sh app yunocontent yunocommunity
+
       - name: Start Supabase local development setup
         run: supabase start
         working-directory: ./supabase
