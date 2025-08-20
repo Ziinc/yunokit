@@ -23,7 +23,7 @@ jobs:
         command: [test, lint, compile]
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3þ
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:

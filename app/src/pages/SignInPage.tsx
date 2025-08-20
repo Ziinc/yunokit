@@ -24,6 +24,7 @@ import {
   Github,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -54,39 +55,107 @@ const SignInPage: React.FC = () => {
   // State for OAuth loading indicators
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
-  // Testimonial quotes
-  const testimonials = [
-    {
-      quote:
-        "Our Yunokit-powered forums turned passive users into an active community overnight.",
-      author: "Community Manager at StartHub",
-    },
-    {
-      quote:
-        "Moderation used to drain our day. Now we handle reports in minutes and focus on growth.",
-      author: "Lead Moderator",
-    },
-    {
-      quote:
-        "Yunokit gave our product team a direct line to user feedback through lively discussion threads.",
-      author: "Product Owner",
-    },
-    {
-      quote:
-        "We launched a full community space in a weekend and engagement metrics have never looked better.",
-      author: "IndieApp Developer",
-    },
-    {
-      quote:
-        "Our support team now points customers to helpful forum answers instead of writing repetitive emails.",
-      author: "Customer Success Lead",
-    },
-  ];
+  // Testimonial quotes organized by micro app
+  const testimonialsByApp = {
+    yunocontent: [
+      {
+        quote: "I used to spend weekends wrestling with Strapi. Now I spend them actually relaxing. What is this sorcery?",
+        author: "Backend Developer, Eternally Grateful"
+      },
+      {
+        quote: "Yunokit turned my Supabase into a CMS so fast, I thought I accidentally hired a wizard consultant.",
+        author: "Solo Founder, Pleasantly Confused"
+      },
+      {
+        quote: "Content management went from 'please kill me' to 'please give me more content to manage.' I don't recognize myself.",
+        author: "Content Manager, Identity Crisis"
+      },
+      {
+        quote: "My schema changes now take minutes instead of migrations. My therapist says I seem happier.",
+        author: "Full-Stack Developer, Mentally Stable"
+      },
+      {
+        quote: "I built a content API in 10 minutes. Then spent 3 hours convincing my team it wasn't a demo.",
+        author: "Tech Lead, Imposter Syndrome"
+      },
+      {
+        quote: "Yunokit made content editing so intuitive, even our CEO can add blog posts. God help us all.",
+        author: "DevOps Engineer, Regretting Decisions"
+      },
+      {
+        quote: "My content workflow is now so smooth, I keep checking if I broke something. Old habits die hard.",
+        author: "Senior Developer, Trust Issues"
+      },
+      {
+        quote: "I no longer cry when clients ask for 'just a small content change.' Character development, they call it.",
+        author: "Freelancer, Emotional Growth"
+      },
+      {
+        quote: "Content versioning that actually works? I'm starting to believe in fairy tales again.",
+        author: "CTO, Cautious Optimist"
+      },
+      {
+        quote: "My Supabase database went from 'organized chaos' to 'actually organized.' My OCD is pleased.",
+        author: "Database Admin, Inner Peace"
+      }
+    ],
+    yunocommunity: [
+      {
+        quote: "Yunokit gave us 'community-led growth.' Which apparently means my users now bully me into building features.",
+        author: "Product Owner, Held Hostage"
+      },
+      {
+        quote: "Our forums are so active, I'm considering charging rent. Users practically live there now.",
+        author: "Community Manager, Accidental Landlord"
+      },
+      {
+        quote: "Moderation used to be like herding cats. Now it's like herding very well-behaved, self-moderating cats.",
+        author: "Lead Moderator, Cat Whisperer"
+      },
+      {
+        quote: "We launched a community in a weekend. My users are more engaged than I am with my own product.",
+        author: "Startup Founder, Existential Crisis"
+      },
+      {
+        quote: "Our community grew so fast, I forgot I was supposed to be running a business, not a digital village.",
+        author: "Entrepreneur, Accidental Mayor"
+      },
+      {
+        quote: "User reports went from 'nuclear meltdown' to 'polite suggestion box.' I miss the chaos, honestly.",
+        author: "Community Manager, Stockholm Syndrome"
+      },
+      {
+        quote: "Forums launched at 9 AM. By lunch, users were organizing their own meetups. I've created a monster.",
+        author: "Product Manager, Frankenstein Complex"
+      },
+      {
+        quote: "My support tickets dropped 90%. Now I spend my days watching users help each other. It's beautiful.",
+        author: "Customer Success, Unemployed But Happy"
+      },
+      {
+        quote: "Community engagement metrics broke our analytics dashboard. Apparently 'too much engagement' is a real problem.",
+        author: "Growth Hacker, Victim of Success"
+      },
+      {
+        quote: "Users are now moderating better than I ever did. I'm either really good at my job or completely useless.",
+        author: "Community Lead, Identity Crisis"
+      }
+    ]
+  };
 
-  // Memoize the random testimonial selection
-  const randomTestimonial = useMemo(() => {
-    return testimonials[Math.floor(Math.random() * testimonials.length)];
-  }, []); // Empty dependency array means this will only run once when component mounts
+  // Random testimonial selection that changes with slide
+  const [currentTestimonials, setCurrentTestimonials] = useState(() => ({
+    yunocontent: testimonialsByApp.yunocontent[Math.floor(Math.random() * testimonialsByApp.yunocontent.length)],
+    yunocommunity: testimonialsByApp.yunocommunity[Math.floor(Math.random() * testimonialsByApp.yunocommunity.length)]
+  }));
+
+  // Update testimonials when slide changes
+  const updateTestimonials = () => {
+    setCurrentTestimonials({
+      yunocontent: testimonialsByApp.yunocontent[Math.floor(Math.random() * testimonialsByApp.yunocontent.length)],
+      yunocommunity: testimonialsByApp.yunocommunity[Math.floor(Math.random() * testimonialsByApp.yunocommunity.length)]
+    });
+  };
 
   // State for email/password auth
   const [email, setEmail] = useState("");
@@ -331,7 +400,11 @@ const SignInPage: React.FC = () => {
 
   const slides = [
     {
-      icon: <Sparkles className="h-7 w-7 mr-3 animate-pulse text-yellow-300" />,
+      appName: "yunocontent",
+      appIcon: (
+        <Database className="h-8 w-8 text-indigo-600" />
+      ),
+      icon: <Sparkles className="h-10 w-10 mr-3 animate-pulse text-yellow-300" />,
       heading: (
         <>
           Content Management{" "}
@@ -342,11 +415,15 @@ const SignInPage: React.FC = () => {
         </>
       ),
       description:
-        "The Strapi-alternative that transforms your Supabase database into a powerful, intuitive CMS.",
+        "Powerful Strapi-like CMS features for your Supabase backend",
       features: contentFeatures,
     },
     {
-      icon: <Users className="h-7 w-7 mr-3 animate-pulse text-yellow-300" />,
+      appName: "yunocommunity",
+      appIcon: (
+        <Users className="h-8 w-8 text-purple-600" />
+      ),
+      icon: <Sparkles className="h-10 w-10 mr-3 animate-pulse text-yellow-300" />,
       heading: (
         <>
           Community Building{" "}
@@ -357,42 +434,49 @@ const SignInPage: React.FC = () => {
         </>
       ),
       description:
-        "Launch thriving forums backed by Supabase with built-in moderation and interactive community features.",
+        "Discourse-style community forums powered by your Supabase backend",
       features: communityFeatures,
     },
   ];
 
   const [slideIndex, setSlideIndex] = useState(0);
   const currentSlide = slides[slideIndex];
-  const nextSlide = () => setSlideIndex((slideIndex + 1) % slides.length);
+  const nextSlide = () => {
+    setSlideIndex((slideIndex + 1) % slides.length);
+    updateTestimonials();
+  };
+  const prevSlide = () => {
+    setSlideIndex((slideIndex - 1 + slides.length) % slides.length);
+    updateTestimonials();
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
       {/* Floating sparkles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <Sparkles className="absolute top-[10%] left-[5%] text-yellow-400 h-6 w-6 animate-pulse" />
+        <Sparkles className="absolute top-[10%] left-[5%] text-yellow-400 h-10 w-10 animate-pulse" />
         <Sparkles
-          className="absolute top-[20%] right-[8%] text-yellow-400 h-5 w-5 animate-pulse"
+          className="absolute top-[20%] right-[8%] text-yellow-400 h-8 w-8 animate-pulse"
           style={{ animationDelay: "0.5s" }}
         />
         <Sparkles
-          className="absolute top-[80%] left-[15%] text-yellow-400 h-7 w-7 animate-pulse"
+          className="absolute top-[80%] left-[15%] text-yellow-400 h-12 w-12 animate-pulse"
           style={{ animationDelay: "1.2s" }}
         />
         <Sparkles
-          className="absolute top-[65%] right-[12%] text-yellow-400 h-4 w-4 animate-pulse"
+          className="absolute top-[65%] right-[12%] text-yellow-400 h-7 w-7 animate-pulse"
           style={{ animationDelay: "0.7s" }}
         />
         <Sparkles
-          className="absolute top-[40%] left-[8%] text-yellow-400 h-5 w-5 animate-pulse"
+          className="absolute top-[40%] left-[8%] text-yellow-400 h-9 w-9 animate-pulse"
           style={{ animationDelay: "1.5s" }}
         />
         <Sparkles
-          className="absolute top-[30%] right-[20%] text-yellow-400 h-6 w-6 animate-pulse"
+          className="absolute top-[30%] right-[20%] text-yellow-400 h-11 w-11 animate-pulse"
           style={{ animationDelay: "2.0s" }}
         />
         <Sparkles
-          className="absolute top-[85%] right-[25%] text-yellow-400 h-5 w-5 animate-pulse"
+          className="absolute top-[85%] right-[25%] text-yellow-400 h-8 w-8 animate-pulse"
           style={{ animationDelay: "1.0s" }}
         />
       </div>
@@ -408,7 +492,7 @@ const SignInPage: React.FC = () => {
               />
             </div>
             <CardTitle className="text-2xl font-bold">
-              {showRegister ? "Create an account" : "Welcome back"}
+              {showRegister ? "Create an account" : "Micro-apps for your Supabase backend"}
             </CardTitle>
             <CardDescription>
               {showRegister
@@ -792,18 +876,61 @@ const SignInPage: React.FC = () => {
         </Card>
 
         {/* Marketing Banner */}
-        <div className="hidden lg:flex flex-col max-w-xl w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl relative">
-          <button
-            type="button"
-            onClick={nextSlide}
-            className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
-          >
-            <ChevronRight className="h-5 w-5 text-white" />
-          </button>
+        <div className="hidden lg:flex flex-col max-w-xl w-full h-[800px] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl px-16 py-8 text-white shadow-xl relative">
+          {/* Micro App Icons with Navigation */}
+          <div className="flex justify-center items-center gap-6 mb-8">
+            <button
+              type="button"
+              onClick={prevSlide}
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5 text-white" />
+            </button>
+            
+            {slides.map((slide, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => {
+                  setSlideIndex(index);
+                  updateTestimonials();
+                }}
+                className={`group flex flex-col items-center transition-all duration-300 ${
+                  index === slideIndex 
+                    ? 'scale-110' 
+                    : 'scale-100 opacity-70 hover:opacity-90 hover:scale-105'
+                }`}
+              >
+                <div className={`p-4 rounded-2xl bg-white transition-all duration-300 shadow-lg ${
+                  index === slideIndex 
+                    ? 'bg-opacity-100 shadow-xl ring-4 ring-yellow-300 ring-opacity-50' 
+                    : 'bg-opacity-80 hover:bg-opacity-90'
+                }`}>
+                  {slide.appIcon}
+                </div>
+                <span className={`mt-2 text-xs font-medium transition-all duration-300 ${
+                  index === slideIndex 
+                    ? 'text-yellow-200 font-bold' 
+                    : 'text-white text-opacity-80'
+                }`}>
+                  {slide.appName}
+                </span>
+              </button>
+            ))}
+            
+            <button
+              type="button"
+              onClick={nextSlide}
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-2 transition-colors"
+            >
+              <ChevronRight className="h-5 w-5 text-white" />
+            </button>
+          </div>
 
-          <div className="mb-5 flex items-center">
+          <div className="mb-5 flex items-center justify-center relative">
             {currentSlide.icon}
-            <h2 className="text-3xl font-bold">{currentSlide.heading}</h2>
+            <h2 className="text-3xl font-bold text-center">{currentSlide.heading}</h2>
+            <Sparkles className="h-10 w-10 ml-3 animate-pulse text-yellow-300" />
           </div>
 
           <p className="text-lg mb-6 font-medium">{currentSlide.description}</p>
@@ -828,20 +955,29 @@ const SignInPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="bg-white bg-opacity-10 rounded-lg p-4 border border-white border-opacity-20 italic text-sm">
-            "{randomTestimonial.quote}"
-            <div className="mt-2 font-medium">— {randomTestimonial.author}</div>
+          {/* Customer Testimonials */}
+          <div className="mb-6">
+            <div className="bg-white bg-opacity-10 rounded-lg p-4 border border-white border-opacity-20 italic text-sm">
+              "{currentTestimonials[currentSlide.appName as keyof typeof currentTestimonials].quote}"
+              <div className="mt-2 font-medium">— {currentTestimonials[currentSlide.appName as keyof typeof currentTestimonials].author}</div>
+            </div>
           </div>
 
-          <div className="mt-6 flex flex-col items-center justify-center">
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 mr-2 text-yellow-300" />
-              <p className="text-sm font-medium">Save 5+ hours every week!*</p>
+          {/* Footer */}
+          <div className="mt-auto">
+            <div className="-mx-16 border-t border-white border-opacity-20"></div>
+            <div className="pt-6">
+              <div className="flex flex-col items-center justify-center">
+                <div className="flex items-center">
+                  <Clock className="h-5 w-5 mr-2 text-yellow-300" />
+                  <p className="text-sm font-medium">Save 5+ hours every week!*</p>
+                </div>
+                <p className="text-xs text-yellow-200 mt-1 italic opacity-80 text-center">
+                  *Hours measured in developer time, which somehow expands when
+                  estimating project deadlines yet shrinks during lunch breaks.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-yellow-200 mt-1 italic opacity-80">
-              *Hours measured in developer time, which somehow expands when
-              estimating project deadlines yet shrinks during lunch breaks.
-            </p>
           </div>
         </div>
       </div>
