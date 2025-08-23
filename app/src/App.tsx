@@ -22,9 +22,8 @@ const ContentSearchPage = lazy(() => import("./pages/ContentSearchPage"));
 const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const ForumManagementPage = lazy(() => import("./pages/ForumManagementPage"));
 const ForumDetailPage = lazy(() => import("./pages/ForumDetailPage"));
+const NewPostPage = lazy(() => import("./pages/NewPostPage"));
 const PostCommentsPage = lazy(() => import("./pages/PostCommentsPage"));
-const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
-const CommunityConfigPage = lazy(() => import("./pages/CommunityConfigPage"));
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SearchProvider } from "@/contexts/SearchContext";
@@ -85,10 +84,9 @@ const AppContent: React.FC = () => {
           <Route path="/community" element={<CommunityPage />}>
             <Route index element={<Navigate to="forums" replace />} />
             <Route path="forums" element={<ForumManagementPage />} />
-            <Route path="users" element={<UserManagementPage />} />
-            <Route path="config" element={<CommunityConfigPage />} />
           </Route>
           <Route path="/community/forums/:forumId" element={<ForumDetailPage />} />
+          <Route path="/community/forums/:forumId/new-post" element={<NewPostPage />} />
           <Route path="/community/posts/:postId" element={<PostCommentsPage />} />
           <Route path="/community/posts/:postId/:commentId" element={<PostCommentsPage />} />
         </Route>

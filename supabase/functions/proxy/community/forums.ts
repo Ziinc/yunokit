@@ -28,14 +28,49 @@ export const updateForum = async (
   return await client.from("forums").update(forum).eq("id", id).select().single().then(handleResponse);
 };
 
+// Soft delete - sets deleted_at timestamp
 export const deleteForum = async (client: SupabaseClient, id: number) => {
+  return await client
+    .from("forums")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single()
+    .then(handleResponse);
+};
+
+// Permanent delete - actually removes from database
+export const permanentDeleteForum = async (client: SupabaseClient, id: number) => {
   return await client.from("forums").delete().eq("id", id).then(handleResponse);
 };
 
+// Archive forum - sets archived_at timestamp
 export const archiveForum = async (client: SupabaseClient, id: number) => {
   return await client
     .from("forums")
-    .update({ archived: true })
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single()
+    .then(handleResponse);
+};
+
+// Unarchive forum - clears archived_at timestamp
+export const unarchiveForum = async (client: SupabaseClient, id: number) => {
+  return await client
+    .from("forums")
+    .update({ archived_at: null })
+    .eq("id", id)
+    .select()
+    .single()
+    .then(handleResponse);
+};
+
+// Restore forum - clears both deleted_at and archived_at timestamps to make it fully active
+export const restoreForum = async (client: SupabaseClient, id: number) => {
+  return await client
+    .from("forums")
+    .update({ deleted_at: null, archived_at: null })
     .eq("id", id)
     .select()
     .single()

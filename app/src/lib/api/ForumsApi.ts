@@ -40,3 +40,21 @@ export const archiveForum = async (id: number, workspaceId: number) => {
   qp.set("workspaceId", String(workspaceId));
   return await supabase.functions.invoke<ForumRow>(`${base}/${id}/archive?${qp.toString()}`, { method: "POST" });
 };
+
+export const unarchiveForum = async (id: number, workspaceId: number) => {
+  const qp = new URLSearchParams();
+  qp.set("workspaceId", String(workspaceId));
+  return await supabase.functions.invoke<ForumRow>(`${base}/${id}/unarchive?${qp.toString()}`, { method: "POST" });
+};
+
+export const restoreForum = async (id: number, workspaceId: number) => {
+  const qp = new URLSearchParams();
+  qp.set("workspaceId", String(workspaceId));
+  return await supabase.functions.invoke<ForumRow>(`${base}/${id}/restore?${qp.toString()}`, { method: "POST" });
+};
+
+export const permanentDeleteForum = async (id: number, workspaceId: number) => {
+  const qp = new URLSearchParams();
+  qp.set("workspaceId", String(workspaceId));
+  await supabase.functions.invoke(`${base}/${id}/permanent?${qp.toString()}`, { method: "DELETE" });
+};

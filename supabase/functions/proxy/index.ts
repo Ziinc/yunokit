@@ -27,6 +27,9 @@ import {
   updateForum,
   deleteForum,
   archiveForum,
+  permanentDeleteForum,
+  unarchiveForum,
+  restoreForum,
 } from "./community/forums.ts";
 import { listPosts, getPost, createPost, updatePost, deletePost } from "./posts.ts";
 import { listComments, getComment, createComment, updateComment, deleteComment } from "./community/comments.ts";
@@ -192,6 +195,21 @@ app.post("/proxy/community/forums/:id/archive", async (req: any, res: any) => {
 
 app.delete("/proxy/community/forums/:id", async (req: any, res: any) => {
   const data = await deleteForum(req.dataClient, Number(req.params.id));
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.delete("/proxy/community/forums/:id/permanent", async (req: any, res: any) => {
+  const data = await permanentDeleteForum(req.dataClient, Number(req.params.id));
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/community/forums/:id/unarchive", async (req: any, res: any) => {
+  const data = await unarchiveForum(req.dataClient, Number(req.params.id));
+  res.set({ ...corsHeaders }).json(data);
+});
+
+app.post("/proxy/community/forums/:id/restore", async (req: any, res: any) => {
+  const data = await restoreForum(req.dataClient, Number(req.params.id));
   res.set({ ...corsHeaders }).json(data);
 });
 

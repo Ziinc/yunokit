@@ -7,8 +7,8 @@ import { Loader2, ArrowLeft, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { getForumById } from '@/lib/api/ForumsApi';
-import { getCommentsByForum } from '@/lib/api/CommentsApi';
-import { Forum, Comment } from '@/types/comments';
+import { getPostsByForum } from '@/lib/api/PostsApi';
+import { Forum } from '@/types/comments';
 
 
 const ForumDetailPage: React.FC = () => {
@@ -16,7 +16,7 @@ const ForumDetailPage: React.FC = () => {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
   const [forum, setForum] = useState<Forum | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [posts, setPosts] = useState<{ id: number; title: string; content_data?: any; status: string; created_at: string; user_author_id?: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,10 +39,10 @@ const ForumDetailPage: React.FC = () => {
           
           setForum(forumData);
           
-          // Load comments for this forum
-          const commentsResponse = await getCommentsByForum(forumId);
-          if (commentsResponse.data) {
-            setComments(commentsResponse.data);
+          // Load posts for this forum
+          const postsResponse = await getPostsByForum(parseInt(forumId));
+          if (postsResponse.data) {
+            setPosts(postsResponse.data);
           }
         }
       } catch (error) {
@@ -105,57 +105,63 @@ const ForumDetailPage: React.FC = () => {
                 </CardDescription>
               )}
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>{comments.length} comments</span>
+                <span>{posts.length} posts</span>
                 <span>Created {new Date(forum.created_at).toLocaleDateString()}</span>
               </div>
             </div>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Post
+            <Button asChild>
+              <Link to={`/community/forums/${forumId}/new-post`}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Post
+              </Link>
             </Button>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Comments List */}
+      {/* Posts List */}
       <Card>
         <CardHeader>
-          <CardTitle>Comments</CardTitle>
+          <CardTitle>Posts</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Content</TableHead>
+                <TableHead>Title</TableHead>
                 <TableHead>Author</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {comments.length === 0 ? (
+              {posts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
-                    No comments found. Be the first to create a comment!
+                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                    No posts found. Be the first to create a post!
                   </TableCell>
                 </TableRow>
               ) : (
-                comments.map((comment) => (
-                  <TableRow key={comment.id} className="cursor-pointer hover:bg-muted/50">
+                posts.map((post) => (
+                  <TableRow key={post.id} className="cursor-pointer hover:bg-muted/50">
                     <TableCell>
                       <Link 
-                        to={`/community/posts/${comment.id}`}
+                        to={`/community/posts/${post.id}`}
                         className="hover:underline"
                       >
                         <div className="font-medium line-clamp-2">
-                          {comment.content.substring(0, 100)}{comment.content.length > 100 ? '...' : ''}
+                          {post.title || post.content_data?.title || 'Untitled Post'}
                         </div>
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{comment.user_author_id || 'Admin'}</span>
+                      <span className="text-sm">{post.user_author_id || 'Anonymous'}</span>
                     </TableCell>
                     <TableCell>
-                      {new Date(comment.created_at).toLocaleDateString()}
+                      <span className="text-sm capitalize">{post.status || 'draft'}</span>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(post.created_at).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
                 ))

@@ -165,18 +165,21 @@ export type Database = {
     Tables: {
       comments: {
         Row: {
+          content_data: Json | null
           content_item_id: number | null
           id: number
           parent_comment_id: number | null
           user_author_id: string | null
         }
         Insert: {
+          content_data?: Json | null
           content_item_id?: number | null
           id?: number
           parent_comment_id?: number | null
           user_author_id?: string | null
         }
         Update: {
+          content_data?: Json | null
           content_item_id?: number | null
           id?: number
           parent_comment_id?: number | null
@@ -224,6 +227,7 @@ export type Database = {
       }
       posts: {
         Row: {
+          content_data: Json | null
           content_item_id: number | null
           forum_id: number | null
           id: number
@@ -231,6 +235,7 @@ export type Database = {
           user_author_id: string | null
         }
         Insert: {
+          content_data?: Json | null
           content_item_id?: number | null
           forum_id?: number | null
           id?: number
@@ -238,6 +243,7 @@ export type Database = {
           user_author_id?: string | null
         }
         Update: {
+          content_data?: Json | null
           content_item_id?: number | null
           forum_id?: number | null
           id?: number

@@ -42,10 +42,7 @@ export const SelectionActionsBar: React.FC<SelectionActionsBarProps> = ({
                 variant={action.variant || "ghost"}
                 size="sm"
                 onClick={action.onClick}
-                className={cn(
-                  "h-8",
-                  action.variant === "destructive" && "text-destructive"
-                )}
+                className="h-8"
               >
                 {action.icon && <span className="mr-2">{action.icon}</span>}
                 {action.label}

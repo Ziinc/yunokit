@@ -99,6 +99,13 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) =
     setShowCreateDialog(false);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && !isCreating && formData.name.trim()) {
+      e.preventDefault();
+      handleCreate();
+    }
+  };
+
   return (
     <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
       <DialogTrigger asChild>
@@ -107,7 +114,7 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) =
           Create Forum
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onKeyDown={handleKeyDown}>
         <DialogHeader>
           <DialogTitle>Create New Forum</DialogTitle>
           <DialogDescription>

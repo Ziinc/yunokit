@@ -5,4 +5,5 @@ export * from './TemplateService';
 export * from './TemplateGenerators'; 
 export * from './SystemAuthorApi';
 export * from './ForumsApi';
+export * from './PostsApi';
 export * from './CommunityConfigApi';
