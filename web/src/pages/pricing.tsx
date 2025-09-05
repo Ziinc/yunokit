@@ -2,7 +2,7 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import { Check, DollarSign, ChevronDown, Rocket, Zap, X } from 'lucide-react';
+import { Check, DollarSign, ChevronDown, Rocket, Zap } from 'lucide-react';
 import { Button } from '../../../shared/src/ui/button';
 import { Alert, AlertDescription } from '../../../shared/src/ui/alert';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../shared/src/ui/collapsible';
@@ -16,13 +16,7 @@ const plans = [
     features: [
       "1 user included per workspace",
       "1 workspace",
-      "Basic content management",
       "Standard support"
-    ],
-    limitations: [
-      "No community features",
-      "No system authors",
-      "No content approval flow"
     ],
     cta: "Get Started",
     popular: false
@@ -35,15 +29,13 @@ const plans = [
       { text: "3 users included per workspace", highlight: true },
       { text: "2 workspaces included", highlight: true },
       { text: "Community features", highlight: true },
-      "System authors",
-      "Content approval flow",
-      "Priority support"
+      "Priority support",
     ],
     addOns: [
       { name: "Additional Workspace User", price: 5 },
       { name: "Additional Workspace", price: 10 }
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     popular: true
   }
 ];
@@ -74,26 +66,22 @@ function ShipFastBanner() {
       <div className="container mx-auto px-4 relative">
         <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
           <div className="rounded-full bg-cms-green/10 p-3 mb-8">
-            <Zap className="w-8 h-8 text-cms-green animate-pulse" />
+            <Zap className="w-8 h-8 text-green-600 animate-pulse" />
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-cms-purple to-cms-green bg-clip-text text-transparent">
-            Ship Content Faster with Confidence
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-cms-purple">
+            Ship Features, not your<br/> Admin Dashboard
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Get started in minutes, not days. Our intuitive platform helps you focus on what matters most - creating amazing content.
+            Micro-apps to get features shipped in minutes, not days.
           </p>
           <div className="flex gap-4 items-center text-lg font-medium">
             <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-cms-green" />
+              <Check className="w-5 h-5 text-green-600" />
               <span>Quick Setup</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-cms-green" />
+              <Check className="w-5 h-5 text-green-600" />
               <span>Easy Integration</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-cms-green" />
-              <span>24/7 Support</span>
             </div>
           </div>
         </div>
@@ -115,9 +103,6 @@ function QuirkyFooterBanner() {
           </h2>
           <p className="text-xl mb-6 text-muted-foreground">
             Just straightforward pricing that won't make your wallet cry. 
-            <span className="block mt-2">
-              (We promise it's cheaper than your coffee addiction! ☕️)
-            </span>
           </p>
         </div>
       </div>
@@ -128,10 +113,10 @@ function QuirkyFooterBanner() {
 function PricingCard({ plan }) {
   return (
     <Alert className={cn(
-      "rounded-2xl p-8 transition-all relative border-2 hover:shadow-xl",
+      "rounded-2xl p-8 transition-all relative border-2 hover:shadow-xl flex flex-col h-full",
       plan.popular 
         ? "border-cms-purple bg-gradient-to-b from-cms-purple-light/30 to-transparent shadow-lg" 
-        : "border-muted hover:border-cms-purple/50"
+        : "border-cms-green/60 bg-gradient-to-b from-cms-green-light/20 to-transparent hover:border-cms-green hover:shadow-lg hover:scale-[1.02]"
     )}>
       {plan.popular && (
         <div className="absolute -top-3 left-0 w-full flex justify-center">
@@ -144,14 +129,32 @@ function PricingCard({ plan }) {
       <div className={cn("text-center mb-8", plan.popular && "mt-4")}>
         <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
         <AlertDescription className="mb-4">{plan.description}</AlertDescription>
-        <div className="flex items-center justify-center gap-1">
-          <DollarSign className="h-6 w-6 text-cms-purple" />
-          <span className="text-4xl font-bold">{plan.price}</span>
-          <span className="text-muted-foreground">/month</span>
+        <div>
+          <div className="flex items-center justify-center gap-1">
+            {plan.name === "Pro" ? (
+              <>
+                <span className="text-4xl font-bold line-through text-muted-foreground">${plan.price}</span>
+                <DollarSign className="h-6 w-6 text-cms-purple ml-2" />
+                <span className="text-4xl font-bold">0</span>
+                <span className="text-muted-foreground">/month</span>
+              </>
+            ) : (
+              <>
+                <DollarSign className="h-6 w-6 text-cms-purple" />
+                <span className="text-4xl font-bold">{plan.price}</span>
+                <span className="text-muted-foreground">/month</span>
+              </>
+            )}
+          </div>
+          {plan.name === "Pro" && (
+            <div className="text-lg text-green-600 font-bold mt-2">
+              Free during alpha
+            </div>
+          )}
         </div>
       </div>
 
-      <ul className="space-y-4 mb-8">
+      <ul className="space-y-4 mb-8 flex-grow">
         {plan.features.map((feature, idx) => {
           const isHighlighted = typeof feature === 'object' && feature.highlight;
           const featureText = typeof feature === 'object' ? feature.text : feature;
@@ -163,7 +166,7 @@ function PricingCard({ plan }) {
             )}>
               <Check className={cn(
                 "h-5 w-5 flex-shrink-0 mt-0.5",
-                isHighlighted ? "text-cms-purple" : "text-cms-green"
+                isHighlighted ? "text-cms-purple" : "text-green-600"
               )} />
               <span className={cn(
                 "text-foreground",
@@ -195,15 +198,15 @@ function PricingCard({ plan }) {
             {plan.addOns.map((addon, idx) => (
               <li key={idx} className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{addon.name}</span>
-                <span className="text-foreground">${addon.price}/mo per unit</span>
+                <span className="text-foreground">${addon.price}/month</span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      <Button asChild className="block w-full" variant="default" size="lg">
-        <Link to="/docs/intro" className="flex items-center justify-center gap-2">
+      <Button asChild className="w-full mt-auto min-h-12 bg-cms-purple hover:bg-cms-purple/90 text-white hover:text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200" variant="default" size="default">
+        <Link to="/docs/intro" className="w-full flex items-center justify-center gap-2 no-underline hover:no-underline">
           <Rocket className="w-4 h-4" />
           {plan.cta}
         </Link>
@@ -212,145 +215,6 @@ function PricingCard({ plan }) {
   );
 }
 
-function FeatureComparisonTable() {
-  const comparison = [
-    {
-      app: "Content Manager",
-      features: [
-        {
-          name: "Workspaces",
-          free: { available: true, note: "1 workspace" },
-          pro: { available: true, note: "Unlimited" }
-        },
-        {
-          name: "Revision history",
-          free: { available: true, note: "Basic" },
-          pro: { available: true, note: "Full" }
-        },
-        {
-          name: "Publishing and Reviewing",
-          free: { available: true, note: "Drafts only" },
-          pro: { available: true, note: "Full" }
-        }
-      ]
-    },
-    {
-      app: "Schema Builder",
-      features: [
-        {
-          name: "Field types",
-          free: { available: true, note: "Core" },
-          pro: { available: true, note: "Advanced" }
-        },
-        {
-          name: "Validations",
-          free: { available: true, note: "Basic" },
-          pro: { available: true, note: "Custom" }
-        },
-        {
-          name: "Environments",
-          free: { available: true, note: "Single" },
-          pro: { available: true, note: "Multiple" }
-        }
-      ]
-    },
-    {
-      app: "Assets Library",
-      features: [
-        {
-          name: "Storage",
-          free: { available: true, note: "1GB" },
-          pro: { available: true, note: "Unlimited" }
-        },
-        {
-          name: "Optimization",
-          free: { available: true, note: "Manual" },
-          pro: { available: true, note: "Automatic" }
-        },
-        {
-          name: "Search",
-          free: { available: true, note: "Basic" },
-          pro: { available: true, note: "AI tagging" }
-        }
-      ]
-    },
-    {
-      app: "Community Management",
-      features: [
-        {
-          name: "Comments",
-          free: { available: false },
-          pro: { available: true, note: "Comments & reactions" }
-        },
-        {
-          name: "Analytics",
-          free: { available: false },
-          pro: { available: true, note: "Engagement" }
-        },
-        {
-          name: "Moderation",
-          free: { available: false },
-          pro: { available: true, note: "Tools" }
-        }
-      ]
-    }
-  ];
-
-  return (
-    <div className="py-16 bg-background">
-      <div className="container mx-auto px-4 max-w-5xl">
-        <h2 className="text-3xl font-bold text-center mb-8">Feature Comparison</h2>
-        <table className="w-full text-left border rounded-xl overflow-hidden">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="p-4" />
-              <th className="p-4">Free</th>
-              <th className="p-4">Pro</th>
-            </tr>
-          </thead>
-          {comparison.map((section, idx) => (
-            <tbody key={idx} className="divide-y">
-              <tr className="bg-muted/20">
-                <th colSpan={3} className="p-4 text-left text-lg font-semibold">
-                  {section.app}
-                </th>
-              </tr>
-              {section.features.map((feature, fIdx) => (
-                <tr key={fIdx} className="bg-card">
-                  <td className="p-4 align-top">{feature.name}</td>
-                  <td className="p-4 align-top">
-                    {feature.free.available ? (
-                      <Check className="w-4 h-4 text-cms-purple" />
-                    ) : (
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    )}
-                    {feature.free.note && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {feature.free.note}
-                      </p>
-                    )}
-                  </td>
-                  <td className="p-4 align-top">
-                    {feature.pro.available ? (
-                      <Check className="w-4 h-4 text-cms-purple" />
-                    ) : (
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    )}
-                    {feature.pro.note && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {feature.pro.note}
-                      </p>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          ))}
-        </table>
-      </div>
-    </div>
-  );
-}
 
 function FAQSection() {
   return (
@@ -360,8 +224,9 @@ function FAQSection() {
         <div className="rounded-2xl border divide-y bg-card">
           {faqs.map((faq, idx) => (
             <Collapsible key={idx}>
-              <CollapsibleTrigger className="w-full px-6 py-6 hover:bg-muted/50">
-                {faq.question}
+              <CollapsibleTrigger className="w-full px-6 py-6 hover:bg-muted/50 flex items-center justify-between text-left group">
+                <span>{faq.question}</span>
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="px-6 pb-6">
@@ -396,7 +261,6 @@ export default function Pricing(): JSX.Element {
             ))}
           </div>
         </div>
-        <FeatureComparisonTable />
         <FAQSection />
         <QuirkyFooterBanner />
       </main>
