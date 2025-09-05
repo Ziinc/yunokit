@@ -11,9 +11,9 @@ const darkCodeTheme = themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "YunoContent",
-  tagline: "Dinosaurs are cool",
-  url: "https://www.yunocontent.com",
+  title: "Yunokit",
+  tagline: "Micro-apps for your Supabase backend",
+  url: "https://yunokit.com",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -54,7 +54,7 @@ const config = {
     ({
       navbar: {
         logo: {
-          alt: "yunocontent",
+          alt: "yunokit",
           src: "logo.png",
         },
         items: [
@@ -106,7 +106,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} YunoContent`,
+        copyright: `Copyright © ${new Date().getFullYear()} Yunokit`,
       },
       prism: {
         theme: lightCodeTheme,
