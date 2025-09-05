@@ -39,7 +39,7 @@ const config = {
           routeBasePath: "/docs", // Serve the blog at the site's root
         },
         gtag: {
-          trackingID: "G-B3P5HGLDR1",
+          trackingID: "G-H1JDBL1D09",
         },
         
         theme: {
