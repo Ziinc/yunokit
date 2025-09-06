@@ -52,6 +52,7 @@ function HomepageHeader() {
 
       <div className="container mx-auto px-4">
         <div className="text-center">
+          
           <h1 className="text-5xl font-extrabold text-white mb-6">
             Your Supabase Backend {' '}
             <span className="relative italic text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
@@ -65,7 +66,7 @@ function HomepageHeader() {
           <div className="flex justify-center gap-4">
             <Link
               className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-purple-600 font-semibold hover:bg-yellow-50 transition-colors"
-              to="/docs/intro">
+              to="https://app.yunokit.com">
               Get Started
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
@@ -85,11 +86,17 @@ function HomepageHeader() {
 
 function FeatureSection() {
   return (
-    <section className="py-16">
+    <section className="py-5">
       <div className="container mx-auto px-4">
+
+      <img 
+          src="/branding@3x.png" 
+          alt="YunoKit" 
+          className="h-32 mb-4 w-auto mx-auto"
+        />
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Two Powerful Micro-Apps</h2>
-          <p className="text-xl text-gray-600">Everything you need to manage content and build communities on Supabase</p>
+          <h2 className="text-3xl font-bold mb-4">Modular Micro-Apps + Admin Dashboard =  🤩  </h2>
+          <p className="text-xl text-gray-600">Everything you need to build and manage user-facing features on Supabase</p>
         </div>
         <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
           {features.map((feature, idx) => (
@@ -229,6 +236,7 @@ function ChillSection() {
     </section>
   );
 }
+
 
 export default function Home(): JSX.Element {
   const {siteConfig} = useDocusaurusContext();
