@@ -1,0 +1,283 @@
+---
+sidebar_position: 1
+---
+
+# YunoContent
+
+Allows for dynamic content creation and content types, providing maximum flexibility for end user content creation. It uses the `yunocontent` schema to store content.
+
+Features:
+
+- Content Manager
+- Content Type Builder
+
+
+## Integration
+
+Relevant tables:
+
+- `yunocontent.content_items`
+- `yunocontent.schemas`
+
+Relevant views:
+
+- `yunocontent.content_items_vw` (recommended for reads)
+
+
+### Client Querying
+
+```ts
+// Read from the view for computed fields like status
+const { data, error } = await yc
+  .schema('yunocontent')
+  .from('content_items_vw')
+  .select('*')
+  .eq('id', 1);
+
+// Create new content item
+const { data: newItem, error: createError } = await yc
+  .schema('yunocontent')
+  .from('content_items')
+  .insert({
+    title: 'New Article',
+    content: { body: 'Article content here' },
+    content_type: 'article',
+    status: 'draft'
+  })
+  .select();
+
+// Update content item
+const { data: updatedItem, error: updateError } = await yc
+  .schema('yunocontent')
+  .from('content_items')
+  .update({
+    title: 'Updated Title',
+    content: { body: 'Updated content' },
+    status: 'published'
+  })
+  .eq('id', 1)
+  .select();
+
+// Delete content item
+const { error: deleteError } = await yc
+  .schema('yunocontent')
+  .from('content_items')
+  .delete()
+  .eq('id', 1);
+
+// List all content items with filtering
+const { data: items, error: listError } = await yc
+  .schema('yunocontent')
+  .from('content_items_vw')
+  .select('*')
+  .eq('content_type', 'article')
+  .eq('status', 'published')
+  .order('created_at', { ascending: false });
+```
+
+## Publishing and Unpublishing Content
+
+Content items can be managed through their publication status. This allows you to control when content becomes publicly accessible.
+
+### Publishing Content
+Content items start in an unpublished state. To make content publicly accessible:
+
+1. Navigate to the content item in the Content Manager
+2. Click the "Publish" button in the top right
+3. The item's status will update to "Published"
+
+### Unpublishing Content
+To remove content from public access while preserving it for future use:
+
+1. Select the published content item
+2. Click "Unpublish" in the top right
+3. The item will return to draft status
+
+## Downloading Content
+
+You can export your content for backup or migration purposes:
+
+### Bulk Download
+1. Navigate to the Content Manager
+2. Select the items you want to export
+3. Click the "Download" button
+4. Choose your preferred format (JSON/CSV)
+
+### Single Item Download
+1. Open the specific content item
+2. Click the "Download" button in the top right
+3. The item will be exported in JSON format
+
+The downloaded content includes all fields and metadata, making it suitable for backup or migration purposes.
+
+
+
+
+# Content Management Guide
+
+## Content Editor Interface
+
+### Dashboard Overview
+- Content listing and filtering
+- Quick actions and bulk operations
+- Status indicators and workflow states
+
+### Content Creation
+1. Select content type
+2. Fill in required fields
+3. Add media and relationships
+4. Save as draft or publish
+
+### Content Organization
+- Folders and collections
+- Tags and categories
+- Search and filters
+- Bulk actions
+
+## Version Control
+
+### Revision History
+- Track changes
+- Compare versions
+- Restore previous versions
+
+### Draft Management
+- Save work in progress
+- Preview changes
+- Schedule publications
+
+## Media Management
+
+### Asset Library
+- Upload and organize files
+- Image optimization
+- File metadata
+
+### Media Usage
+- Track asset usage
+- Replace assets
+- Bulk operations
+
+## Publishing Workflow
+
+### Content States
+- Draft
+- In Review
+- Published
+- Archived
+
+### Review Process
+1. Submit for review
+2. Reviewer feedback
+3. Approval/rejection
+4. Publication
+
+### Scheduling
+- Schedule future publications
+- Set expiration dates
+- Recurring content updates 
+
+# Content Schema Builder
+
+The Schema Builder allows you to define the structure of your content. There are two main types of schemas: Singles and Collections.
+
+## Schema Types
+
+### Singles
+Single schemas represent standalone content that only has one instance. Examples include:
+- Homepage
+- About Page
+- Privacy Policy
+- Global Settings
+
+Single schemas are ideal for unique content that doesn't need multiple entries.
+
+### Collections
+Collection schemas represent content types that can have multiple entries. Examples include:
+- Blog Posts
+- Products
+- Team Members
+- FAQ Items
+
+Collections are perfect for content that follows the same structure but needs multiple entries.
+
+## Schema Status
+
+### Active vs Archived
+- **Active**: Default state for schemas. Content can be created, edited, and published.
+- **Archived**: 
+  - No new content can be created
+  - Existing content remains accessible but marked as archived
+  - Hidden from content creation forms
+  - Visible in the "Archived" tab or with reduced opacity in "All" view
+  - Can be used to phase out deprecated content types
+
+### Archiving Schemas
+You can archive schemas in two ways:
+1. **Bulk Archive**: Select multiple schemas using the checkboxes and click the "Archive" action in the selection bar
+2. **Individual Archive**: Use the "Manage Schema" button on a specific schema
+
+Archiving is reversible and is recommended over deletion when:
+- Deprecating content types that still have existing content
+- Temporarily disabling content creation for specific types
+- Maintaining content history while preventing new entries
+
+## Field Types
+
+The following field types are available when building your schema:
+
+### Text Fields
+| Field Type | Description |
+|------------|-------------|
+| `string` | Basic text input for titles, names, etc. |
+| `text` | Multi-line text area for longer content |
+| `markdown` | Rich text editor with markdown support |
+| `html` | HTML editor for custom markup |
+
+### Media Fields
+| Field Type | Description |
+|------------|-------------|
+| `image` | Image upload with preview |
+| `file` | File upload for documents, etc. |
+| `media` | General media upload (images, videos, files) |
+
+### Structured Fields
+| Field Type | Description |
+|------------|-------------|
+| `json` | Structured data in JSON format |
+| `block` | Content blocks for flexible layouts |
+| `array` | List of items (can contain other field types) |
+| `reference` | Reference to other content items |
+
+### Special Fields
+| Field Type | Description |
+|------------|-------------|
+| `boolean` | True/false toggle |
+| `number` | Numeric input |
+| `date` | Date picker |
+| `datetime` | Date and time picker |
+| `select` | Single selection from predefined options |
+| `multiselect` | Multiple selections from predefined options |
+| `color` | Color picker with hex/rgba support |
+
+## Best Practices
+
+1. **Schema Planning**
+   - Plan your content structure before creating schemas
+   - Consider relationships between different content types
+   - Think about future content needs
+
+2. **Field Organization**
+   - Group related fields together
+   - Use clear, descriptive field names
+   - Make required fields explicit
+
+3. **Schema Management**
+   - Archive instead of delete when phasing out content types
+   - Document schema changes
+   - Test schema changes with sample content
+
+4. **Performance Considerations**
+   - Limit the number of reference fields
+   - Use appropriate field types for the data
+   - Consider query patterns when structuring content 
