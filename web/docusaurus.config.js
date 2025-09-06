@@ -12,7 +12,7 @@ const darkCodeTheme = themes.dracula;
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Yunokit",
-  tagline: "Micro-apps for your Supabase backend",
+  tagline: "Plugins for your Supabase backend",
   url: "https://yunokit.com",
   baseUrl: "/",
   onBrokenLinks: "throw",
@@ -73,6 +73,11 @@ const config = {
             to: "/about",
             position: "left",
             label: "About",
+          },
+          {
+            href: "https://app.yunokit.com",
+            label: "Sign In",
+            position: "right",
           },
           {
             href: "https://github.com/Ziinc/yunokit",

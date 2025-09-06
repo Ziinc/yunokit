@@ -56,11 +56,11 @@ function HomepageHeader() {
           <h1 className="text-5xl font-extrabold text-white mb-6">
             Your Supabase Backend {' '}
             <span className="relative italic text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400">
-              Reimagined
+              Toolkit
               <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full animate-pulse"></span>
             </span>
           </h1>
-          <p className="text-xl text-white mb-8 max-w-2xl mx-auto">
+          <p className="text-3xl text-white mb-8 max-w-2xl mx-auto">
             {siteConfig.tagline}
           </p>
           <div className="flex justify-center gap-4">
@@ -95,7 +95,7 @@ function FeatureSection() {
           className="h-32 mb-4 w-auto mx-auto"
         />
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Modular Micro-Apps + Admin Dashboard =  🤩  </h2>
+          <h2 className="text-3xl font-bold mb-4">Plugins + Admin Dashboard =  🤩  </h2>
           <p className="text-xl text-gray-600">Everything you need to build and manage user-facing features on Supabase</p>
         </div>
         <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
