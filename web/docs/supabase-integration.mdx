@@ -1,93 +1,38 @@
+---
+sidebar_position: 2
+---
 # Supabase Integration
 
-YunoContent integrates seamlessly with [Supabase](https://supabase.com) to provide a robust backend for your content management needs. This integration enables authentication, database storage, and real-time features.
+Yunokit connects to [Supabase](https://supabase.com) as an OAuth2 application to provide a seamless integration with your Supabase project.
 
-## Connecting to Supabase
+Each workspace links to an individual Supabase project.
 
-To connect your Supabase project to YunoContent:
+ The Supabase connection or the Supabase project linkage can be removed at any time, while preserving all data on the target Supabase project.
 
-1. Navigate to the **Settings > Supabase** page in your YunoContent workspace
-2. Click the "Connect Supabase Project" button
-3. You'll be redirected to Supabase to authorize the connectionþ
-4. Select the project you want to connect
-5. Confirm the authorization
+## Service API Authentication
 
-### What Happens During Connection
+To authenticate with the data API, Yunokit stores the legacy `service_role` key for usage with the connected Supabase project.
 
-When you connect YunoContent to Supabase:
-- Necessary database tables and schemas are automatically set up
+## What does Yunokit do after connecting to a Supabase project?
+
+When you connect Yunokit to Supabase:
+- Necessary database tables and schemas are automatically set up via migrations
 - Row-level security policies are configured
 - Real-time subscriptions are enabled
 - Storage buckets for media are created
 - Access tokens are securely stored for maintaining the connection
 - Your project's schema information is retrieved to enable content management
 
-## Managing Your Cþonnection
 
-You can manage your Supabase connection from the Settings page:
+## Migration Management
+Yunokit will perform migrations for all plugins. Each plugin tracks its own migraitons on its own schema. Due to the interconnected nature of the plugins, it is necessary for all plugins to be updated at the same time during a Database migration.
 
-- View your current connection status and project details (name, ID, region)
-- Disconnect your Supabase account
-- Remove project association from a workspace
-- Monitor connection health
+However, each individual migration script executed is scoped to a specific plugin and can be tracked on the plugin's `schema_migrations` table.
 
 ### Disconnecting Your Supabase Account
 
 When you disconnect your Supabase account:
 - The supabase_connection record for your account is permanently deleted
 - All access and refresh tokens used to connect to your Supabase account are removed
-- This affects all workspaces associated with your account
-- You'll need to reconnect your account to resume using YunoContent with Supabase
 
-To disconnect:
-1. Go to **Settings > Supabase**
-2. Click "Disconnect Account"
-3. Confirm the disconnection in the dialog that appears
-
-### Removing Project Association
-
-You can remove a project's association with your workspace without disconnecting your entire Supabase account:
-
-- This nullifies the project_ref field for your workspace
-- This is non-destructive and all data is still retained on the project
-- No data will be shown in the workspace dashboard until a new project is linked
-- Only affects the current workspace, not your Supabase account access
-
-To remove a project association:
-1. Go to **Settings > Supabase**
-2. Click "Remove Project Association"
-3. Type "delete" to confirm
-4. Confirm the removal
-
-## Querying Content with Supabase
-
-You can query the created content using `supabase-js` for custom integration into your app.
-
-Example `supabase-js` usage:
-
-```js
-const { data, error } = await client
-  .from("content_items")
-  .select()
-  .eq("id", 1);
-```
-
-## Security
-
-The Supabase integration uses OAuth2 for secure authorization:
-- No sensitive credentials are stored in your browser
-- Connection tokens are securely managed
-- Row-level security ensures data access control
-- All communication is encrypted
-
-## Troubleshooting
-
-If you encounter issues with your Supabase connection:
-
-1. Check your project's status in the Supabase dashboard
-2. Ensure your project's region is accessible
-3. Verify that the access tokens haven't expired (indicated by a "Token expired" status)
-4. Try disconnecting and reconnecting your account if problems persist
-5. Ensure your Supabase project has the necessary database schema and permissions
-6. Contact support if issues persist
-
+This affects all connected workspaces, and you will need to reconnect your account to resume using Yunokit with Supabase.

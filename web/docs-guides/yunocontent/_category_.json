@@ -1,0 +1,10 @@
+{
+    "position": 1,
+    "label": "YunoContent",
+    "collapsible": true,
+    "collapsed": true,
+    "link": {
+      "type": "doc",
+      "id": "index"
+    }
+  }

@@ -1,0 +1,267 @@
+---
+id: yunocontent
+title: YunoContent API Reference
+---
+
+# YunoContent API Reference
+
+Complete client querying examples for the `yunocontent` schema.
+
+## Content Items
+
+### Read Operations
+
+```ts
+// Get single content item by ID
+const { data: item, error } = await client
+  .schema('yunocontent')
+  .from('content_items_vw')
+  .select('*')
+  .eq('id', '<content_item_id>')
+  .single();
+
+// List all content items
+const { data: items, error } = await client
+  .schema('yunocontent')
+  .from('content_items_vw')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+// Filter by content type
+const { data: articles, error } = await client
+  .schema('yunocontent')
+  .from('content_items_vw')
+  .select('*')
+  .eq('content_type', 'article')
+  .eq('status', 'published')
+  .order('created_at', { ascending: false });
+
+// Search by title
+const { data: searchResults, error } = await client
+  .schema('yunocontent')
+  .from('content_items_vw')
+  .select('*')
+  .ilike('title', '%search term%')
+  .limit(10);
+
+// Pagination
+const { data: pagedItems, error } = await client
+  .schema('yunocontent')
+  .from('content_items_vw')
+  .select('*')
+  .range(0, 9) // First 10 items
+  .order('created_at', { ascending: false });
+```
+
+### Create Operations
+
+```ts
+// Create new content item
+const { data: newItem, error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .insert({
+    title: 'New Article',
+    content: { 
+      body: 'Article content here',
+      excerpt: 'Brief summary'
+    },
+    content_type: 'article',
+    status: 'draft',
+    metadata: {
+      tags: ['tech', 'tutorial'],
+      featured: false
+    }
+  })
+  .select()
+  .single();
+
+// Create with custom fields
+const { data: customItem, error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .insert({
+    title: 'Product Launch',
+    content: {
+      name: 'New Product',
+      price: 99.99,
+      description: 'Product description',
+      images: ['image1.jpg', 'image2.jpg']
+    },
+    content_type: 'product',
+    status: 'published'
+  })
+  .select()
+  .single();
+```
+
+### Update Operations
+
+```ts
+// Update content item
+const { data: updatedItem, error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .update({
+    title: 'Updated Title',
+    content: { 
+      body: 'Updated content',
+      excerpt: 'Updated summary'
+    },
+    status: 'published'
+  })
+  .eq('id', '<content_item_id>')
+  .select()
+  .single();
+
+// Update specific fields
+const { data: partialUpdate, error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .update({
+    status: 'archived',
+    metadata: {
+      archived_at: new Date().toISOString(),
+      reason: 'Outdated content'
+    }
+  })
+  .eq('id', '<content_item_id>')
+  .select()
+  .single();
+
+// Bulk update
+const { data: bulkUpdated, error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .update({ status: 'published' })
+  .eq('content_type', 'article')
+  .eq('status', 'draft')
+  .select();
+```
+
+### Delete Operations
+
+```ts
+// Delete single content item
+const { error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .delete()
+  .eq('id', '<content_item_id>');
+
+// Delete by content type
+const { error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .delete()
+  .eq('content_type', 'temp')
+  .eq('status', 'draft');
+
+// Soft delete (archive)
+const { data: archivedItem, error } = await client
+  .schema('yunocontent')
+  .from('content_items')
+  .update({ 
+    status: 'archived',
+    metadata: { archived_at: new Date().toISOString() }
+  })
+  .eq('id', '<content_item_id>')
+  .select()
+  .single();
+```
+
+## Schemas
+
+### Read Operations
+
+```ts
+// List all schemas
+const { data: schemas, error } = await client
+  .schema('yunocontent')
+  .from('schemas')
+  .select('*')
+  .order('name');
+
+// Get single schema
+const { data: schema, error } = await client
+  .schema('yunocontent')
+  .from('schemas')
+  .select('*')
+  .eq('name', 'article')
+  .single();
+
+// Filter active schemas
+const { data: activeSchemas, error } = await client
+  .schema('yunocontent')
+  .from('schemas')
+  .select('*')
+  .eq('status', 'active')
+  .order('name');
+```
+
+### Create Operations
+
+```ts
+// Create new schema
+const { data: newSchema, error } = await client
+  .schema('yunocontent')
+  .from('schemas')
+  .insert({
+    name: 'product',
+    description: 'Product listings',
+    type: 'collection',
+    status: 'active',
+    fields: {
+      title: { type: 'string', required: true },
+      price: { type: 'number', required: true },
+      description: { type: 'text' },
+      images: { type: 'array', items: { type: 'string' } },
+      featured: { type: 'boolean', default: false }
+    }
+  })
+  .select()
+  .single();
+```
+
+### Update Operations
+
+```ts
+// Update schema fields
+const { data: updatedSchema, error } = await client
+  .schema('yunocontent')
+  .from('schemas')
+  .update({
+    description: 'Updated description',
+    fields: {
+      title: { type: 'string', required: true },
+      price: { type: 'number', required: true },
+      description: { type: 'text' },
+      images: { type: 'array', items: { type: 'string' } },
+      featured: { type: 'boolean', default: false },
+      category: { type: 'string' } // New field
+    }
+  })
+  .eq('name', 'product')
+  .select()
+  .single();
+
+// Archive schema
+const { data: archivedSchema, error } = await client
+  .schema('yunocontent')
+  .from('schemas')
+  .update({ status: 'archived' })
+  .eq('name', 'old_schema')
+  .select()
+  .single();
+```
+
+### Delete Operations
+
+```ts
+// Delete schema (use with caution)
+const { error } = await client
+  .schema('yunocontent')
+  .from('schemas')
+  .delete()
+  .eq('name', 'unused_schema');
+```

@@ -1,0 +1,70 @@
+---
+id: schema-builder
+title: Schema Builder
+---
+
+# Content Schema Builder
+
+The Schema Builder allows you to define the structure of your content. There are two main types of schemas: Singles and Collections.
+
+## Schema Types
+
+### Singles
+
+Single schemas represent standalone content that only has one instance. Examples include:
+
+- Homepage
+- About Page
+- Privacy Policy
+- Global Settings
+
+Single schemas are ideal for unique content that doesn't need multiple entries.
+
+### Collections
+
+Collection schemas represent content types that can have multiple entries. Examples include:
+
+- Blog Posts
+- Products
+- Team Members
+- FAQ Items
+
+Collections are perfect for content that follows the same structure but needs multiple entries.
+
+## Schema Status
+
+### Active vs Archived
+
+- **Active**: Default state for schemas. Content can be created, edited, and published.
+- **Archived**:
+  - No new content can be created
+  - Existing content remains accessible but marked as archived
+  - Hidden from content creation forms
+  - Visible in the "Archived" tab or with reduced opacity in "All" view
+  - Can be used to phase out deprecated content types
+
+### Archiving Schemas
+
+You can archive schemas in two ways:
+
+1. **Bulk Archive**: Select multiple schemas using the checkboxes and click the "Archive" action in the selection bar
+2. **Individual Archive**: Use the "Manage Schema" button on a specific schema
+
+Archiving is reversible and is recommended over deletion when:
+
+- Deprecating content types that still have existing content
+- Temporarily disabling content creation for specific types
+- Maintaining content history while preventing new entries
+
+## Field Types
+
+The following field types are available when building your schema:
+
+| Field Type  | Description                             |
+| ----------- | --------------------------------------- |
+| `text`      | Multi-line text area for longer content |
+| `markdown`  | Rich text editor with markdown support  |
+| `reference` | Reference to other content items        |
+| `boolean`   | True/false toggle                       |
+| `number`    | Numeric input                           |
+| `datetime`  | Date and time picker                    |

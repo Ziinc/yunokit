@@ -3,7 +3,7 @@
 
 const {themes} = require('prism-react-renderer');
 const autoprefixer = require("autoprefixer")
-const tailwindConfig = require("../shared/tailwind.config");
+const tailwindConfig = require("../shared/tailwind.config").default;
 const tailwind = require("tailwindcss");
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
@@ -37,6 +37,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
           routeBasePath: "/docs", // Serve the blog at the site's root
+          breadcrumbs: true,
         },
         gtag: {
           trackingID: "G-H1JDBL1D09",
@@ -52,6 +53,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+
       navbar: {
         logo: {
           alt: "yunokit",
@@ -63,6 +65,22 @@ const config = {
             docId: "intro",
             position: "left",
             label: "Docs",
+          },
+          {
+            label: "Guides",
+            position: "left",
+            items: [
+              { type: "doc", docsPluginId: "guides", docId: "yunocontent/index", label: "YunoContent" },
+              { type: "doc", docsPluginId: "guides", docId: "yunocommunity/index", label: "YunoCommunity" },
+            ],
+          },
+          {
+            label: "API Reference",
+            position: "left",
+            items: [
+              { type: "doc", docsPluginId: "reference", docId: "yunocontent", label: "YunoContent" },
+              { type: "doc", docsPluginId: "reference", docId: "yunocommunity", label: "YunoCommunity" },
+            ],
           },
           {
             to: "/pricing",
@@ -90,19 +108,32 @@ const config = {
         style: "dark",
         links: [
           {
-            title: "Project",
+            title: "Documentation",
             items: [
               {
-                label: "Documentation",
-                to: "/",
+                label: "Developer Docs",
+                to: "/docs",
+              },
+              {
+                label: "Guides",
+                to: "/guides",
+              },
+              {
+                label: "API Reference",
+                to: "/reference",
+              },
+            ],
+          },
+          {
+            title: "Yunokit App",
+            items: [
+              {
+                label: "About",
+                to: "/about",
               },
               {
                 label: "Pricing",
                 to: "/pricing",
-              },
-              {
-                label: "About",
-                to: "/about",
               },
               {
                 label: "Github",
@@ -132,6 +163,28 @@ const config = {
         },
       };
     },
+
+
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'guides',
+        path: 'docs-guides',
+        routeBasePath: 'guides',
+        sidebarPath: require.resolve('./sidebars.js'),
+        breadcrumbs: false,
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'reference',
+        path: 'docs-reference',
+        routeBasePath: 'reference',
+        sidebarPath: require.resolve('./sidebars.js'),
+        breadcrumbs: false,
+      },
+    ],
   ],
 };
 

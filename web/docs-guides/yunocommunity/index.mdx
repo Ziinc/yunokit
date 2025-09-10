@@ -1,38 +1,51 @@
 ---
-sidebar_position: 2
+id: index
+title: YunoCommunity Overview
+slug: /yunocommunity
 ---
 
 # YunoCommunity
 
 YunoCommunity handles forums, posts, comments and user moderation. It runs in its own `yunocommunity` schema and exposes APIs via the community function. Use it to create forums, approve posts, ban users and configure community options.
 
+## Features
+
+- Forum management
+- Post creation and moderation
+- Comment threading (multi-thread or single-thread)
+- User moderation and banning
+- Content approval workflows
+
+## Integration
+
+Relevant tables:
+- `yunocommunity.forums`
+- `yunocommunity.posts`
+- `yunocommunity.comments`
+
 ## Posts and Comments
 
 Each forum contains many posts. Posts support `multi_thread` mode allowing a Reddit style tree of comments, or single-thread mode for classic linear discussions. Comments reference optional `parent_comment_id` to build the hierarchy.
 
-### Client Querying
+## Quick Start
 
-```js
+```ts
 // List forums
-const { data: forums, error: forumsError } = await client
+const { data: forums } = await client
   .schema("yunocommunity")
   .from("forums")
   .select("*")
   .order("created_at", { ascending: false });
 
-// List posts in a forum
-const { data: posts, error: postsError } = await client
+// Create a new post
+const { data: post } = await client
   .schema("yunocommunity")
   .from("posts")
-  .select("*")
-  .eq("forum_id", "<forum_id>")
-  .order("created_at", { ascending: false });
-
-// List comments for a post
-const { data: comments, error: commentsError } = await client
-  .schema("yunocommunity")
-  .from("comments")
-  .select("*")
-  .eq("post_id", "<post_id>")
-  .order("created_at", { ascending: true });
-```
+  .insert({
+    forum_id: "<forum_id>",
+    title: "Hello World",
+    body: "First post content"
+  })
+  .select()
+  .single();
+``` 

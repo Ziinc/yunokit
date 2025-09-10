@@ -1,0 +1,526 @@
+---
+id: yunocommunity
+title: YunoCommunity API Reference
+---
+
+# YunoCommunity API Reference
+
+Complete client querying examples for the `yunocommunity` schema.
+
+## Forums
+
+### Read Operations
+
+```ts
+// List all forums
+const { data: forums, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+// Get single forum by ID
+const { data: forum, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .select('*')
+  .eq('id', '<forum_id>')
+  .single();
+
+// Get forum by slug
+const { data: forum, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .select('*')
+  .eq('slug', 'general-discussion')
+  .single();
+
+// Search forums
+const { data: searchResults, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .select('*')
+  .ilike('name', '%search term%')
+  .limit(10);
+```
+
+### Create Operations
+
+```ts
+// Create new forum
+const { data: newForum, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .insert({
+    name: 'General Discussion',
+    slug: 'general-discussion',
+    description: 'Talk about anything here',
+    settings: {
+      threading_mode: 'multi_thread',
+      auto_approve_posts: true,
+      auto_approve_comments: true
+    }
+  })
+  .select()
+  .single();
+
+// Create forum with custom settings
+const { data: customForum, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .insert({
+    name: 'Announcements',
+    slug: 'announcements',
+    description: 'Official announcements only',
+    settings: {
+      threading_mode: 'single_thread',
+      auto_approve_posts: false,
+      auto_approve_comments: false,
+      restricted_posting: true
+    }
+  })
+  .select()
+  .single();
+```
+
+### Update Operations
+
+```ts
+// Update forum details
+const { data: updatedForum, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .update({
+    description: 'Updated forum description',
+    settings: {
+      threading_mode: 'multi_thread',
+      auto_approve_posts: false,
+      auto_approve_comments: true
+    }
+  })
+  .eq('id', '<forum_id>')
+  .select()
+  .single();
+
+// Update forum slug
+const { data: renamedForum, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .update({
+    name: 'New Forum Name',
+    slug: 'new-forum-name'
+  })
+  .eq('id', '<forum_id>')
+  .select()
+  .single();
+```
+
+### Delete Operations
+
+```ts
+// Delete forum
+const { error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .delete()
+  .eq('id', '<forum_id>');
+
+// Archive forum (soft delete)
+const { data: archivedForum, error } = await client
+  .schema('yunocommunity')
+  .from('forums')
+  .update({ 
+    archived: true,
+    archived_at: new Date().toISOString()
+  })
+  .eq('id', '<forum_id>')
+  .select()
+  .single();
+```
+
+## Posts
+
+### Read Operations
+
+```ts
+// List posts in a forum
+const { data: posts, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .select('*')
+  .eq('forum_id', '<forum_id>')
+  .order('created_at', { ascending: false });
+
+// Get single post
+const { data: post, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .select('*')
+  .eq('id', '<post_id>')
+  .single();
+
+// Get posts by user
+const { data: userPosts, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .select('*')
+  .eq('author_id', '<user_id>')
+  .order('created_at', { ascending: false });
+
+// Search posts
+const { data: searchResults, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .select('*')
+  .or('title.ilike.%search%,body.ilike.%search%')
+  .eq('forum_id', '<forum_id>')
+  .limit(20);
+
+// Get pending posts for moderation
+const { data: pendingPosts, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .select('*')
+  .eq('status', 'pending')
+  .order('created_at', { ascending: true });
+```
+
+### Create Operations
+
+```ts
+// Create new post
+const { data: newPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .insert({
+    forum_id: '<forum_id>',
+    title: 'Hello World',
+    body: 'This is my first post in this forum!',
+    author_id: '<user_id>',
+    status: 'published'
+  })
+  .select()
+  .single();
+
+// Create post with metadata
+const { data: richPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .insert({
+    forum_id: '<forum_id>',
+    title: 'Product Launch Discussion',
+    body: 'What do you think about our new product?',
+    author_id: '<user_id>',
+    status: 'published',
+    metadata: {
+      tags: ['product', 'launch', 'feedback'],
+      pinned: false,
+      locked: false
+    }
+  })
+  .select()
+  .single();
+
+// Create post requiring approval
+const { data: pendingPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .insert({
+    forum_id: '<forum_id>',
+    title: 'Awaiting Approval',
+    body: 'This post needs moderator approval',
+    author_id: '<user_id>',
+    status: 'pending'
+  })
+  .select()
+  .single();
+```
+
+### Update Operations
+
+```ts
+// Update post content
+const { data: updatedPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .update({
+    title: 'Updated Post Title',
+    body: 'Updated post content here',
+    edited_at: new Date().toISOString()
+  })
+  .eq('id', '<post_id>')
+  .select()
+  .single();
+
+// Approve pending post
+const { data: approvedPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .update({
+    status: 'published',
+    approved_at: new Date().toISOString(),
+    approved_by: '<moderator_id>'
+  })
+  .eq('id', '<post_id>')
+  .select()
+  .single();
+
+// Pin post
+const { data: pinnedPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .update({
+    metadata: { pinned: true, pinned_at: new Date().toISOString() }
+  })
+  .eq('id', '<post_id>')
+  .select()
+  .single();
+
+// Lock post (prevent new comments)
+const { data: lockedPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .update({
+    metadata: { locked: true, locked_at: new Date().toISOString() }
+  })
+  .eq('id', '<post_id>')
+  .select()
+  .single();
+```
+
+### Delete Operations
+
+```ts
+// Delete post
+const { error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .delete()
+  .eq('id', '<post_id>');
+
+// Soft delete (archive)
+const { data: archivedPost, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .update({
+    status: 'deleted',
+    deleted_at: new Date().toISOString()
+  })
+  .eq('id', '<post_id>')
+  .select()
+  .single();
+```
+
+## Comments
+
+### Read Operations
+
+```ts
+// List comments for a post
+const { data: comments, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .select('*')
+  .eq('post_id', '<post_id>')
+  .order('created_at', { ascending: true });
+
+// Get comment tree (with replies)
+const { data: commentTree, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .select('*')
+  .eq('post_id', '<post_id>')
+  .order('parent_comment_id', { ascending: true });
+
+// Get single comment
+const { data: comment, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .select('*')
+  .eq('id', '<comment_id>')
+  .single();
+
+// Get comments by user
+const { data: userComments, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .select('*')
+  .eq('author_id', '<user_id>')
+  .order('created_at', { ascending: false });
+
+// Get pending comments for moderation
+const { data: pendingComments, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .select('*')
+  .eq('status', 'pending')
+  .order('created_at', { ascending: true });
+```
+
+### Create Operations
+
+```ts
+// Create new comment
+const { data: newComment, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .insert({
+    post_id: '<post_id>',
+    body: 'Great post! Thanks for sharing.',
+    author_id: '<user_id>',
+    status: 'published'
+  })
+  .select()
+  .single();
+
+// Create reply to another comment
+const { data: reply, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .insert({
+    post_id: '<post_id>',
+    body: 'I agree with your point!',
+    author_id: '<user_id>',
+    parent_comment_id: '<parent_comment_id>',
+    status: 'published'
+  })
+  .select()
+  .single();
+
+// Create comment requiring approval
+const { data: pendingComment, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .insert({
+    post_id: '<post_id>',
+    body: 'This comment needs approval',
+    author_id: '<user_id>',
+    status: 'pending'
+  })
+  .select()
+  .single();
+```
+
+### Update Operations
+
+```ts
+// Update comment content
+const { data: updatedComment, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .update({
+    body: 'Updated comment text',
+    edited_at: new Date().toISOString()
+  })
+  .eq('id', '<comment_id>')
+  .select()
+  .single();
+
+// Approve pending comment
+const { data: approvedComment, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .update({
+    status: 'published',
+    approved_at: new Date().toISOString(),
+    approved_by: '<moderator_id>'
+  })
+  .eq('id', '<comment_id>')
+  .select()
+  .single();
+
+// Flag comment for review
+const { data: flaggedComment, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .update({
+    status: 'flagged',
+    flagged_at: new Date().toISOString(),
+    flagged_reason: 'inappropriate content'
+  })
+  .eq('id', '<comment_id>')
+  .select()
+  .single();
+```
+
+### Delete Operations
+
+```ts
+// Delete comment
+const { error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .delete()
+  .eq('id', '<comment_id>');
+
+// Soft delete comment
+const { data: deletedComment, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .update({
+    status: 'deleted',
+    deleted_at: new Date().toISOString()
+  })
+  .eq('id', '<comment_id>')
+  .select()
+  .single();
+
+// Delete all comments for a post
+const { error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .delete()
+  .eq('post_id', '<post_id>');
+```
+
+## Advanced Queries
+
+### Join Operations
+
+```ts
+// Get posts with forum information
+const { data: postsWithForum, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .select(`
+    *,
+    forums:forum_id (
+      name,
+      slug,
+      description
+    )
+  `)
+  .eq('forum_id', '<forum_id>');
+
+// Get comments with post and author info
+const { data: commentsWithDetails, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .select(`
+    *,
+    posts:post_id (
+      title,
+      forum_id
+    )
+  `)
+  .eq('post_id', '<post_id>');
+```
+
+### Aggregate Operations
+
+```ts
+// Count posts per forum
+const { data: postCounts, error } = await client
+  .schema('yunocommunity')
+  .from('posts')
+  .select('forum_id, count(*)')
+  .group('forum_id');
+
+// Count comments per post
+const { data: commentCounts, error } = await client
+  .schema('yunocommunity')
+  .from('comments')
+  .select('post_id, count(*)')
+  .eq('status', 'published')
+  .group('post_id');
+``` 

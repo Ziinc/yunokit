@@ -20,6 +20,67 @@
   align-items: center !important;
 }
 
+/* Center the navbar logo vertically */
+.navbar__brand {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+/* Style Sign In as primary button and hide external link icon */
+.navbar__link[href="https://app.yunokit.com"] {
+  background-color: var(--ifm-color-primary) !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.375rem !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.navbar__link[href="https://app.yunokit.com"]:hover {
+  background-color: var(--ifm-color-primary-dark) !important;
+  color: white !important;
+}
+
+/* Hide external link icon for Sign In button */
+.navbar__link[href="https://app.yunokit.com"]::after {
+  display: none !important;
+}
+
+/* Hide external link icons in footer */
+.footer__link-item[href^="http"]::after {
+  display: none !important;
+}
+
+/* Replace breadcrumb section names based on route */
+/* For Documentation pages - replace "YunoContent" with "Docs" */
+body[class*="docs-"] .breadcrumbs__item:nth-child(2) .breadcrumbs__link {
+  font-size: 0;
+}
+body[class*="docs-"] .breadcrumbs__item:nth-child(2) .breadcrumbs__link::after {
+  content: "Docs";
+  font-size: 1rem;
+}
+
+/* For Guides pages - replace with "Guides" */
+body[class*="guides-"] .breadcrumbs__item:nth-child(2) .breadcrumbs__link {
+  font-size: 0;
+}
+body[class*="guides-"] .breadcrumbs__item:nth-child(2) .breadcrumbs__link::after {
+  content: "Guides";
+  font-size: 1rem;
+}
+
+/* For API Reference pages - replace with "API Reference" */
+body[class*="reference-"] .breadcrumbs__item:nth-child(2) .breadcrumbs__link {
+  font-size: 0;
+}
+body[class*="reference-"] .breadcrumbs__item:nth-child(2) .breadcrumbs__link::after {
+  content: "API Reference";
+  font-size: 1rem;
+}
+
 /* You can override the default Infima variables here. */
 :root {
   --ifm-color-primary: #2e8555;
@@ -127,4 +188,25 @@
 .markdown li > ul,
 .markdown li > ol {
   margin: 0.25rem 0;
+}
+
+/* Navbar dropdown: highlight only on hover */
+.navbar .dropdown__menu .dropdown__link {
+  color: var(--ifm-font-color-base);
+  background: transparent;
+}
+
+.navbar .dropdown__menu .dropdown__link:hover {
+  color: var(--ifm-color-primary);
+  background: var(--ifm-menu-color-background-active);
+}
+
+.navbar .dropdown__menu .dropdown__link--active {
+  color: var(--ifm-font-color-base);
+  background: transparent;
+}
+
+.navbar .dropdown__menu .dropdown__link:focus-visible {
+  color: var(--ifm-color-primary);
+  background: var(--ifm-menu-color-background-active);
 }
