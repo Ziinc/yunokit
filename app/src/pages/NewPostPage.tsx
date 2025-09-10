@@ -38,7 +38,7 @@ const NewPostPage: React.FC = () => {
     ]
   };
 
-  const handleSave = async (content: Record<string, unknown>, status?: string) => {
+  const handleSave = async (content: Record<string, unknown>) => {
     if (!forumId) {
       toast({
         title: "Error",
@@ -55,7 +55,7 @@ const NewPostPage: React.FC = () => {
         title: content.title as string,
         content_data: content,
         forum_id: parseInt(forumId),
-        status: (status as 'draft' | 'published' | 'archived' | 'flagged') || 'draft'
+        status: 'published'
       };
 
       const { error } = await createPost(postData);
@@ -82,10 +82,6 @@ const NewPostPage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handlePublish = async (content: Record<string, unknown>) => {
-    await handleSave(content, 'published');
   };
 
   if (!forumId) {
@@ -136,7 +132,6 @@ const NewPostPage: React.FC = () => {
             schema={postSchema}
             initialContent={{}}
             onSave={handleSave}
-            onPublish={handlePublish}
           />
         </CardContent>
       </Card>

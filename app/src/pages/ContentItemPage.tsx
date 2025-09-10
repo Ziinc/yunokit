@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
-import { ContentItem, ContentItemStatus, ContentItemComment, ContentField } from "@/lib/contentSchema";
+import { ContentItem, ContentItemComment, ContentField } from "@/lib/contentSchema";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight, FileX2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -84,7 +84,7 @@ const ContentItemPage: React.FC = () => {
     id: contentItemData.id.toString(),
     schemaId: contentItemData.schema_id?.toString() || '',
     title: contentItemData.title || 'Untitled',
-    status: 'draft' as ContentItemStatus, // Map from database status if available
+    status: 'draft' as ContentItem['status'], // Map from database status if available
     createdAt: contentItemData.created_at,
     updatedAt: contentItemData.updated_at || contentItemData.created_at,
     publishedAt: contentItemData.published_at || undefined,
@@ -186,8 +186,7 @@ const ContentItemPage: React.FC = () => {
   const [comments, setComments] = useState<ContentItemComment[]>([]);
   
   const handleSave = async (
-    content: Record<string, unknown>,
-    status?: ContentItemStatus
+    content: Record<string, unknown>
   ) => {
     if (!currentWorkspace || !schemaIdNumber) {
       toast({
@@ -208,7 +207,6 @@ const ContentItemPage: React.FC = () => {
     }
 
     try {
-      const newStatus = status || 'draft';
       const title = content.title || 'Untitled';
       
       if (contentIdNumber) {
@@ -217,9 +215,6 @@ const ContentItemPage: React.FC = () => {
           title: title as string,
           data: content as Json,
           updated_at: new Date().toISOString(),
-          ...(newStatus === 'published' && !contentItem?.publishedAt ? { 
-            published_at: new Date().toISOString(),
-          } : {})
         };
         
         await updateContentItem(contentIdNumber, updateData, currentWorkspace.id);
@@ -234,9 +229,6 @@ const ContentItemPage: React.FC = () => {
           schema_id: schemaIdNumber,
           title: title as string,
           data: content as Json,
-          ...(newStatus === 'published' ? { 
-            published_at: new Date().toISOString(),
-          } : {})
         };
         
         const response = await createContentItem(createData, currentWorkspace.id);
@@ -626,23 +618,19 @@ const ContentItemPage: React.FC = () => {
               </div>
               
               {contentSchema && (
-                <ContentItemEditor 
+                <ContentItemEditor
                   schema={contentSchema}
                   initialContent={initialContent}
-                  contentItem={contentItem}
                   onSave={handleSave}
-                  onAddComment={() => handleAddComment()}
                 />
               )}
             </div>
           ) : (
             contentSchema && (
-              <ContentItemEditor 
+              <ContentItemEditor
                 schema={contentSchema}
                 initialContent={initialContent}
-                contentItem={contentItem}
                 onSave={handleSave}
-                onAddComment={() => handleAddComment()}
               />
             )
           )}

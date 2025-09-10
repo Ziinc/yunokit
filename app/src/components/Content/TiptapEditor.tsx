@@ -1,25 +1,15 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Node } from '@tiptap/core';
-import {
-  DragDropContext,
-  Draggable,
-  DropResult,
-  DraggableProvidedDragHandleProps,
-} from '@hello-pangea/dnd';
+import SchemaField from './extensions/SchemaField';
 import { ContentSchema, ContentField, ContentFieldType } from '@/lib/contentSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Plus, GripVertical, X, Type, Hash, Calendar, ToggleLeft, List, Link, FileText, Code, Image } from 'lucide-react';
-import { StrictModeDroppable } from '../StrictModeDroppable';
+import { Plus, X, Type, Hash, Calendar, ToggleLeft, List, Link, FileText, Code, Image, Bold, Italic, Underline, Strikethrough } from 'lucide-react';
 import './TiptapEditor.css';
 
 interface TiptapEditorProps {
@@ -205,272 +195,8 @@ const AddFieldDialog: React.FC<{
   );
 };
 
-// Component for field insertion points
-const FieldInsertionPoint: React.FC<{
-  onInsertField: () => void;
-  isVisible: boolean;
-}> = ({ onInsertField, isVisible }) => {
-  if (!isVisible) return null;
-  
-  return (
-    <div className="relative field-insertion-point py-1">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-dotted border-muted-foreground/50"></div>
-      </div>
-      <div className="relative flex justify-center">
-        <button
-          onClick={onInsertField}
-          className="flex items-center gap-1.5 bg-background px-2.5 py-0.5 rounded-full border border-muted-foreground/30 hover:border-primary/50 text-muted-foreground hover:text-primary transition-all duration-200 shadow-sm cursor-pointer"
-        >
-          <Plus className="h-3 w-3" />
-          <span className="text-xs font-medium">Add Field</span>
-        </button>
-      </div>
-    </div>
-  );
-};
 
-// Define custom node types for each field type
-const SchemaFieldNode = Node.create({
-  name: 'schemaField',
-  group: 'block',
-  atom: true,
-  
-  addAttributes() {
-    return {
-      fieldId: {
-        default: null,
-      },
-      fieldType: {
-        default: 'text',
-      },
-      fieldName: {
-        default: '',
-      },
-      fieldValue: {
-        default: null,
-      },
-      fieldRequired: {
-        default: false,
-      },
-      fieldDescription: {
-        default: '',
-      },
-      fieldOptions: {
-        default: [],
-      },
-    };
-  },
 
-  parseHTML() {
-    return [
-      {
-        tag: 'div[data-type="schema-field"]',
-      },
-    ];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return ['div', { 'data-type': 'schema-field', ...HTMLAttributes }];
-  },
-
-  addNodeView() {
-    return () => {
-      const container = document.createElement('div');
-      container.className = 'schema-field-node';
-      return {
-        dom: container,
-      };
-    };
-  },
-});
-
-const getFieldIcon = (type: ContentFieldType) => {
-  switch (type) {
-    case 'text':
-      return <Type className="h-4 w-4" />;
-    case 'number':
-      return <Hash className="h-4 w-4" />;
-    case 'date':
-      return <Calendar className="h-4 w-4" />;
-    case 'boolean':
-      return <ToggleLeft className="h-4 w-4" />;
-    case 'enum':
-      return <List className="h-4 w-4" />;
-    case 'relation':
-      return <Link className="h-4 w-4" />;
-    default:
-      return <Type className="h-4 w-4" />;
-  }
-};
-
-const SchemaFieldComponent: React.FC<{
-  field: ContentField;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  onRemove: () => void;
-  editable: boolean;
-  isDynamic?: boolean;
-  dragHandleProps?: DraggableProvidedDragHandleProps;
-}> = ({ field, value, onChange, onRemove, editable, isDynamic = false, dragHandleProps }) => {
-  const renderFieldInput = () => {
-    switch (field.type) {
-      case 'text':
-        return (
-          <Input
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={field.description || `Enter ${field.name?.toLowerCase() || 'value'}`}
-            disabled={!editable}
-          />
-        );
-      
-      case 'number':
-        return (
-          <Input
-            type="number"
-            value={value || ''}
-            onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-            placeholder={field.description || `Enter ${field.name?.toLowerCase() || 'number'}`}
-            disabled={!editable}
-          />
-        );
-      
-      case 'date':
-        return (
-          <Input
-            type="datetime-local"
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={!editable}
-          />
-        );
-      
-      case 'boolean':
-        return (
-          <div className="flex items-center space-x-2">
-            <Switch
-              checked={value || false}
-              onCheckedChange={onChange}
-              disabled={!editable}
-            />
-            <span className="text-sm">{value ? 'Yes' : 'No'}</span>
-          </div>
-        );
-      
-      case 'enum':
-        return (
-          <Select value={value || ''} onValueChange={onChange} disabled={!editable}>
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${field.name?.toLowerCase() || 'option'}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      
-      case 'markdown':
-        return (
-          <Textarea
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={field.description || `Enter ${field.name?.toLowerCase() || 'markdown'}`}
-            className="min-h-[120px] font-mono"
-            disabled={!editable}
-          />
-        );
-      
-      case 'json':
-        return (
-          <Textarea
-            value={typeof value === 'string' ? value : JSON.stringify(value || {}, null, 2)}
-            onChange={(e) => {
-              try {
-                const parsed = JSON.parse(e.target.value);
-                onChange(parsed);
-              } catch {
-                onChange(e.target.value);
-              }
-            }}
-            placeholder={field.description || 'Enter JSON data'}
-            className="min-h-[120px] font-mono"
-            disabled={!editable}
-          />
-        );
-      
-      default:
-        return (
-          <Input
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={field.description || `Enter ${field.name?.toLowerCase() || 'value'}`}
-            disabled={!editable}
-          />
-        );
-    }
-  };
-
-  return (
-    <Card className="transition-all duration-200 hover:shadow-md">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex items-center gap-2 mt-2">
-            {dragHandleProps ? (
-              <div {...dragHandleProps}>
-                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-              </div>
-            ) : (
-              <div className="w-4 h-4 flex items-center justify-center">
-                {getFieldIcon(field.type)}
-              </div>
-            )}
-            {dragHandleProps && getFieldIcon(field.type)}
-          </div>
-          
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div>
-                  <h3 className="font-medium text-sm">
-                    {field.name || 'Untitled Field'}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </h3>
-                  {field.description && (
-                    <p className="text-xs text-muted-foreground mt-1">{field.description}</p>
-                  )}
-                </div>
-                {isDynamic && (
-                  <Badge variant="outline" className="text-xs">
-                    Dynamic
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Show remove button only for dynamic fields */}
-              {editable && isDynamic && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onRemove}
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            
-            {renderFieldInput()}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   schema,
@@ -482,6 +208,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   const [dynamicFields, setDynamicFields] = React.useState<ContentField[]>([]);
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [insertionPointIndex, setInsertionPointIndex] = useState<number | null>(null);
+  const [editorInstance, setEditorInstance] = useState<any>(null);
 
   // Initialize field values from content
   useEffect(() => {
@@ -525,54 +252,6 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     }
   }, [content, schema]);
 
-  const handleFieldChange = useCallback((fieldId: string, value: unknown) => {
-    const newValues = { ...fieldValues, [fieldId]: value };
-    setFieldValues(newValues);
-    
-    // Include dynamic field metadata in the content
-    const contentWithMetadata = {
-      ...newValues,
-      __dynamicFields: dynamicFields.reduce((acc, field) => {
-        acc[field.id] = {
-          name: field.name,
-          type: field.type,
-          required: field.required,
-          description: field.description,
-          options: field.options,
-        };
-        return acc;
-      }, {} as Record<string, Partial<ContentField>>)
-    };
-    
-    onChange(contentWithMetadata);
-  }, [fieldValues, dynamicFields, onChange]);
-
-  const handleRemoveField = useCallback((fieldId: string) => {
-    const newValues = { ...fieldValues };
-    delete newValues[fieldId];
-    setFieldValues(newValues);
-    
-    // Also remove from dynamic fields list if it's a dynamic field
-    const updatedDynamicFields = dynamicFields.filter(field => field.id !== fieldId);
-    setDynamicFields(updatedDynamicFields);
-    
-    // Update content with metadata
-    const contentWithMetadata = {
-      ...newValues,
-      __dynamicFields: updatedDynamicFields.reduce((acc, field) => {
-        acc[field.id] = {
-          name: field.name,
-          type: field.type,
-          required: field.required,
-          description: field.description,
-          options: field.options,
-        };
-        return acc;
-      }, {} as Record<string, Partial<ContentField>>)
-    };
-    
-    onChange(contentWithMetadata);
-  }, [fieldValues, dynamicFields, onChange]);
 
   const handleAddField = (newField: ContentField, insertIndex?: number) => {
     // Add the new field to the content with a default value
@@ -581,7 +260,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     setFieldValues(newContent);
     
     // Add to dynamic fields list at the specified index
-    let updatedDynamicFields;
+    let updatedDynamicFields: ContentField[];
     if (insertIndex !== undefined && insertIndex !== null) {
       updatedDynamicFields = [...dynamicFields];
       updatedDynamicFields.splice(insertIndex, 0, newField);
@@ -590,10 +269,34 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     }
     setDynamicFields(updatedDynamicFields);
     
+    // Add the new field to the Tiptap editor
+    if (editorInstance) {
+      const newNode = {
+        type: 'schemaField',
+        attrs: {
+          fieldId: newField.id,
+          fieldType: newField.type,
+          fieldName: newField.name,
+          fieldValue: defaultValue,
+          fieldRequired: newField.required,
+          fieldDescription: newField.description,
+          fieldOptions: newField.options || [],
+          isDynamic: true,
+        },
+      };
+      
+      // Insert the node at the end of the document, followed by a paragraph for markdown content
+      const currentSize = editorInstance.state.doc.content.size;
+      editorInstance.chain()
+        .focus()
+        .insertContentAt(currentSize, [newNode, { type: 'paragraph' }])
+        .run();
+    }
+    
     // Store content with metadata
     const contentWithMetadata = {
       ...newContent,
-      __dynamicFields: updatedDynamicFields.reduce((acc, field) => {
+      __dynamicFields: updatedDynamicFields.reduce((acc: Record<string, Partial<ContentField>>, field: ContentField) => {
         acc[field.id] = {
           name: field.name,
           type: field.type,
@@ -635,53 +338,150 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     }
   };
 
-  const handleInsertField = (insertIndex: number) => {
-    setInsertionPointIndex(insertIndex);
-    setIsAddFieldDialogOpen(true);
-  };
-
-  const handleDrop = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-
-    if (sourceIndex === destinationIndex) return;
-
-    const [draggedField] = dynamicFields.splice(sourceIndex, 1);
-    dynamicFields.splice(destinationIndex, 0, draggedField);
-
-    setDynamicFields([...dynamicFields]);
-
-    // Update content with metadata
-    const contentWithMetadata = {
-      ...fieldValues,
-      __dynamicFields: dynamicFields.reduce((acc, field) => {
-        acc[field.id] = {
-          name: field.name,
-          type: field.type,
-          required: field.required,
-          description: field.description,
-          options: field.options,
-        };
-        return acc;
-      }, {} as Record<string, Partial<ContentField>>)
-    };
-    
-    onChange(contentWithMetadata);
-  };
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      SchemaFieldNode,
-    ],
+    extensions: [StarterKit, SchemaField],
     content: '',
     editable,
-    onUpdate: () => {
-      // Handle editor updates if needed
+    onCreate: ({ editor }) => {
+      setEditorInstance(editor);
+    },
+    onUpdate: ({ editor }) => {
+      // For flexible schemas, store both the raw editor content and extracted data
+      if (!schema.strict) {
+        const rawContent = editor.getJSON();
+        
+        // Extract field values and text content from the editor
+        const extractedValues: Record<string, unknown> = {};
+        const textContent: string[] = [];
+        
+        editor.state.doc.descendants((node) => {
+          // Extract schema field values
+          if (node.type.name === 'schemaField' && node.attrs.fieldId) {
+            extractedValues[node.attrs.fieldId] = node.attrs.fieldValue;
+          }
+          // Extract text content from paragraphs and other text nodes
+          else if (node.isText && node.text) {
+            textContent.push(node.text);
+          }
+          return true;
+        });
+        
+        onChange({ 
+          __editorContent: rawContent,
+          __extractedFields: extractedValues,
+          __textContent: textContent.join(' ').trim(),
+          __htmlContent: editor.getHTML()
+        });
+        return;
+      }
+      
+      // For strict schemas, extract field values as before
+      const extractedValues: Record<string, unknown> = {};
+      
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === 'schemaField' && node.attrs.fieldId) {
+          extractedValues[node.attrs.fieldId] = node.attrs.fieldValue;
+        }
+        return true;
+      });
+      
+      // Update field values if they've changed
+      const hasChanged = Object.keys(extractedValues).some(
+        fieldId => extractedValues[fieldId] !== fieldValues[fieldId]
+      );
+      
+      if (hasChanged) {
+        setFieldValues(extractedValues);
+        
+        // Include dynamic field metadata in the content
+        const contentWithMetadata = {
+          ...extractedValues,
+          __dynamicFields: dynamicFields.reduce((acc: Record<string, Partial<ContentField>>, field: ContentField) => {
+            acc[field.id] = {
+              name: field.name,
+              type: field.type,
+              required: field.required,
+              description: field.description,
+              options: field.options,
+            };
+            return acc;
+          }, {} as Record<string, Partial<ContentField>>)
+        };
+        
+        onChange(contentWithMetadata);
+      }
     },
   });
+
+  const [isInitialized, setIsInitialized] = React.useState(false);
+
+  useEffect(() => {
+    if (!editor) return;
+    
+    // For flexible schemas, check if we have existing editor content
+    if (!schema.strict && content.__editorContent) {
+      // Only set content if it's different from current content to avoid overriding
+      const currentContent = editor.getJSON();
+      if (JSON.stringify(currentContent) !== JSON.stringify(content.__editorContent)) {
+        editor.commands.setContent(content.__editorContent);
+      }
+      return;
+    }
+    
+    // Only initialize once for strict schemas or when there's no existing content
+    if (isInitialized) return;
+    
+    // For strict schemas or initial flexible schema setup, create schema field nodes
+    const schemaNodes = schema.fields.map((field) => ({
+      type: 'schemaField',
+      attrs: {
+        fieldId: field.id,
+        fieldType: field.type,
+        fieldName: field.name,
+        fieldValue: fieldValues[field.id] || null,
+        fieldRequired: field.required,
+        fieldDescription: field.description,
+        fieldOptions: field.options || [],
+        isDynamic: false,
+      },
+    }));
+    
+    const dynamicNodes = dynamicFields.map((field) => ({
+      type: 'schemaField',
+      attrs: {
+        fieldId: field.id,
+        fieldType: field.type,
+        fieldName: field.name,
+        fieldValue: fieldValues[field.id] || null,
+        fieldRequired: field.required,
+        fieldDescription: field.description,
+        fieldOptions: field.options || [],
+        isDynamic: true,
+      },
+    }));
+    
+    const allNodes = [...schemaNodes, ...dynamicNodes];
+    
+    // For flexible schemas, intersperse with paragraph nodes to allow markdown content
+    if (!schema.strict) {
+      const content = [];
+      allNodes.forEach((node, index) => {
+        content.push(node);
+        // Add a paragraph after each schema field (except the last one)
+        if (index < allNodes.length - 1) {
+          content.push({ type: 'paragraph', content: [] });
+        }
+      });
+      // Add a final paragraph at the end
+      content.push({ type: 'paragraph', content: [] });
+      editor.commands.setContent({ type: 'doc', content });
+    } else {
+      editor.commands.setContent({ type: 'doc', content: allNodes });
+    }
+    
+    setIsInitialized(true);
+  }, [editor, schema, dynamicFields, fieldValues, content, isInitialized]);
 
   if (!editor) {
     return (
@@ -691,100 +491,83 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     );
   }
 
-  return (
-    <div className="tiptap-editor">
-      <div className="space-y-2">
-        {/* Render schema fields */}
-        {schema.fields.map((field) => (
-          <SchemaFieldComponent
-            key={field.id}
-            field={field}
-            value={fieldValues[field.id]}
-            onChange={(value) => handleFieldChange(field.id, value)}
-            onRemove={() => handleRemoveField(field.id)}
-            editable={editable}
-            isDynamic={false}
-          />
-        ))}
-        
-        {/* Render dynamic fields with drag and drop */}
-        {editable && !schema.strict && (
-          <DragDropContext onDragEnd={handleDrop}>
-            <StrictModeDroppable droppableId="dynamic-fields">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="space-y-2"
-                >
-                  {/* Insertion point at the beginning */}
-                  <FieldInsertionPoint
-                    onInsertField={() => handleInsertField(0)}
-                    isVisible={dynamicFields.length > 0}
-                  />
-                  
-                  {dynamicFields.map((field, index) => (
-                    <React.Fragment key={field.id}>
-                      <Draggable draggableId={field.id} index={index}>
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                          >
-                            <SchemaFieldComponent
-                              field={field}
-                              value={fieldValues[field.id]}
-                              onChange={(value) => handleFieldChange(field.id, value)}
-                              onRemove={() => handleRemoveField(field.id)}
-                              editable={editable}
-                              isDynamic={true}
-                              dragHandleProps={provided.dragHandleProps}
-                            />
-                          </div>
-                        )}
-                      </Draggable>
-                      
-                      {/* Insertion point after each field */}
-                      <FieldInsertionPoint
-                        onInsertField={() => handleInsertField(index + 1)}
-                        isVisible={true}
-                      />
-                    </React.Fragment>
-                  ))}
-                  
-                  {provided.placeholder}
-                </div>
-              )}
-            </StrictModeDroppable>
-          </DragDropContext>
-        )}
-        
-        {/* Render dynamic fields without drag and drop when not editable or strict schema */}
-        {(!editable || schema.strict) && dynamicFields.map((field) => (
-          <SchemaFieldComponent
-            key={field.id}
-            field={field}
-            value={fieldValues[field.id]}
-            onChange={(value) => handleFieldChange(field.id, value)}
-            onRemove={() => handleRemoveField(field.id)}
-            editable={editable}
-            isDynamic={true}
-          />
-        ))}
-        
-        {/* Add Field Dialog */}
-        <AddFieldDialog
-          onAddField={handleAddField}
-          isOpen={isAddFieldDialogOpen}
-          onOpenChange={setIsAddFieldDialogOpen}
-          insertIndex={insertionPointIndex}
-        />
-      </div>
-      
-      {/* Hidden editor content for Tiptap integration */}
-      <div className="hidden">
-        <EditorContent editor={editor} />
-      </div>
+  const MarkdownToolbar = () => (
+    <div className="flex items-center gap-1 p-2 border-b bg-muted/30">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => editor?.chain().focus().toggleBold().run()}
+        className={`h-8 w-8 p-0 ${editor?.isActive('bold') ? 'bg-accent' : ''}`}
+        disabled={!editor?.can().toggleBold()}
+      >
+        <Bold className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => editor?.chain().focus().toggleItalic().run()}
+        className={`h-8 w-8 p-0 ${editor?.isActive('italic') ? 'bg-accent' : ''}`}
+        disabled={!editor?.can().toggleItalic()}
+      >
+        <Italic className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => editor?.chain().focus().toggleStrike().run()}
+        className={`h-8 w-8 p-0 ${editor?.isActive('strike') ? 'bg-accent' : ''}`}
+        disabled={!editor?.can().toggleStrike()}
+      >
+        <Strikethrough className="h-4 w-4" />
+      </Button>
+      <div className="w-px h-6 bg-border mx-1" />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => editor?.chain().focus().toggleBulletList().run()}
+        className={`h-8 w-8 p-0 ${editor?.isActive('bulletList') ? 'bg-accent' : ''}`}
+        disabled={!editor?.can().toggleBulletList()}
+      >
+        <List className="h-4 w-4" />
+      </Button>
     </div>
   );
-}; 
+
+  return (
+    <section className="border rounded-lg bg-background">
+      <div className="tiptap-editor">
+        {/* Markdown Toolbar for flexible schemas */}
+        {!schema.strict && editable && <MarkdownToolbar />}
+        
+        <div className="space-y-4 p-4">
+          {/* Main Tiptap Editor with Schema Fields */}
+          <EditorContent editor={editor} />
+          
+          {/* Add Field Dialog and Controls for flexible schemas */}
+          {editable && !schema.strict && (
+            <div className="space-y-2">
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddFieldDialogOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Field
+                </Button>
+              </div>
+              
+              <AddFieldDialog
+                onAddField={handleAddField}
+                isOpen={isAddFieldDialogOpen}
+                onOpenChange={setIsAddFieldDialogOpen}
+                insertIndex={insertionPointIndex}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
