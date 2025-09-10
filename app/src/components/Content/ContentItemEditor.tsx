@@ -9,6 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 
+// Simple JSON syntax highlighter
+const highlightJSON = (jsonString: string): string => {
+  return jsonString
+    .replace(/("([^"\\]|\\.)*")\s*:/g, '<span style="color: #7dd3fc;">$1</span>:') // Keys (cyan)
+    .replace(/:\s*("([^"\\]|\\.)*")/g, ': <span style="color: #86efac;">$1</span>') // String values (green)
+    .replace(/:\s*(true|false)/g, ': <span style="color: #fbbf24;">$1</span>') // Booleans (yellow)
+    .replace(/:\s*(null)/g, ': <span style="color: #f87171;">$1</span>') // Null (red)
+    .replace(/:\s*(\d+\.?\d*)/g, ': <span style="color: #c084fc;">$1</span>') // Numbers (purple)
+    .replace(/([{}[\]])/g, '<span style="color: #e2e8f0;">$1</span>') // Brackets (light gray)
+    .replace(/(,)/g, '<span style="color: #64748b;">$1</span>'); // Commas (gray)
+};
+
 interface ContentItemEditorProps {
   schema: ContentSchema;
   initialContent?: Record<string, unknown>;
@@ -159,15 +171,19 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
               <CardTitle>JSON Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap bg-muted p-4 rounded-md text-sm overflow-auto max-h-[600px]">
-                {JSON.stringify(
-                  schema.strict 
-                    ? content 
-                    : content.__editorContent || content, 
-                  null, 
-                  2
-                )}
-              </pre>
+              <div className="bg-slate-900 text-slate-100 p-4 rounded-md text-sm overflow-auto max-h-[600px] font-mono">
+                <pre className="whitespace-pre-wrap">
+                  <code dangerouslySetInnerHTML={{
+                    __html: highlightJSON(JSON.stringify(
+                      schema.strict 
+                        ? content 
+                        : content.__editorContent || content, 
+                      null, 
+                      2
+                    ))
+                  }} />
+                </pre>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

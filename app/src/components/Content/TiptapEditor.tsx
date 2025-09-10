@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, X, Type, Hash, Calendar, ToggleLeft, List, Link, FileText, Code, Image, Bold, Italic, Underline, Strikethrough } from 'lucide-react';
+import { Plus, X, Type, Hash, Calendar, ToggleLeft, List, Link, FileText, Code, Image, Bold, Italic, Underline, Strikethrough, MessageSquare } from 'lucide-react';
 import './TiptapEditor.css';
 
 interface TiptapEditorProps {
@@ -195,8 +195,38 @@ const AddFieldDialog: React.FC<{
   );
 };
 
-
-
+// Content divider component with hover buttons
+const ContentDivider: React.FC<{
+  onAddParagraph: () => void;
+  onAddField: () => void;
+}> = ({ onAddParagraph, onAddField }) => {
+  return (
+    <div className="group relative my-2">
+      <div className="h-px bg-border"></div>
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 bg-background border rounded-md shadow-sm px-2 py-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={onAddParagraph}
+          >
+            <MessageSquare className="h-3 w-3" />
+          </Button>
+          <div className="w-px h-4 bg-border"></div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={onAddField}
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   schema,
@@ -285,11 +315,11 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
         },
       };
       
-      // Insert the node at the end of the document, followed by a paragraph for markdown content
+      // Insert the node at the end of the document
       const currentSize = editorInstance.state.doc.content.size;
       editorInstance.chain()
         .focus()
-        .insertContentAt(currentSize, [newNode, { type: 'paragraph' }])
+        .insertContentAt(currentSize, newNode)
         .run();
     }
     
@@ -336,6 +366,23 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
       default:
         return '';
     }
+  };
+
+  const handleAddParagraph = (insertPosition?: number) => {
+    if (!editorInstance) return;
+    
+    const paragraphNode = { type: 'paragraph', content: [] };
+    const position = insertPosition || editorInstance.state.doc.content.size;
+    
+    editorInstance.chain()
+      .focus()
+      .insertContentAt(position, paragraphNode)
+      .run();
+  };
+
+  const handleAddFieldAtPosition = (insertPosition?: number) => {
+    setInsertionPointIndex(insertPosition || null);
+    setIsAddFieldDialogOpen(true);
   };
 
 
@@ -463,19 +510,9 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     
     const allNodes = [...schemaNodes, ...dynamicNodes];
     
-    // For flexible schemas, intersperse with paragraph nodes to allow markdown content
+    // For flexible schemas, create content without automatic paragraph interspersing
     if (!schema.strict) {
-      const content = [];
-      allNodes.forEach((node, index) => {
-        content.push(node);
-        // Add a paragraph after each schema field (except the last one)
-        if (index < allNodes.length - 1) {
-          content.push({ type: 'paragraph', content: [] });
-        }
-      });
-      // Add a final paragraph at the end
-      content.push({ type: 'paragraph', content: [] });
-      editor.commands.setContent({ type: 'doc', content });
+      editor.commands.setContent({ type: 'doc', content: allNodes });
     } else {
       editor.commands.setContent({ type: 'doc', content: allNodes });
     }
@@ -541,22 +578,17 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
         
         <div className="space-y-4 p-4">
           {/* Main Tiptap Editor with Schema Fields */}
-          <EditorContent editor={editor} />
+          <div className={`tiptap-content ${!schema.strict ? 'flexible-schema' : ''}`}>
+            <EditorContent editor={editor} />
+          </div>
           
           {/* Add Field Dialog and Controls for flexible schemas */}
           {editable && !schema.strict && (
             <div className="space-y-2">
-              <div className="flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddFieldDialogOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Field
-                </Button>
-              </div>
+              <ContentDivider
+                onAddParagraph={() => handleAddParagraph()}
+                onAddField={() => handleAddFieldAtPosition()}
+              />
               
               <AddFieldDialog
                 onAddField={handleAddField}

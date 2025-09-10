@@ -492,8 +492,8 @@ const ContentItemPage: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 gap-6">
+        <div className="col-span-1">
           {contentItem?.status === 'pending_review' && previousVersion ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
@@ -634,79 +634,6 @@ const ContentItemPage: React.FC = () => {
               />
             )
           )}
-        </div>
-        
-        <div className="space-y-4">
-          <div className="border rounded-md p-4">
-            <h3 className="font-medium flex items-center gap-2 mb-4">
-              <MessageSquare size={18} />
-              Review Comments
-            </h3>
-            
-            {contentItem?.status === 'pending_review' && (
-              <div className="flex gap-2 mb-4">
-                <Button 
-                  className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
-                  onClick={handleApproveContent}
-                >
-                  <ThumbsUp size={16} />
-                  Approve
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1 gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                  onClick={handleRejectContent}
-                >
-                  <ThumbsDown size={16} />
-                  Needs Revision
-                </Button>
-              </div>
-            )}
-            
-            <div className="space-y-3 mb-4">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3 p-3 bg-muted rounded-md">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      {comment.userName.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm">{comment.userName}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(comment.createdAt), "MMM d, h:mm a")}
-                      </span>
-                    </div>
-                    <p className="text-sm">{comment.text}</p>
-                  </div>
-                </div>
-              ))}
-              
-              {comments.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No comments yet
-                </p>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Add a comment..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="flex-1 min-h-[80px]"
-              />
-              <Button 
-                size="sm" 
-                className="self-end"
-                onClick={handleAddComment}
-                disabled={!newComment.trim()}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
       </div>
