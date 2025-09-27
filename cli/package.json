@@ -1,0 +1,38 @@
+{
+  "name": "yunokit-cli",
+  "version": "1.0.0",
+  "main": "index.js",
+  "bin": {
+    "yunokit": "./src/index.js"
+  },
+  "scripts": {
+    "build": "mkdir -p ./dist/app/assets && cp -a ../app/dist/** ./dist/app && tsc",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "dev": "ts-node --transpile-only src/index.ts ",
+    "lint": "oxlint"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "YunoKit CLI tool for database migrations",
+  "dependencies": {
+    "commander": "^14.0.1",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "serve-static": "^2.2.0",
+    "umzug": "^3.8.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.5.2",
+    "@types/pg": "^8.15.5",
+    "@types/serve-static": "^1.15.8",
+    "@types/supertest": "^6.0.2",
+    "oxlint": "^1.16.0",
+    "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "vite-plugin-compile-time": "^0.4.6",
+    "vitest": "^2.1.8"
+  }
+}

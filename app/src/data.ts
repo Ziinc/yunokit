@@ -10,6 +10,7 @@ export type Migration = {
   workspace: string
 }
 
+// @ts-ignore
 export const migrations: Migration[] = compileTime(async () => {
   const results: Migration[] = []
   // Read supabase/migrations directly
@@ -18,7 +19,7 @@ export const migrations: Migration[] = compileTime(async () => {
     "../../supabase/migrations"
   );
   if (fs.existsSync(supabaseMigrationsPath)) {
-    ["yunocontent", "yunocommunity"].forEach((schema: Migration["schema"]) => {
+    (["yunocontent", "yunocommunity"] as Migration["schema"][]).forEach((schema: Migration["schema"]) => {
       const files = fs
         .readdirSync(path.join(supabaseMigrationsPath, schema))
         .filter((file) => file.endsWith(".sql"))
