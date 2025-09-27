@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
-import { ContentItem, ContentItemComment, ContentField } from "@/lib/contentSchema";
+import { ContentItem } from "@/lib/api/SchemaApi";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Send, ThumbsUp, ThumbsDown, Plus, ArrowRight, FileX2 } from "lucide-react";
+import { ChevronLeft, MessageSquare, Send, Plus, ArrowRight, FileX2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { BackIconButton } from "@/components/ui/BackIconButton";
@@ -24,13 +24,13 @@ import ContentItemHistoryPanel from "@/components/Content/ContentItemHistoryPane
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
 import type { Json } from "../../database.types";
+import { JSONContent } from "@tiptap/core";
 
 const ContentItemPage: React.FC = () => {
   const { contentId, schemaId } = useParams<{ contentId?: string; schemaId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
-  const [newComment, setNewComment] = useState("");
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [inlineCommentText, setInlineCommentText] = useState("");
   const [diffView, setDiffView] = useState<"unified" | "split">("unified");
@@ -182,13 +182,16 @@ const ContentItemPage: React.FC = () => {
     }
   ]);
 
-  // Mock comments for demo purposes
-  const [comments, setComments] = useState<ContentItemComment[]>([]);
+
   
   const handleSave = async (
-    content: Record<string, unknown>
+    contentItem: {
+      title: string
+      data: JSONContent
+    }
   ) => {
-    if (!currentWorkspace || !schemaIdNumber) {
+    console.log(currentWorkspace, schemaIdNumber)
+    if (!currentWorkspace || !schema) {
       toast({
         title: "Error",
         description: "Workspace or schema not found",
@@ -197,6 +200,7 @@ const ContentItemPage: React.FC = () => {
       return;
     }
 
+    console.log('schema?.archived_at')
     if (!contentIdNumber && schema?.archived_at) {
       toast({
         title: "Schema archived",
@@ -207,15 +211,16 @@ const ContentItemPage: React.FC = () => {
     }
 
     try {
-      const title = content.title || 'Untitled';
+      const title = contentItem.title || 'Untitled';
       
       if (contentIdNumber) {
         // Update existing content item
         const updateData = {
           title: title as string,
-          data: content as Json,
+          data: contentItem.data as Json,
           updated_at: new Date().toISOString(),
         };
+    console.log('updateData', updateData)
         
         await updateContentItem(contentIdNumber, updateData, currentWorkspace.id);
         
@@ -228,14 +233,14 @@ const ContentItemPage: React.FC = () => {
         const createData = {
           schema_id: schemaIdNumber,
           title: title as string,
-          data: content as Json,
+          data: contentItem.data as Json,
         };
         
         const response = await createContentItem(createData, currentWorkspace.id);
         
         if (response.data) {
           // Navigate to the edit page for the newly created item
-          navigate(`/manager/editor/${schemaId}/${response.data.id}`);
+          navigate(`/manager/editor/${response.data.id}`);
         }
         
         toast({
@@ -257,84 +262,6 @@ const ContentItemPage: React.FC = () => {
     }
   };
   
-  const handleAddComment = () => {
-    if (!newComment.trim() || !contentItem) return;
-    
-    // TODO: Implement comment saving to database
-    const comment: ContentItemComment = {
-      id: crypto.randomUUID(),
-      contentItemId: contentItem.id,
-      userId: 'current-user',
-      userName: 'Current User',
-      text: newComment,
-      createdAt: new Date().toISOString()
-    };
-    
-    setComments(prev => [...prev, comment]);
-    setNewComment("");
-    
-    toast({
-      title: "Comment added",
-      description: "Your comment has been added to the review thread."
-    });
-  };
-  
-  const handleApproveContent = async () => {
-    if (!contentItem || !currentWorkspace || !contentIdNumber) return;
-    
-    try {
-      await updateContentItem(
-        contentIdNumber, 
-        {
-          published_at: new Date().toISOString(),
-        }, 
-        currentWorkspace.id
-      );
-      
-      mutateContentItem();
-      
-      toast({
-        title: "Content approved",
-        description: "The content has been approved and published."
-      });
-    } catch (error) {
-      console.error('Error approving content:', error);
-      toast({
-        title: "Error",
-        description: "Failed to approve content. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleRejectContent = async () => {
-    if (!contentItem || !currentWorkspace || !contentIdNumber) return;
-    
-    try {
-      await updateContentItem(
-        contentIdNumber, 
-        {
-          published_at: null,
-        }, 
-        currentWorkspace.id
-      );
-      
-      mutateContentItem();
-      
-      toast({
-        title: "Content needs revision",
-        description: "The content has been returned to draft status."
-      });
-    } catch (error) {
-      console.error('Error rejecting content:', error);
-      toast({
-        title: "Error",
-        description: "Failed to reject content. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleAddInlineComment = () => {
     if (!inlineCommentText.trim() || selectedLine === null) return;
 
@@ -452,24 +379,8 @@ const ContentItemPage: React.FC = () => {
     );
   }
 
-  // Convert schema to the expected format
-  const contentSchema = schema ? {
-    id: schema.id.toString(),
-    name: schema.name || 'Untitled Schema',
-    description: schema.description || undefined,
-    fields: (schema.fields || []).map(field => ({
-      id: field.id,
-      name: field.label,
-      type: field.type,
-      required: field.required,
-      description: field.description || undefined,
-      defaultValue: field.default_value,
-      options: field.options || [],
-      relationSchemaId: field.relation_schema_id || undefined,
-    } as ContentField)),
-    isCollection: schema.type === 'collection',
-    type: schema.type || 'collection'
-  } : null;
+  // Use schema directly
+  const contentSchema = schema;
 
   return (
     <>
@@ -620,7 +531,8 @@ const ContentItemPage: React.FC = () => {
               {contentSchema && (
                 <ContentItemEditor
                   schema={contentSchema}
-                  initialContent={initialContent}
+                  initialData={initialContent}
+                  initialTitle={contentItem?.title || ""}
                   onSave={handleSave}
                 />
               )}
@@ -629,7 +541,8 @@ const ContentItemPage: React.FC = () => {
             contentSchema && (
               <ContentItemEditor
                 schema={contentSchema}
-                initialContent={initialContent}
+                initialData={initialContent}
+                initialTitle={contentItem?.title || ""}
                 onSave={handleSave}
               />
             )

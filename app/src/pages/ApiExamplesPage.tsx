@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Code, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exampleSchemas, ContentSchema, ContentField } from "@/lib/contentSchema";
+import { ContentSchemaRow, SchemaField } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 
 export const ApiExamplesPage: React.FC = () => {
@@ -21,12 +21,12 @@ export const ApiExamplesPage: React.FC = () => {
   };
 
   // Generate a sample response for a schema
-  const generateSampleResponse = (schema: ContentSchema) => {
+  const generateSampleResponse = (schema: ContentSchemaRow) => {
     const sample: Record<string, unknown> = {
       id: "123e4567-e89b-12d3-a456-426614174000",
     };
 
-    schema.fields.forEach((field: ContentField) => {
+          schema.fields.forEach((field: SchemaField) => {
       switch(field.type) {
         case "string":
           sample[field.name] = `Sample ${field.name}`;
@@ -808,7 +808,8 @@ const createConversation = async (conversationData) => {
           </CardContent>
         </Card>
 
-        {exampleSchemas.map((schema) => (
+        {/* TODO: Update with ContentSchemaRow examples */}
+        {[].map((schema) => (
           <Card key={schema.id} id={`api-${schema.id}`} className="mb-8">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">

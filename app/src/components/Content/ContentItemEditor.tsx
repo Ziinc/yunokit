@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ContentSchema } from "@/lib/contentSchema";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { TiptapEditor } from "./TiptapEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,63 +23,25 @@ const highlightJSON = (jsonString: string): string => {
 };
 
 interface ContentItemEditorProps {
-  schema: ContentSchema;
-  initialContent?: Record<string, unknown>;
+  schema: ContentSchemaRow;
+  initialData?: Record<string, unknown>;
   initialTitle?: string;
-  onSave: (content: Record<string, unknown>, title: string) => void;
+  onSave: (contentItem: {
+    title: string;
+    data: Record<string, unknown>;
+  }) => void;
 }
 
 export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
   schema,
-  initialContent = {},
+  initialData = {},
   initialTitle = "",
   onSave,
 }) => {
   const { toast } = useToast();
-  const [content, setContent] = useState<Record<string, unknown>>(initialContent);
+  const [content, setContent] = useState<Record<string, unknown>>(initialData);
   const [title, setTitle] = useState<string>(initialTitle);
   const [activeTab, setActiveTab] = useState<string>("fields");
-
-  // Initialize content with default values from schema
-  useEffect(() => {
-    const defaults: Record<string, unknown> = {};
-    
-    schema.fields.forEach(field => {
-      if (content[field.id] === undefined) {
-        if (field.defaultValue !== undefined) {
-          defaults[field.id] = field.defaultValue;
-        } else {
-          // Set default empty values based on type
-          switch (field.type) {
-            case "markdown":
-              defaults[field.id] = "";
-              break;
-            case "json":
-              defaults[field.id] = {};
-              break;
-            case "boolean":
-              defaults[field.id] = false;
-              break;
-
-            case "text":
-              defaults[field.id] = "";
-              break;
-            case "number":
-              defaults[field.id] = 0;
-              break;
-            case "date":
-              defaults[field.id] = "";
-              break;
-            default:
-              defaults[field.id] = "";
-              break;
-          }
-        }
-      }
-    });
-    
-    setContent(prevContent => ({ ...defaults, ...prevContent }));
-  }, [schema, initialContent]);
 
 
   const handleSave = () => {
@@ -93,22 +55,12 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
       return;
     }
 
-    // For flexible schemas, validate by checking the content structure
-    if (!schema.strict) {
-      if (!content.content || !Array.isArray(content.content) || content.content.length === 0) {
-        toast({
-          title: "No content to save",
-          description: "Please add some content before saving",
-          variant: "destructive",
-        });
-        return;
-      }
-      onSave(content, title.trim());
-    } else {
-      // For strict schemas, validate required fields as before
-      const missingFields = schema.fields
-        .filter(field => field.required && !content[field.id])
-        .map(field => field.name);
+    // Validate based on content format - check if we have fields
+    if (content.fields && Array.isArray(content.fields)) {
+      // For the new fields format, validate required fields
+      const missingFields = content.fields
+        .filter((field: { required: boolean; value: unknown; name: string }) => field.required && (!field.value || field.value === ''))
+        .map((field: { name: string }) => field.name);
 
       if (missingFields.length > 0) {
         toast({
@@ -118,13 +70,22 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
         });
         return;
       }
-
-      onSave(content, title.trim());
+    } else {
+      // For legacy format, just check if we have some content
+      if (Object.keys(content).length === 0) {
+        toast({
+          title: "No content to save",
+          description: "Please add some content before saving",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
-    toast({
-      title: "Content saved",
-      description: "Your content has been saved successfully",
+    console.log('content to save', content);
+    onSave({
+      title: title.trim(),
+      data: content
     });
   };
 
@@ -138,7 +99,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">
-            {schema.isCollection ? "Edit Item" : `Edit ${schema.name}`}
+            {schema.type === 'collection' ? "Edit Item" : `Edit ${schema.name}`}
           </h1>
           {!schema.strict && (
             <TooltipProvider>
@@ -202,9 +163,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
                 <pre className="whitespace-pre-wrap">
                   <code dangerouslySetInnerHTML={{
                     __html: highlightJSON(JSON.stringify(
-                      schema.strict
-                        ? content
-                        : content.content || content,
+                      content,
                       null,
                       2
                     ))

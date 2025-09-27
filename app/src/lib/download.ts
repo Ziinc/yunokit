@@ -1,4 +1,4 @@
-import { ContentItem } from './contentSchema';
+import { ContentItem } from './api/SchemaApi';
 
 type ExportFormat = 'csv' | 'json' | 'jsonl';
 

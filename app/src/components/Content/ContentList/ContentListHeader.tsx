@@ -6,12 +6,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ContentSchema } from "@/lib/contentSchema";
+import { ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { DocsButton } from "@/components/ui/DocsButton";
 
 interface ContentListHeaderProps {
   handleCreateNew: (schemaId: string) => void;
-  schemas: ContentSchema[];
+  schemas: ContentSchemaRow[];
 }
 
 export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
@@ -36,7 +36,7 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
           </SelectTrigger>
           <SelectContent>
             {schemas.map(schema => (
-              <SelectItem key={schema.id} value={schema.id}>
+              <SelectItem key={schema.id} value={schema.id.toString()}>
                 {schema.name}
               </SelectItem>
             ))}

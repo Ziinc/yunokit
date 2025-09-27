@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { listContentItemsBySchema } from "@/lib/api/ContentApi";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
-import { ContentItem } from "@/lib/contentSchema";
+import { ContentItem } from "@/lib/api/SchemaApi";
 
 interface RelationFieldProps {
   id: string;

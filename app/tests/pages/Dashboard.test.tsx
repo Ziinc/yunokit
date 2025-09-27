@@ -8,7 +8,7 @@ import Dashboard from "../../src/pages/Dashboard";
 import * as SchemaApi from "../../src/lib/api/SchemaApi";
 import { useWorkspace } from "../../src/lib/contexts/WorkspaceContext";
 import { Workspace } from "../../src/lib/workspaceSchema";
-import { ContentSchema } from "../../src/lib/contentSchema";
+import { ContentSchemaRow } from "../../src/lib/api/SchemaApi";
 
 // Test data
 const mockContentItems = [
@@ -24,7 +24,7 @@ const mockContentItems = [
   },
 ];
 
-const mockSchemas: ContentSchema[] = [
+  const mockSchemas: ContentSchemaRow[] = [
   {
     id: "blog",
     name: "Blog Post",

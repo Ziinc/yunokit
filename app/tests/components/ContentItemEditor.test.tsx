@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { ContentItemEditor } from '@/components/Content/ContentItemEditor';
-import { ContentSchema } from '@/lib/contentSchema';
+import { ContentSchemaRow } from '../../src/lib/api/SchemaApi';
 
 // Mock the TiptapEditor component
 vi.mock('@/components/Content/TiptapEditor', () => ({

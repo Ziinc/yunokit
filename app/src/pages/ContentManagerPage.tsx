@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { ContentItem, ContentItemStatus } from "@/lib/contentSchema";
+import type { ContentItem, ContentItemStatus } from "@/lib/api/SchemaApi";
 import * as ContentApiMod from '@/lib/api/ContentApi';
 import * as SchemaApiMod from '@/lib/api/SchemaApi';
 import type { ContentSchemaRow } from '@/lib/api/SchemaApi';
@@ -39,7 +39,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
 import { downloadContent } from "@/lib/download";
-import { ContentStatusBadge } from "@/components/Content/ContentList/ContentStatusBadge";
 import { formatDate } from "@/utils/formatDate";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 // Note: For this page, we fetch data directly to align with tests that mock API modules and SWR.
@@ -124,38 +123,21 @@ const ContentManagerPage: React.FC = () => {
   const [isChangingAuthor, setIsChangingAuthor] = useState(false);
   const { currentWorkspace } = useWorkspace();
   
-  const [allItems, setAllItems] = useState<ContentItemRow[]>([]);
-  const [contentLoading, setContentLoading] = useState<boolean>(false);
-  const [contentError, setContentError] = useState<unknown>(null);
-  
-  const [schemas, setSchemas] = useState<ContentSchemaRow[]>([]);
-  const [schemasLoading, setSchemasLoading] = useState<boolean>(false);
-  const [schemasError, setSchemasError] = useState<unknown>(null);
+  // Data state consolidated
+  const [dataState, setDataState] = useState({
+    allItems: [] as ContentItemRow[],
+    schemas: [] as ContentSchemaRow[],
+    loading: { content: false, schemas: false },
+    errors: { content: null as unknown, schemas: null as unknown }
+  });
 
-  // Convert ContentSchemaRow[] to ContentSchema[] for components that expect string IDs
-  const convertedSchemas = schemas.map(schema => ({
-    id: schema.id.toString(),
-    name: schema.name,
-    description: schema.description || undefined,
-    fields: (schema.fields as any[]) || [],
-    isCollection: schema.type === 'collection',
-    type: schema.type || 'collection',
-    strict: schema.strict
-  }));
+  // Use ContentSchemaRow directly
+  const { convertedSchemas, activeSchemas } = useMemo(() => {
+    const active = dataState.schemas.filter(s => !s.archived_at);
+    return { convertedSchemas: dataState.schemas, activeSchemas: active };
+  }, [dataState.schemas]);
 
-  const activeSchemas = schemas
-    .filter(s => !s.archived_at)
-    .map(s => ({
-      id: s.id.toString(),
-      name: s.name,
-      description: s.description || undefined,
-      fields: (s.fields as any[]) || [],
-      isCollection: s.type === 'collection',
-      type: s.type || 'collection',
-      strict: s.strict
-    }));
-
-  const isLoading = contentLoading || schemasLoading;
+  const isLoading = dataState.loading.content || dataState.loading.schemas;
   
   const [filterValues, setFilterValues] = useState<FilterValues>({
     schemaId: "all",
@@ -164,58 +146,66 @@ const ContentManagerPage: React.FC = () => {
     perPage: 10,
   });
   
-  // Direct data loading to align with test mocks
-  useEffect(() => {
+  // Custom hook for data management
+  const loadData = useCallback(async () => {
     if (!currentWorkspace) return;
-    const load = async () => {
+
+    setDataState(prev => ({
+      ...prev,
+      loading: { content: true, schemas: true },
+      errors: { content: null, schemas: null }
+    }));
+
+    const loadContent = async () => {
       try {
-        setContentLoading(true);
-        const res = await ((ContentApiMod as any).ContentApi?.listContentItems?.(currentWorkspace.id) ?? ContentApiMod.listContentItems(currentWorkspace.id));
-        setAllItems(((res as any)?.data as ContentItemRow[]) ?? []);
-      } catch (e) {
-        setContentError(e);
-      } finally {
-        setContentLoading(false);
+        const res = await ContentApiMod.listContentItems(currentWorkspace.id);
+        return res.data ?? [];
+      } catch (error) {
+        console.error("Error loading content:", error);
+        toast({
+          title: "Error loading content",
+          description: "There was a problem loading your content.",
+          variant: "destructive"
+        });
+        throw error;
       }
     };
-    load();
-  }, [currentWorkspace]);
 
-  useEffect(() => {
-    if (!currentWorkspace) return;
-    const load = async () => {
+    const loadSchemas = async () => {
       try {
-        setSchemasLoading(true);
-        const res = await ((ContentApiMod as any).ContentApi?.getSchemas?.(currentWorkspace.id) ?? SchemaApiMod.listSchemas(currentWorkspace.id));
-        setSchemas(((res as any)?.data as ContentSchemaRow[]) ?? (res as any) ?? []);
-      } catch (e) {
-        setSchemasError(e);
-      } finally {
-        setSchemasLoading(false);
+        const res = await SchemaApiMod.listSchemas(currentWorkspace.id);
+        return res.data ?? [];
+      } catch (error) {
+        console.error("Error loading schemas:", error);
+        toast({
+          title: "Error loading schemas",
+          description: "There was a problem loading your schemas.",
+          variant: "destructive"
+        });
+        throw error;
       }
     };
-    load();
-  }, [currentWorkspace]);
 
-  // Handle errors
+    const [contentResult, schemasResult] = await Promise.allSettled([
+      loadContent(),
+      loadSchemas()
+    ]);
+
+    setDataState(prev => ({
+      ...prev,
+      allItems: contentResult.status === 'fulfilled' ? contentResult.value : prev.allItems,
+      schemas: schemasResult.status === 'fulfilled' ? schemasResult.value : prev.schemas,
+      loading: { content: false, schemas: false },
+      errors: {
+        content: contentResult.status === 'rejected' ? contentResult.reason : null,
+        schemas: schemasResult.status === 'rejected' ? schemasResult.reason : null
+      }
+    }));
+  }, [currentWorkspace, toast]);
+
   useEffect(() => {
-    if (contentError) {
-      console.error("Error loading content:", contentError);
-      toast({
-        title: "Error loading content",
-        description: "There was a problem loading your content.",
-        variant: "destructive"
-      });
-    }
-    if (schemasError) {
-      console.error("Error loading schemas:", schemasError);
-      toast({
-        title: "Error loading schemas",
-        description: "There was a problem loading your schemas.",
-        variant: "destructive"
-      });
-    }
-  }, [contentError, schemasError, toast]);
+    loadData();
+  }, [loadData]);
   
   // Parse and apply filters from URL query parameters
   useEffect(() => {
@@ -346,10 +336,7 @@ const ContentManagerPage: React.FC = () => {
       
       // Mutate SWR cache to refresh data
       // Refresh content after delete
-      try {
-        const res = await ((ContentApiMod as any).ContentApi?.listContentItems?.(currentWorkspace!.id) ?? ContentApiMod.listContentItems(currentWorkspace!.id));
-        setAllItems(((res as any)?.data as ContentItemRow[]) ?? []);
-      } catch {}
+      loadData();
       setSelectedItems([]);
       setShowDeleteDialog(false);
       
@@ -372,9 +359,9 @@ const ContentManagerPage: React.FC = () => {
     
     try {
       const ids = selectedItems.map(item => item.id);
-      
+
       for (const id of ids) {
-        const item = allItems.find(item => item.id === id);
+        const item = dataState.allItems.find(item => item.id === id);
         if (item) {
           // Save to API - unpublish by setting published_at to null
           await ContentApiMod.updateContentItem(item.id!, {
@@ -385,10 +372,7 @@ const ContentManagerPage: React.FC = () => {
       
       // Mutate SWR cache to refresh data
       // Refresh content after update
-      try {
-        const res = await ((ContentApiMod as any).ContentApi?.listContentItems?.(currentWorkspace!.id) ?? ContentApiMod.listContentItems(currentWorkspace!.id));
-        setAllItems(((res as any)?.data as ContentItemRow[]) ?? []);
-      } catch {}
+      loadData();
       setSelectedItems([]);
       
       toast({
@@ -467,7 +451,7 @@ const ContentManagerPage: React.FC = () => {
         
         {selectedItems.length === 0 ? (
           <ResultsBar
-            totalItems={allItems.length}
+            totalItems={dataState.allItems.length}
             sortField={sortField}
             onSortChange={handleSortChange}
             sortOptions={sortOptions}
@@ -528,8 +512,8 @@ const ContentManagerPage: React.FC = () => {
           </div>
         ) : (
           <ContentTable
-            items={allItems}
-            schemas={schemas}
+            items={dataState.allItems}
+            schemas={dataState.schemas}
             onRowClick={handleRowClick}
             currentPage={currentPage}
             totalPages={1}

@@ -1,4 +1,4 @@
-import { ContentItem } from "@/lib/contentSchema";
+import { ContentItem } from "@/lib/api/SchemaApi";
 
 export const getUniqueAuthors = (
   items: Array<{ createdBy?: string; created_by?: string; user_id?: string }>

@@ -3,6 +3,7 @@ import {
   createContentItem,
   deleteContentItem,
   getContentItem,
+  updateContentItem,
   listContentItems,
 } from "./content/content_items.ts";
 import {
@@ -67,6 +68,14 @@ app.get("/proxy/:context/content_items/:id", async (req: any, res: any) => {
   res.set({ ...corsHeaders });
   res.json(data);
 });
+
+app.put("/proxy/:context/content_items/:id", async (req: any, res: any) => {
+  const data = await updateContentItem(req.dataClient, req.params.id, req.body);
+
+  res.set({ ...corsHeaders });
+  res.json(data);
+});
+
 
 app.post("/proxy/:context/content_items", async (req: any, res: any) => {
   const data = await createContentItem(req.dataClient, req.body);

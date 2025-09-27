@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
-import { ContentSchema } from "@/lib/contentSchema";
+import { ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { createPost } from "@/lib/api/PostsApi";
 
 const NewPostPage: React.FC = () => {
@@ -15,7 +15,7 @@ const NewPostPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Define a simple schema for posts with title and markdown content
-  const postSchema: ContentSchema = {
+  const postSchema: ContentSchemaRow = {
     id: 'post-schema',
     name: 'Post',
     strict: true,

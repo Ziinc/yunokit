@@ -5,7 +5,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import SchemaField from '@/components/Content/extensions/SchemaField';
-import { ContentFieldType } from '@/lib/contentSchema';
+import { SchemaFieldType } from '../../src/lib/api/SchemaApi';
 
 // Test wrapper component that creates a Tiptap editor with SchemaField extension
 const SchemaFieldTestWrapper = ({
@@ -20,7 +20,7 @@ const SchemaFieldTestWrapper = ({
   onFieldChange,
 }: {
   fieldId: string;
-  fieldType: ContentFieldType;
+      fieldType: SchemaFieldType;
   fieldName: string;
   fieldValue: unknown;
   fieldRequired?: boolean;

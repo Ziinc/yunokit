@@ -25,7 +25,7 @@ import {
   FileEdit,
   Archive,
 } from "lucide-react";
-import { ContentSchema } from "@/lib/contentSchema";
+import { ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { listSchemas, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -142,7 +142,7 @@ const SchemaEditorPage: React.FC = () => {
     options: null,
   });
   const [newOption, setNewOption] = useState("");
-  const [availableSchemas, setAvailableSchemas] = useState<ContentSchema[]>([]);
+  const [availableSchemas, setAvailableSchemas] = useState<ContentSchemaRow[]>([]);
 
   const { currentWorkspace } = useWorkspace();
 
@@ -201,13 +201,7 @@ const SchemaEditorPage: React.FC = () => {
         try {
           const response = await listSchemas(currentWorkspace.id);
           if (response.data) {
-            const mappedSchemas = response.data.map((schema) => ({
-              ...schema,
-              id: schema.id.toString(),
-              isCollection: schema.type === "collection",
-              schemaType: schema.type as "collection" | "single",
-            })) as ContentSchema[];
-            setAvailableSchemas(mappedSchemas);
+            setAvailableSchemas(response.data);
           }
         } catch (error) {
           console.error("Error loading schemas:", error);
@@ -931,7 +925,7 @@ const SchemaEditorPage: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               {availableSchemas.map((schema) => (
-                <SelectItem key={schema.id} value={schema.id}>
+                <SelectItem key={schema.id} value={schema.id.toString()}>
                   {schema.name}
                 </SelectItem>
               ))}
@@ -1152,7 +1146,7 @@ const SchemaEditorPage: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {availableSchemas.map((schema) => (
-                          <SelectItem key={schema.id} value={schema.id}>
+                          <SelectItem key={schema.id} value={schema.id.toString()}>
                             {schema.name}
                           </SelectItem>
                         ))}
@@ -1293,7 +1287,7 @@ const SchemaEditorPage: React.FC = () => {
                                       {
                                         availableSchemas.find(
                                           (s) =>
-                                            s.id === field.relation_schema_id
+                                            s.id.toString() === field.relation_schema_id
                                         )?.name
                                       }
                                     </Badge>

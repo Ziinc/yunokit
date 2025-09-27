@@ -1,6 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { ContentItemStatus } from "@/lib/contentSchema";
+import { ContentItemStatus } from "@/lib/api/SchemaApi";
 
 interface ContentStatusBadgeProps {
   status: ContentItemStatus;

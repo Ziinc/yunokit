@@ -16,7 +16,17 @@ const ForumDetailPage: React.FC = () => {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
   const [forum, setForum] = useState<Forum | null>(null);
-  const [posts, setPosts] = useState<{ id: number; title: string; content_data?: any; status: string; created_at: string; user_author_id?: string }[]>([]);
+
+  interface ForumPost {
+    id: number;
+    title: string;
+    content_data?: Record<string, unknown>;
+    status: string;
+    created_at: string;
+    user_author_id?: string;
+  }
+
+  const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -150,7 +160,7 @@ const ForumDetailPage: React.FC = () => {
                         className="hover:underline"
                       >
                         <div className="font-medium line-clamp-2">
-                          {post.title || post.content_data?.title || 'Untitled Post'}
+                          {post.title || (post.content_data?.title as string) || 'Untitled Post'}
                         </div>
                       </Link>
                     </TableCell>

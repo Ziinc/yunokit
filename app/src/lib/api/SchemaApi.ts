@@ -28,6 +28,34 @@ export interface SchemaField {
   relation_schema_id: string | null;
 }
 
+// Additional types that aren't in database but are used throughout the app
+export type ContentItemStatus = 'draft' | 'pending_review' | 'published';
+
+export interface ContentItem {
+  id: string;
+  title: string;
+  schemaId: string;
+  status: ContentItemStatus;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  icon?: string;
+  data: Record<string, unknown>;
+}
+
+export interface ContentItemComment {
+  id: string;
+  contentItemId: string;
+  userId: string;
+  userName: string;
+  text: string;
+  createdAt: string;
+  fieldId?: string; // Optional - if comment is about a specific field
+  resolved?: boolean;
+}
+
 export const listSchemas = async (workspaceId: number) => {
   const qp = new URLSearchParams({
     workspaceId: workspaceId.toString(),

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ContentSchema } from "@/lib/contentSchema";
+import { ContentSchemaRow } from '@/lib/api/SchemaApi';
 
 const filterSchema = z.object({
   schemaId: z.string().optional(),
@@ -32,7 +32,7 @@ export type FilterValues = z.infer<typeof filterSchema>;
 interface FilterFormProps {
   onSubmitFilters: (values: FilterValues) => void;
   resetFilters: () => void;
-  schemas: ContentSchema[];
+  schemas: ContentSchemaRow[];
   initialValues?: FilterValues;
 }
 
@@ -144,8 +144,6 @@ export const FilterForm: React.FC<FilterFormProps> = ({
           name="schemaId"
           render={({ field }) => {
             const schemaIdValue = field.value || "all";
-            const s = schemas.find(sc => sc.id === schemaIdValue);
-            const schemaLabel = schemaIdValue === 'all' ? 'All Schemas' : (s?.name || 'All Schemas');
             return (
               <FormItem className="w-[140px] mr-1">
                 <Select 
@@ -159,7 +157,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({
                   <SelectContent>
                     <SelectItem value="all">All Schemas</SelectItem>
                     {schemas.map(schema => (
-                      <SelectItem key={schema.id} value={schema.id}>
+                      <SelectItem key={schema.id} value={schema.id.toString()}>
                         {schema.name}
                       </SelectItem>
                     ))}
@@ -170,7 +168,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({
           }}
         />
         {/* Visible label text for testing and clarity */}
-        <span aria-live="polite" className="text-[0px] leading-none">{form.getValues().schemaId ? (form.getValues().schemaId === 'all' ? 'All Schemas' : (schemas.find(sc => sc.id === form.getValues().schemaId)?.name || '')) : 'All Schemas'}</span>
+        <span aria-live="polite" className="text-[0px] leading-none">{form.getValues().schemaId ? (form.getValues().schemaId === 'all' ? 'All Schemas' : (schemas.find(sc => sc.id.toString() === form.getValues().schemaId)?.name || '')) : 'All Schemas'}</span>
         
         <div className="flex gap-2 ml-auto">
           {hasActiveFilters && (

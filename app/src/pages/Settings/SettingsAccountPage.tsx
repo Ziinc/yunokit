@@ -12,7 +12,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
-  updateUsername,
   updateEmail,
   updatePassword,
   signOut,
@@ -22,7 +21,6 @@ import {
   AlertTriangle,
   Lock,
   Mail,
-  Save,
   Loader2,
   Trash2,
   LogOut,
@@ -45,45 +43,6 @@ const SettingsAccountPage: React.FC = () => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Handle username update
-  const handleUpdateUsername = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!usernameInput.trim()) {
-      toast({
-        title: "Username required",
-        description: "Please enter a valid username",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsUpdatingUsername(true);
-
-      if (user?.id) {
-        const { error } = await updateUsername(user.id, usernameInput);
-
-        if (error) throw error;
-
-        toast({
-          title: "Username updated",
-          description: "Your username has been updated successfully",
-        });
-      }
-    } catch (error) {
-      console.error("Update username error:", error);
-      toast({
-        title: "Failed to update username",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingUsername(false);
-    }
-  };
 
   // Handle email update
   const handleUpdateEmail = async (e: React.FormEvent) => {

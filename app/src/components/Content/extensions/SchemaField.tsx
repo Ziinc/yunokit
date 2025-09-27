@@ -20,7 +20,6 @@ const AutoSizeTextarea: React.FC<{
   placeholder?: string;
   minRows?: number;
   maxRows?: number;
-  [key: string]: any;
 }> = ({ value, onChange, placeholder, minRows = 3, maxRows = 8, ...props }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 

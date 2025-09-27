@@ -1,4 +1,25 @@
-import { ContentItem, ContentSchema } from "../contentSchema";
+import { ContentItem } from "./SchemaApi";
+
+// Local type for template generation - different from database ContentSchemaRow
+interface ContentSchema {
+  id: string;
+  name: string;
+  description: string;
+  isCollection?: boolean;
+  schemaType?: string;
+  fields: Array<{
+    id: string;
+    name: string;
+    type: string;
+    required?: boolean;
+    defaultValue?: string | number | boolean | null;
+    assetTypes?: string[];
+    isMultiple?: boolean;
+    description?: string;
+    relationTarget?: string;
+    options?: string[];
+  }>;
+}
 
 /**
  * Generate schemas and content items for the ecommerce template
@@ -102,15 +123,13 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'Electronics',
         description: 'Electronic devices and accessories',
         featured: true
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
-      updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
+      updatedBy: 'admin@example.com'
     },
     {
       id: crypto.randomUUID(),
@@ -120,15 +139,13 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'Clothing',
         description: 'Apparel and fashion items',
         featured: true
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -141,7 +158,7 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'Wireless Headphones',
         description: 'High-quality wireless headphones with noise cancellation',
         price: '99.99',
@@ -150,10 +167,8 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
         featured: true,
         categoryId: categories[0].id
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     },
     {
       id: crypto.randomUUID(),
@@ -163,7 +178,7 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'Cotton T-Shirt',
         description: 'Comfortable 100% cotton t-shirt',
         price: '24.99',
@@ -172,10 +187,8 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
         variants: JSON.stringify({ sizes: ['S', 'M', 'L', 'XL'], colors: ['Black', 'White', 'Gray'] }),
         categoryId: categories[1].id
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -188,7 +201,7 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
@@ -201,10 +214,8 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
         }),
         customerSince: new Date().toISOString()
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -297,16 +308,14 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'Jane Smith',
         bio: 'Jane is a tech writer with over 10 years of experience in the industry.',
         email: 'jane.smith@example.com',
         role: 'Author'
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -319,15 +328,13 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'Technology',
         description: 'Latest tech news and reviews',
         slug: 'technology'
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     },
     {
       id: crypto.randomUUID(),
@@ -337,15 +344,13 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'Design',
         description: 'UI/UX and graphic design',
         slug: 'design'
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -358,7 +363,7 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         title: 'Getting Started with React',
         content: '# Introduction to React\n\nReact is a JavaScript library for building user interfaces...',
         excerpt: 'Learn the basics of React and how to build your first component.',
@@ -368,10 +373,8 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
         tags: ['Technology', 'React'],
         featured: true
       },
-      author: { name: 'Jane Smith', avatar: '' },
       createdBy: 'jane.smith@example.com',
       updatedBy: 'jane.smith@example.com',
-      publishedBy: 'admin@example.com'
     },
     {
       id: crypto.randomUUID(),
@@ -380,7 +383,7 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       status: 'draft',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      content: {
+      data: {
         title: 'UI Design Principles',
         content: '# Fundamental UI Design Principles\n\nConsistency, feedback, and simplicity...',
         excerpt: 'Learn the key principles of effective UI design.',
@@ -389,7 +392,6 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
         category: categories[1].id,
         tags: ['Design', 'UI/UX']
       },
-      author: { name: 'Jane Smith', avatar: '' },
       createdBy: 'jane.smith@example.com',
       updatedBy: 'jane.smith@example.com'
     }
@@ -501,16 +503,14 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         name: 'David Johnson',
         bio: 'Full-stack developer and educator with 15 years of experience.',
         email: 'david.johnson@example.com',
         expertise: ['Web Development', 'Mobile Development']
       },
-      author: { name: 'Admin', avatar: '' },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -523,7 +523,7 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         title: 'JavaScript Fundamentals',
         description: 'Learn the core concepts of JavaScript programming from the ground up.',
         instructor: instructors[0].id,
@@ -534,10 +534,8 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
         published: true,
         featured: true
       },
-      author: { name: 'David Johnson', avatar: '' },
       createdBy: 'david.johnson@example.com',
       updatedBy: 'david.johnson@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -550,16 +548,14 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         title: 'Getting Started with JavaScript',
         description: 'Introduction to JavaScript and setup',
         course: courses[0].id,
         order: '1'
       },
-      author: { name: 'David Johnson', avatar: '' },
       createdBy: 'david.johnson@example.com',
       updatedBy: 'david.johnson@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
@@ -572,7 +568,7 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      content: {
+      data: {
         title: 'Introduction to JavaScript',
         content: '# Welcome to JavaScript\n\nIn this lesson, you will learn the basics of JavaScript...',
         course: courses[0].id,
@@ -580,10 +576,8 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
         duration: '15',
         order: '1'
       },
-      author: { name: 'David Johnson', avatar: '' },
       createdBy: 'david.johnson@example.com',
       updatedBy: 'david.johnson@example.com',
-      publishedBy: 'admin@example.com'
     }
   ];
 
