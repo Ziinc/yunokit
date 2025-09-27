@@ -14,11 +14,9 @@ const SettingsWorkspacesPage = lazy(() => import("./pages/Settings/SettingsWorks
 const SettingsMembersPage = lazy(() => import("./pages/Settings/SettingsMembersPage"));
 const SettingsDatabasePage = lazy(() => import("./pages/Settings/SettingsDatabasePage"));
 const SettingsBillingPage = lazy(() => import("./pages/Settings/SettingsBillingPage"));
-const AssetsLibraryPage = lazy(() => import("./pages/AssetsLibraryPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
-const ContentSearchPage = lazy(() => import("./pages/ContentSearchPage"));
 const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const ForumManagementPage = lazy(() => import("./pages/ForumManagementPage"));
 const ForumDetailPage = lazy(() => import("./pages/ForumDetailPage"));
@@ -26,7 +24,6 @@ const NewPostPage = lazy(() => import("./pages/NewPostPage"));
 const PostCommentsPage = lazy(() => import("./pages/PostCommentsPage"));
 import { AppLayout } from "./components/Layout/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { SearchProvider } from "@/contexts/SearchContext";
 import { WorkspaceProvider } from "@/lib/contexts/WorkspaceContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -71,7 +68,6 @@ const AppContent: React.FC = () => {
             element={<SchemaEditorPage />}
           />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/library" element={<AssetsLibraryPage />} />
           <Route path="/settings" element={<SettingsPage />}>
             <Route index element={<Navigate to="account" replace />} />
             <Route path="account" element={<SettingsAccountPage />} />
@@ -80,7 +76,6 @@ const AppContent: React.FC = () => {
             <Route path="database" element={<SettingsDatabasePage />} />
             <Route path="billing" element={<SettingsBillingPage />} />
           </Route>
-          <Route path="/search" element={<ContentSearchPage />} />
           <Route path="/community" element={<CommunityPage />}>
             <Route index element={<Navigate to="forums" replace />} />
             <Route path="forums" element={<ForumManagementPage />} />
@@ -104,9 +99,7 @@ const App: React.FC = () => (
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <BrowserRouter>
           <AuthProvider>
-            <SearchProvider>
-              <AppContent />
-            </SearchProvider>
+            <AppContent />
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

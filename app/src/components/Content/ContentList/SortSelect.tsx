@@ -25,11 +25,13 @@ export const SortSelect: React.FC<SortSelectProps> = ({
   onChange, 
   options 
 }) => {
+  const selected = options.find(o => o.value === (value || 'title'));
   return (
     <Select value={value || "title"} onValueChange={onChange}>
       <SelectTrigger className="w-[180px] h-9 bg-background border border-input rounded-md shadow-sm focus:ring-0 focus:ring-offset-0">
         <div className="flex items-center gap-2 truncate">
           <ArrowUpDown size={14} className="text-muted-foreground shrink-0" />
+          <span style={{ pointerEvents: 'none' }} className="truncate">{selected?.label || 'Title (A-Z)'}</span>
           <SelectValue placeholder="Sort by..." className="truncate" />
         </div>
       </SelectTrigger>

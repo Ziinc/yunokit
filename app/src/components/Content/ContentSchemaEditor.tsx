@@ -29,6 +29,7 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
       description: "",
       fields: [],
       type: "collection" as const,
+      strict: true, // Default to strict mode
     }
   );
 
@@ -219,16 +220,33 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
               <Switch
                 id="isCollection"
                 checked={schema.type === "collection"}
-                onCheckedChange={(checked) => setSchema({ 
-                  ...schema, 
+                onCheckedChange={(checked) => setSchema({
+                  ...schema,
                   type: checked ? "collection" : "single"
                 })}
               />
               <Label htmlFor="isCollection">Collection Type</Label>
               <p className="text-sm text-muted-foreground ml-2">
-                {schema.type === "collection" 
-                  ? "Will contain multiple content items" 
+                {schema.type === "collection"
+                  ? "Will contain multiple content items"
                   : "Will contain a single content item"}
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="strictMode"
+                checked={schema.strict !== false}
+                onCheckedChange={(checked) => setSchema({
+                  ...schema,
+                  strict: checked
+                })}
+              />
+              <Label htmlFor="strictMode">Strict Schema Mode</Label>
+              <p className="text-sm text-muted-foreground ml-2">
+                {schema.strict !== false
+                  ? "Only predefined fields allowed"
+                  : "Allow adding custom fields dynamically"}
               </p>
             </div>
           </div>

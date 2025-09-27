@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ContentSchema } from "@/lib/contentSchema";
 import { TiptapEditor } from "./TiptapEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,16 +25,19 @@ const highlightJSON = (jsonString: string): string => {
 interface ContentItemEditorProps {
   schema: ContentSchema;
   initialContent?: Record<string, unknown>;
-  onSave: (content: Record<string, unknown>) => void;
+  initialTitle?: string;
+  onSave: (content: Record<string, unknown>, title: string) => void;
 }
 
 export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
   schema,
   initialContent = {},
+  initialTitle = "",
   onSave,
 }) => {
   const { toast } = useToast();
   const [content, setContent] = useState<Record<string, unknown>>(initialContent);
+  const [title, setTitle] = useState<string>(initialTitle);
   const [activeTab, setActiveTab] = useState<string>("fields");
 
   // Initialize content with default values from schema
@@ -56,9 +60,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
             case "boolean":
               defaults[field.id] = false;
               break;
-            case "enum":
-              defaults[field.id] = field.options?.[0] || "";
-              break;
+
             case "text":
               defaults[field.id] = "";
               break;
@@ -81,9 +83,19 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
 
 
   const handleSave = () => {
-    // For flexible schemas, validate by checking the editor content structure
+    // Validate title
+    if (!title.trim()) {
+      toast({
+        title: "Title required",
+        description: "Please enter a title for this content",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For flexible schemas, validate by checking the content structure
     if (!schema.strict) {
-      if (!content.__editorContent) {
+      if (!content.content || !Array.isArray(content.content) || content.content.length === 0) {
         toast({
           title: "No content to save",
           description: "Please add some content before saving",
@@ -91,13 +103,13 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
         });
         return;
       }
-      onSave(content);
+      onSave(content, title.trim());
     } else {
       // For strict schemas, validate required fields as before
       const missingFields = schema.fields
         .filter(field => field.required && !content[field.id])
         .map(field => field.name);
-      
+
       if (missingFields.length > 0) {
         toast({
           title: "Required fields missing",
@@ -106,8 +118,8 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
         });
         return;
       }
-      
-      onSave(content);
+
+      onSave(content, title.trim());
     }
 
     toast({
@@ -157,12 +169,27 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
         </TabsList>
         
         <TabsContent value="fields" className="space-y-6 pt-4">
-          <TiptapEditor
-            schema={schema}
-            content={content}
-            onChange={handleTiptapChange}
-            editable={true}
-          />
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="content-title" className="block text-sm font-medium text-gray-700 mb-2">
+                Title
+              </label>
+              <Input
+                id="content-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter the title..."
+                className="text-lg font-semibold"
+              />
+            </div>
+            <TiptapEditor
+              schema={schema}
+              content={content}
+              onChange={handleTiptapChange}
+              editable={true}
+            />
+          </div>
         </TabsContent>
         
         <TabsContent value="json" className="pt-4">
@@ -175,10 +202,10 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
                 <pre className="whitespace-pre-wrap">
                   <code dangerouslySetInnerHTML={{
                     __html: highlightJSON(JSON.stringify(
-                      schema.strict 
-                        ? content 
-                        : content.__editorContent || content, 
-                      null, 
+                      schema.strict
+                        ? content
+                        : content.content || content,
+                      null,
                       2
                     ))
                   }} />

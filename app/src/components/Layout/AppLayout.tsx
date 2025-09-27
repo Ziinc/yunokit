@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
-import { Header } from "./Header";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { WorkspaceSwitcherModal } from "@/components/Workspace/WorkspaceSwitcherModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,7 +37,6 @@ export const AppLayout: React.FC = () => {
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
       <div className="flex flex-col w-full overflow-hidden">
-        <Header />
         <main className="flex-grow overflow-auto p-4">
           <Outlet />
         </main>

@@ -1,23 +1,19 @@
-import packageJson from '../../package.json';
+// Define feature flags configuration directly since package.json no longer contains them
+const featureFlags = {
+  schemaArchiving: false,
+  githubAuth: false,
+  microsoftAuth: false,
+  quickstartTemplates: false,
+} as const;
 
-export type FeatureFlag = keyof typeof packageJson.featureFlags;
+export type FeatureFlag = keyof typeof featureFlags;
 
 export const isFeatureEnabled = (feature: FeatureFlag): boolean => {
-  return packageJson.featureFlags[feature] ?? false;
+  return featureFlags[feature] ?? false;
 };
 
 // Feature flag keys
 export const FeatureFlags = {
-  APPROVAL_FLOWS: 'approvalFlows',
-  COMMUNITY: 'community',
-  CROSS_PROJECT_DATA_MIGRATIONS: 'crossProjectDataMigrations',
-  SYSTEM_AUTHORS: 'systemAuthors',
-  SEARCH: 'search',
-  ASSET_LIBRARY: 'assetLibrary',
-  PSEUDONYM: 'pseudonym',
-  PROFILE_LINKS: 'profileLinks',
-  PROFILE_PICTURE: 'profilePicture',
-  EMAIL_AUTH: 'emailAuth',
   SCHEMA_ARCHIVING: 'schemaArchiving',
   GITHUB_AUTH: 'githubAuth',
   MICROSOFT_AUTH: 'microsoftAuth',

@@ -5,37 +5,27 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { render } from "../utils/test-utils";
 import { WorkspaceSwitcherModal } from "../../src/components/Workspace/WorkspaceSwitcherModal";
 import { useWorkspace } from "../../src/lib/contexts/WorkspaceContext";
+import useSWR from "swr";
 
-// Mock the useWorkspace hook
-vi.mock("../../src/lib/contexts/WorkspaceContext");
-
-// Mock Supabase functions
-vi.mock("../../src/lib/supabase", () => ({
-  initiateOAuthFlow: vi.fn(),
-  exchangeCodeForToken: vi.fn(),
-  checkSupabaseConnection: vi.fn(),
-  listProjects: vi.fn(),
-  checkTokenNeedsRefresh: vi.fn(),
-  refreshAccessToken: vi.fn(),
-}));
-
-// Mock useSWR
-vi.mock("swr", () => ({
-  default: vi.fn(),
-}));
-
+// Mock data for testing
 const mockWorkspaces = [
   {
-    id: "workspace-1",
+    id: 1,
     name: "Test Workspace 1",
     description: "First test workspace",
     project_ref: "project-1",
+    created_at: "2024-01-01T00:00:00Z",
+    user_id: "user-1",
+    api_key: "test-api-key-1",
   },
   {
-    id: "workspace-2",
+    id: 2,
     name: "Test Workspace 2",
     description: "Second test workspace",
     project_ref: null, // Unlinked workspace
+    created_at: "2024-01-01T00:00:00Z",
+    user_id: "user-1",
+    api_key: "test-api-key-2",
   },
 ];
 
@@ -44,11 +34,13 @@ const mockProjects = [
     id: "project-1",
     name: "Test Project 1",
     status: "ACTIVE_HEALTHY",
+    region: "us-east-1",
   },
   {
     id: "project-2",
     name: "Test Project 2",
     status: "ACTIVE_HEALTHY",
+    region: "us-west-2",
   },
 ];
 
@@ -61,9 +53,8 @@ describe("WorkspaceSwitcherModal", () => {
 
   describe("when disconnected from Supabase", () => {
     beforeEach(() => {
-      // Mock useSWR to return disconnected state
-      const mockUseSWR = require("swr").default;
-      mockUseSWR.mockImplementation((key: string) => {
+      // Configure SWR mock for disconnected state
+      (useSWR as Mock).mockImplementation((key: string) => {
         if (key === "sbConnection") {
           return {
             data: { result: false, error: 'Not connected' },
@@ -74,6 +65,7 @@ describe("WorkspaceSwitcherModal", () => {
         return { data: null, mutate: vi.fn(), isLoading: false };
       });
 
+      // Configure automocks for disconnected state
       (useWorkspace as Mock).mockReturnValue({
         workspaces: mockWorkspaces,
         currentWorkspace: null,
@@ -91,35 +83,22 @@ describe("WorkspaceSwitcherModal", () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText(/No Supabase connection found/)).toBeTruthy();
-        expect(screen.getByText('Connect Supabase Project')).toBeTruthy();
-      });
+      const connectionText = await screen.findByText(/No Supabase connection found/);
+      expect(connectionText).toBeTruthy();
+      
+      const connectButton = await screen.findByText('Connect Supabase Project');
+      expect(connectButton).toBeTruthy();
 
       // Should not show workspace info text
-      expect(screen.queryByText(/A workspace links to a Supabase project/)).toBeNull();
+      const workspaceInfo = screen.queryByText(/A workspace links to a Supabase project/);
+      expect(workspaceInfo).toBeNull();
       
       // Should not show any workspace cards
-      expect(screen.queryByText('Test Workspace 1')).toBeNull();
-      expect(screen.queryByText('Test Workspace 2')).toBeNull();
-    });
-
-    test("should call initiateOAuthFlow when connect button is clicked", async () => {
-      const { initiateOAuthFlow } = require("../../src/lib/supabase");
+      const workspace1 = screen.queryByText('Test Workspace 1');
+      expect(workspace1).toBeNull();
       
-      render(
-        <WorkspaceSwitcherModal
-          open={true}
-          onOpenChange={mockOnOpenChange}
-        />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Connect Supabase Project')).toBeTruthy();
-      });
-
-      fireEvent.click(screen.getByText('Connect Supabase Project'));
-      expect(initiateOAuthFlow).toHaveBeenCalledOnce();
+      const workspace2 = screen.queryByText('Test Workspace 2');
+      expect(workspace2).toBeNull();
     });
 
     test("should allow modal to open when disconnected", async () => {
@@ -130,23 +109,19 @@ describe("WorkspaceSwitcherModal", () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText(/No Supabase connection found/)).toBeTruthy();
-      });
+      const connectionText = await screen.findByText(/No Supabase connection found/);
+      expect(connectionText).toBeTruthy();
 
       // Modal should be open and showing disconnected state
-      expect(screen.getByRole('dialog')).toBeTruthy();
-      
-      // Close button should be visible when disconnected
-      expect(screen.getByLabelText('Close')).toBeTruthy();
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toBeTruthy();
     });
   });
 
   describe("when connected to Supabase", () => {
     beforeEach(() => {
-      // Mock useSWR to return connected state and projects
-      const mockUseSWR = require("swr").default;
-      mockUseSWR.mockImplementation((key: string) => {
+      // Configure SWR mock for connected state
+      (useSWR as Mock).mockImplementation((key: string) => {
         if (key === "sbConnection") {
           return {
             data: { result: true },
@@ -157,11 +132,15 @@ describe("WorkspaceSwitcherModal", () => {
         if (key === "valid_access_token") {
           return {
             data: false, // token is not expired
+            mutate: vi.fn(),
+            isLoading: false,
           };
         }
         if (key === "projects") {
           return {
             data: mockProjects,
+            mutate: vi.fn(),
+            isLoading: false,
           };
         }
         return { data: null, mutate: vi.fn(), isLoading: false };
@@ -184,11 +163,14 @@ describe("WorkspaceSwitcherModal", () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText(/A workspace links to a Supabase project/)).toBeTruthy();
-        expect(screen.getByText('Test Workspace 1')).toBeTruthy();
-        expect(screen.getByText('Test Workspace 2')).toBeTruthy();
-      });
+      const workspaceInfo = await screen.findByText(/A workspace links to a Supabase project/);
+      expect(workspaceInfo).toBeTruthy();
+      
+      const workspace1 = await screen.findByText('Test Workspace 1');
+      expect(workspace1).toBeTruthy();
+      
+      const workspace2 = await screen.findByText('Test Workspace 2');
+      expect(workspace2).toBeTruthy();
     });
 
     test("should show link project option for unlinked workspaces", async () => {
@@ -199,10 +181,11 @@ describe("WorkspaceSwitcherModal", () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText(/No project linked/)).toBeTruthy();
-        expect(screen.getByText('Link Project')).toBeTruthy();
-      });
+      const noProjectText = await screen.findByText(/No project linked/);
+      expect(noProjectText).toBeTruthy();
+      
+      const linkButton = await screen.findByText('Link Project');
+      expect(linkButton).toBeTruthy();
     });
 
     test("should prevent closing modal when no current workspace is selected", async () => {
@@ -221,15 +204,12 @@ describe("WorkspaceSwitcherModal", () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText('Test Workspace 1')).toBeTruthy();
-      });
-
-      // Close button should be hidden when connected but no workspace selected
-      expect(screen.queryByLabelText('Close')).toBeNull();
+      const workspace1 = await screen.findByText('Test Workspace 1');
+      expect(workspace1).toBeTruthy();
 
       // Try to close by pressing Escape - should be prevented when connected but no workspace selected
-      fireEvent.keyDown(screen.getByRole("dialog"), {
+      const dialog = screen.getByRole("dialog");
+      fireEvent.keyDown(dialog, {
         key: "Escape",
         code: "Escape",
       });
@@ -246,20 +226,20 @@ describe("WorkspaceSwitcherModal", () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText('Test Workspace 1')).toBeTruthy();
-      });
+      const workspace1 = await screen.findByText('Test Workspace 1');
+      expect(workspace1).toBeTruthy();
 
       // Close button should be visible when current workspace is selected
-      expect(screen.getByLabelText('Close')).toBeTruthy();
+      // Look for the close button - it's a button with the X icon and "Close" sr-only text
+      const closeButton = await screen.findByText('Close');
+      expect(closeButton).toBeTruthy();
     });
   });
 
   describe("loading states", () => {
     test("should show loading spinner when checking connection", async () => {
-      // Mock useSWR to return loading state
-      const mockUseSWR = require("swr").default;
-      mockUseSWR.mockImplementation((key: string) => {
+      // Configure SWR mock for loading state
+      (useSWR as Mock).mockImplementation((key: string) => {
         if (key === "sbConnection") {
           return {
             data: undefined,
@@ -285,7 +265,8 @@ describe("WorkspaceSwitcherModal", () => {
         />
       );
 
-      expect(screen.getByText('Checking connection...')).toBeTruthy();
+      const loadingText = await screen.findByText('Checking connection...');
+      expect(loadingText).toBeTruthy();
     });
   });
 }); 

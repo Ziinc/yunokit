@@ -32,7 +32,7 @@ export const SelectionActionsBar: React.FC<SelectionActionsBarProps> = ({
       )}
     >
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">{selectedCount} items selected</span>
+        <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
       </div>
       <div className="flex items-center gap-2">
         {actions.map((action, index) => (

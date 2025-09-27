@@ -1,13 +1,12 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import SettingsWorkspacesPage from '../../src/pages/Settings/SettingsWorkspacesPage';
-
-// Mock dependencies
-vi.mock('../../src/lib/contexts/WorkspaceContext');
-vi.mock('../../src/lib/api/WorkspaceApi');
-vi.mock('../../src/hooks/use-toast');
+import type { Mock } from 'vitest';
+import { screen, fireEvent, within } from '@testing-library/react';
+import { render } from '../utils/test-utils';
+import SettingsWorkspacesPage from '@/pages/Settings/SettingsWorkspacesPage';
+import * as WorkspaceContext from '@/lib/contexts/WorkspaceContext';
+import * as WorkspaceApi from '@/lib/api/WorkspaceApi';
+import * as ToastHook from '@/hooks/use-toast';
 
 const mockWorkspaces = [
   {
@@ -36,12 +35,11 @@ describe('SettingsWorkspacesPage', () => {
   const mockSetCurrentWorkspace = vi.fn();
   const mockDeleteWorkspace = vi.fn();
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
 
     // Mock useWorkspace
-    const WorkspaceContext = await import('../../src/lib/contexts/WorkspaceContext');
-    vi.mocked(WorkspaceContext.useWorkspace).mockReturnValue({
+    (WorkspaceContext.useWorkspace as unknown as Mock).mockReturnValue({
       workspaces: mockWorkspaces,
       currentWorkspace: mockWorkspaces[0],
       isLoading: false,
@@ -52,90 +50,66 @@ describe('SettingsWorkspacesPage', () => {
     });
 
     // Mock WorkspaceApi
-    const workspaceApi = await import('../../src/lib/api/WorkspaceApi');
-    vi.mocked(workspaceApi.getWorkspaceLimit).mockResolvedValue({
+    (WorkspaceApi.getWorkspaceLimit as unknown as Mock).mockResolvedValue({
       currentCount: 2,
       includedWorkspaces: 2,
       additionalWorkspaces: 0,
       planName: 'Pro',
       isAlphaPhase: true,
     });
-    vi.mocked(workspaceApi.deleteWorkspace).mockImplementation(mockDeleteWorkspace);
+    (WorkspaceApi.deleteWorkspace as unknown as Mock).mockImplementation(mockDeleteWorkspace);
 
     // Mock toast
-    const { useToast } = await import('../../src/hooks/use-toast');
-    vi.mocked(useToast).mockReturnValue({ toast: mockToast, dismiss: vi.fn(), toasts: [] });
+    vi.spyOn(ToastHook, 'useToast').mockReturnValue({ toast: mockToast, dismiss: vi.fn(), toasts: [] } as any);
   });
 
-  const renderPage = () => {
-    return render(
-      <BrowserRouter>
-        <SettingsWorkspacesPage />
-      </BrowserRouter>
-    );
-  };
+  const renderPage = () => render(<SettingsWorkspacesPage />);
 
   it('should render workspaces list', async () => {
     renderPage();
 
-    await waitFor(() => {
-      expect(screen.getByText('Primary Workspace')).toBeTruthy();
-      expect(screen.getByText('Secondary Workspace')).toBeTruthy();
-    });
+    await screen.findByText('Primary Workspace');
+    await screen.findByText('Secondary Workspace');
   });
 
   it('should show delete button for all workspaces', async () => {
     renderPage();
 
-    await waitFor(() => {
-      // Find all delete buttons - should be one for each workspace
-      const deleteButtons = screen.getAllByText('Delete Workspace');
-      expect(deleteButtons.length).toBe(mockWorkspaces.length);
-    });
+    // Find all delete buttons - should be one for each workspace
+    const deleteButtons = await screen.findAllByRole('button', { name: 'Delete Workspace' });
+    expect(deleteButtons.length).toBe(mockWorkspaces.length);
   });
 
   it('should open confirmation dialog when delete button is clicked', async () => {
     renderPage();
 
-    await waitFor(() => {
-      // Find first delete button
-      const deleteButtons = screen.getAllByText('Delete Workspace');
-      fireEvent.click(deleteButtons[0]);
-    });
+    const deleteButtons = await screen.findAllByRole('button', { name: 'Delete Workspace' });
+    fireEvent.click(deleteButtons[0]);
 
-    // Should show delete confirmation dialog
-    expect(screen.getByText('Delete Workspace')).toBeTruthy();
-    expect(screen.getByText(/This action cannot be undone/)).toBeTruthy();
+    await screen.findByText(/This action cannot be undone/);
+    await screen.findByRole('dialog');
   });
 
   it('should delete workspace when confirmed', async () => {
     mockDeleteWorkspace.mockResolvedValueOnce(undefined);
     renderPage();
 
-    await waitFor(() => {
-      // Click first delete button
-      const deleteButtons = screen.getAllByText('Delete Workspace');
-      fireEvent.click(deleteButtons[0]);
-    });
+    const deleteButtons = await screen.findAllByRole('button', { name: 'Delete Workspace' });
+    fireEvent.click(deleteButtons[0]);
 
-    // Should show confirmation dialog
-    expect(screen.getByText('Delete Workspace')).toBeTruthy();
-
-    // Type "delete" to confirm
-    const input = screen.getByPlaceholderText('delete');
+    const dialog = await screen.findByRole('dialog');
+    const input = within(dialog).getByPlaceholderText('delete');
     fireEvent.change(input, { target: { value: 'delete' } });
 
-    // Click delete button in dialog
-    const confirmButton = screen.getByText('Delete Workspace');
+    const confirmButton = within(dialog).getByRole('button', { name: 'Delete Workspace' });
     fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(mockDeleteWorkspace).toHaveBeenCalledWith(1);
-      expect(mockRefreshWorkspaces).toHaveBeenCalled();
-      expect(mockToast).toHaveBeenCalledWith({
-        title: 'Workspace deleted',
-        description: 'The workspace has been deleted successfully',
-      });
+    await screen.findByText('Workspaces');
+    expect(mockDeleteWorkspace).toHaveBeenCalledWith(1);
+    expect(mockRefreshWorkspaces).toHaveBeenCalled();
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Workspace deleted',
+      description: 'The workspace has been deleted successfully',
     });
   });
 
@@ -144,25 +118,21 @@ describe('SettingsWorkspacesPage', () => {
     mockDeleteWorkspace.mockRejectedValueOnce(error);
     renderPage();
 
-    await waitFor(() => {
-      // Click first delete button
-      const deleteButtons = screen.getAllByText('Delete Workspace');
-      fireEvent.click(deleteButtons[0]);
-    });
+    const deleteButtons = await screen.findAllByRole('button', { name: 'Delete Workspace' });
+    fireEvent.click(deleteButtons[0]);
 
-    // Type "delete" and confirm
-    const input = screen.getByPlaceholderText('delete');
+    const dialog = await screen.findByRole('dialog');
+    const input = within(dialog).getByPlaceholderText('delete');
     fireEvent.change(input, { target: { value: 'delete' } });
 
-    const confirmButton = screen.getByText('Delete Workspace');
+    const confirmButton = within(dialog).getByRole('button', { name: 'Delete Workspace' });
     fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith({
-        title: 'Failed to delete workspace',
-        description: 'Delete failed',
-        variant: 'destructive',
-      });
+    await screen.findByText('Workspaces');
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Failed to delete workspace',
+      description: 'Delete failed',
+      variant: 'destructive',
     });
   });
 
@@ -170,39 +140,34 @@ describe('SettingsWorkspacesPage', () => {
     mockDeleteWorkspace.mockResolvedValueOnce(undefined);
     renderPage();
 
-    await waitFor(() => {
-      // Click delete button for current workspace (first one)
-      const deleteButtons = screen.getAllByText('Delete Workspace');
-      fireEvent.click(deleteButtons[0]);
-    });
+    const deleteButtons = await screen.findAllByRole('button', { name: 'Delete Workspace' });
+    fireEvent.click(deleteButtons[0]);
 
-    // Confirm deletion
-    const input = screen.getByPlaceholderText('delete');
+    const dialog = await screen.findByRole('dialog');
+    const input = within(dialog).getByPlaceholderText('delete');
     fireEvent.change(input, { target: { value: 'delete' } });
 
-    const confirmButton = screen.getByText('Delete Workspace');
+    const confirmButton = within(dialog).getByRole('button', { name: 'Delete Workspace' });
     fireEvent.click(confirmButton);
 
-    await waitFor(() => {
-      expect(mockDeleteWorkspace).toHaveBeenCalledWith(1);
-      // Should clear current workspace since we're deleting it
-      expect(mockSetCurrentWorkspace).toHaveBeenCalledWith(null);
-    });
+    await screen.findByText('Workspaces');
+    expect(mockDeleteWorkspace).toHaveBeenCalledWith(1);
+    expect(mockSetCurrentWorkspace).toHaveBeenCalledWith(null);
   });
 
   it('should show workspace limit information', async () => {
     renderPage();
 
-    await waitFor(() => {
-      expect(screen.getByText(/You can create.*more workspace/)).toBeTruthy();
-    });
+    await screen.findByText(/You have 2 workspaces on your Pro plan/);
+    await screen.findByText(/Alpha - No Cost/);
   });
 
   it('should show create workspace form', async () => {
     renderPage();
 
-    await waitFor(() => {
-      expect(screen.getByText('Create New Workspace')).toBeTruthy();
-    });
+    const openButton = await screen.findByRole('button', { name: 'Create Workspace' });
+    fireEvent.click(openButton);
+
+    await screen.findByText('Create New Workspace');
   });
-}); 
+});

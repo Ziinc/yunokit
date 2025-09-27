@@ -5,40 +5,126 @@ import {
   FileText,
   Home,
   Database,
-  Image,
   MessageCircle,
   Loader2,
   Building2,
   Settings,
   ChevronsUpDown,
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  Users,
 } from "lucide-react";
-import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
+
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceSwitcherModal } from "@/components/Workspace/WorkspaceSwitcherModal";
 
+interface NavItem {
+  name: string;
+  path: string;
+  icon: React.ReactNode;
+}
+
+interface NavGroup {
+  name: string;
+  icon: React.ReactNode;
+  items: NavItem[];
+}
+
 export const Sidebar: React.FC = () => {
   const location = useLocation();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { currentWorkspace, isLoading } = useWorkspace();
-  const navItems = [
+
+  const standaloneItems: NavItem[] = [
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
-    { name: "Content Manager", path: "/manager", icon: <FileText size={20} /> },
-    { name: "Schema Builder", path: "/builder", icon: <Database size={20} /> },
-    ...(isFeatureEnabled(FeatureFlags.ASSET_LIBRARY)
-      ? [{ name: "Library", path: "/library", icon: <Image size={20} /> }]
-      : []),
-    ...(isFeatureEnabled(FeatureFlags.COMMUNITY)
-      ? [
-          {
-            name: "Community",
-            path: "/community",
-            icon: <MessageCircle size={20} />,
-          },
-        ]
-      : []),
-  ].filter(Boolean);
+  ];
+
+  const navGroups: NavGroup[] = [
+    {
+      name: "Content",
+      icon: <Folder size={16} />,
+      items: [
+        { name: "Content Manager", path: "/manager", icon: <FileText size={20} /> },
+        { name: "Schema Builder", path: "/builder", icon: <Database size={20} /> },
+      ],
+    },
+    {
+      name: "Community",
+      icon: <Users size={16} />,
+      items: [
+        {
+          name: "Forums",
+          path: "/community",
+          icon: <MessageCircle size={20} />,
+        },
+      ],
+    },
+  ].filter(Boolean) as NavGroup[];
+
+  // Auto-expand the group that contains the current page
+  const getActiveGroup = () => {
+    return navGroups.find(group => 
+      group.items.some(item => 
+        location.pathname === item.path || location.pathname.startsWith(item.path + "/")
+      )
+    );
+  };
+
+  const activeGroup = getActiveGroup();
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(activeGroup ? [activeGroup.name.toLowerCase()] : [])
+  );
+
+  // Update expanded groups when location changes
+  React.useEffect(() => {
+    const currentActiveGroup = getActiveGroup();
+    if (currentActiveGroup) {
+      setExpandedGroups(prev => new Set([...prev, currentActiveGroup.name.toLowerCase()]));
+    }
+  }, [location.pathname]);
+
+  const toggleGroup = (groupName: string) => {
+    // Don't allow collapsing if this group is currently active
+    const group = navGroups.find(g => g.name.toLowerCase() === groupName);
+    const isActive = group ? isGroupActive(group) : false;
+    
+    setExpandedGroups(prev => {
+      const currentActiveGroup = getActiveGroup();
+      const activeGroupName = currentActiveGroup?.name.toLowerCase();
+      
+      // If clicking the currently expanded group and it's not active, collapse it
+      if (prev.has(groupName) && !isActive) {
+        // Collapse this group but keep active group expanded
+        const newExpanded = new Set<string>();
+        if (activeGroupName) {
+          newExpanded.add(activeGroupName);
+        }
+        return newExpanded;
+      } else {
+        // Expand this group and collapse all others except the active group
+        const newExpanded = new Set<string>();
+        
+        // Always keep the active group expanded
+        if (activeGroupName) {
+          newExpanded.add(activeGroupName);
+        }
+        
+        // Add the clicked group
+        newExpanded.add(groupName);
+        
+        return newExpanded;
+      }
+    });
+  };
+
+  const isGroupActive = (group: NavGroup) => {
+    return group.items.some(item => 
+      location.pathname === item.path || location.pathname.startsWith(item.path + "/")
+    );
+  };
 
   return (
     <div className="flex flex-col h-full border-r w-64">
@@ -74,7 +160,8 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => (
+        {/* Standalone items */}
+        {standaloneItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
@@ -89,6 +176,54 @@ export const Sidebar: React.FC = () => {
             {item.name}
           </Link>
         ))}
+
+        {/* Grouped items */}
+        {navGroups.map((group) => {
+          const isExpanded = expandedGroups.has(group.name.toLowerCase());
+          const isActive = isGroupActive(group);
+          
+          return (
+            <div key={group.name} className="space-y-1">
+              <button
+                onClick={() => toggleGroup(group.name.toLowerCase())}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors w-full text-left",
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "hover:bg-muted text-muted-foreground"
+                )}
+              >
+                {isExpanded ? (
+                  <ChevronDown size={16} />
+                ) : (
+                  <ChevronRight size={16} />
+                )}
+                {group.icon}
+                {group.name}
+              </button>
+              
+              {isExpanded && (
+                <div className="ml-4 space-y-1">
+                  {group.items.map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                        location.pathname === item.path || location.pathname.startsWith(item.path + "/")
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      {item.icon}
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
       
       <Separator className="mx-4" />

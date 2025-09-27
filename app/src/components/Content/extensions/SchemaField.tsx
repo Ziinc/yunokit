@@ -3,117 +3,186 @@ import { ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from '@tip
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { X, Pin } from 'lucide-react';
-import { type ContentFieldType } from '@/lib/contentSchema';
+import { X, Pin, Plus, AlignLeft } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 interface SchemaFieldAttrs {
   fieldId: string | null;
-  fieldType: ContentFieldType;
-  fieldName: string;
-  fieldValue: unknown;
-  fieldRequired: boolean;
-  fieldDescription: string;
-  fieldOptions: string[];
-  isDynamic?: boolean;
 }
 
-const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, updateAttributes, editor }) => {
-  const attrs = node.attrs as SchemaFieldAttrs;
+const AutoSizeTextarea: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  minRows?: number;
+  maxRows?: number;
+  [key: string]: any;
+}> = ({ value, onChange, placeholder, minRows = 3, maxRows = 8, ...props }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleChange = (value: unknown) => {
-    updateAttributes({ fieldValue: value });
-    // Remove all the editor focus and update calls that cause re-renders
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+
+    // Calculate the line height
+    const lineHeight = parseInt(getComputedStyle(textarea).lineHeight);
+    const minHeight = lineHeight * minRows;
+    const maxHeight = lineHeight * maxRows;
+
+    // Set height based on content, but constrain between min and max
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+    textarea.style.height = `${newHeight}px`;
   };
 
+  useEffect(() => {
+    adjustHeight();
+  }, [value]);
+
+  return (
+    <Textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => {
+        onChange(e.target.value);
+        // Adjust height on next tick to ensure the change is reflected
+        setTimeout(adjustHeight, 0);
+      }}
+      placeholder={placeholder}
+      className="resize-none overflow-hidden"
+      rows={minRows}
+      {...props}
+    />
+  );
+};
+
+const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos }) => {
+  const attrs = node.attrs as SchemaFieldAttrs;
+
+  // Get field metadata from editor's extension options
+  const schemaFieldExtension = editor.extensionManager.extensions.find(ext => ext.name === 'schemaField');
+  const fieldMetadata = schemaFieldExtension?.options?.fieldMetadata?.[attrs.fieldId || ''];
+  const fieldValues = schemaFieldExtension?.options?.fieldValues || {};
+
+  if (!fieldMetadata) {
+    return (
+      <NodeViewWrapper className="my-1 relative" data-testid={`schema-field-${attrs.fieldId}`}>
+        <div>Field not found: {attrs.fieldId}</div>
+      </NodeViewWrapper>
+    );
+  }
+
+  const handleChange = (value: unknown) => {
+    // Notify the editor about field value changes
+    const onFieldChange = schemaFieldExtension?.options?.onFieldChange;
+    if (onFieldChange && attrs.fieldId) {
+      onFieldChange(attrs.fieldId, value);
+    }
+  };
+
+  const handleAddParagraphAfter = () => {
+    if (!editor || typeof getPos !== 'function') return;
+    
+    try {
+      const pos = getPos();
+      const nodeSize = node.nodeSize;
+      const insertPos = pos + nodeSize;
+      
+      const paragraphNode = {
+        type: 'paragraph',
+        content: [{ type: 'text', text: '' }]
+      };
+      
+      editor.chain()
+        .focus()
+        .insertContentAt(insertPos, paragraphNode)
+        .setTextSelection(insertPos + 1)
+        .run();
+    } catch (error) {
+      console.error('Error adding paragraph:', error);
+    }
+  };
+
+  const handleAddFieldAfter = () => {
+    if (!editor || typeof getPos !== 'function') return;
+    
+    // For now, just log - this would need to trigger the add field dialog
+    // with the correct insertion position
+    const pos = getPos();
+    const nodeSize = node.nodeSize;
+    const insertPos = pos + nodeSize;
+    
+    console.log('Add field after at position:', insertPos);
+    
+    // TODO: Trigger add field dialog with insertPos
+    // This would need to communicate with the TiptapEditor component
+    // to show the AddFieldDialog with the correct insertion position
+  };
+
+  const descriptionId = fieldMetadata.description ? `schema-field-desc-${attrs.fieldId}` : undefined;
+
+  const commonInputA11y = {
+    'aria-label': fieldMetadata.name || undefined,
+    'aria-required': fieldMetadata.required ? 'true' : undefined,
+    'aria-describedby': descriptionId,
+    required: fieldMetadata.required || undefined,
+  } as const;
+
   const renderInput = () => {
-    switch (attrs.fieldType) {
+    const currentValue = fieldValues[attrs.fieldId || ''];
+
+    switch (fieldMetadata.type) {
       case 'text':
         return (
-          <Input
-            value={(attrs.fieldValue as string) || ''}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder={attrs.fieldDescription || `Enter ${attrs.fieldName?.toLowerCase()}`}
+          <AutoSizeTextarea
+            value={(currentValue as string) || ''}
+            onChange={(value) => handleChange(value)}
+            placeholder={fieldMetadata.description || `Enter ${fieldMetadata.name?.toLowerCase()}`}
+            minRows={3}
+            maxRows={8}
+            data-testid={`text-input-${attrs.fieldId}`}
+            {...commonInputA11y}
           />
         );
       case 'number':
         return (
           <Input
             type="number"
-            value={attrs.fieldValue as number | ''}
+            value={currentValue as number | ''}
             onChange={(e) => handleChange(parseFloat(e.target.value) || 0)}
-            placeholder={attrs.fieldDescription || `Enter ${attrs.fieldName?.toLowerCase()}`}
-          />
-        );
-      case 'date':
-        return (
-          <Input
-            type="datetime-local"
-            value={(attrs.fieldValue as string) || ''}
-            onChange={(e) => handleChange(e.target.value)}
+            placeholder={fieldMetadata.description || `Enter ${fieldMetadata.name?.toLowerCase()}`}
+            data-testid={`number-input-${attrs.fieldId}`}
+            {...commonInputA11y}
           />
         );
       case 'boolean':
         return (
           <div className="flex items-center space-x-2">
             <Switch
-              checked={Boolean(attrs.fieldValue)}
+              checked={Boolean(currentValue)}
               onCheckedChange={(checked) => handleChange(checked)}
               className="scale-75"
+              data-testid={`boolean-switch-${attrs.fieldId}`}
+              aria-label={fieldMetadata.name || undefined}
+              aria-describedby={descriptionId}
             />
-            <span className="text-xs text-muted-foreground">{attrs.fieldValue ? 'Yes' : 'No'}</span>
+            <span className="text-xs text-muted-foreground">{currentValue ? 'Yes' : 'No'}</span>
           </div>
-        );
-      case 'enum':
-        return (
-          <Select value={(attrs.fieldValue as string) || ''} onValueChange={handleChange}>
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${attrs.fieldName?.toLowerCase()}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {attrs.fieldOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      case 'markdown':
-        return (
-          <Textarea
-            value={(attrs.fieldValue as string) || ''}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder={attrs.fieldDescription || `Enter ${attrs.fieldName?.toLowerCase()}`}
-            className="min-h-[120px] font-mono"
-          />
-        );
-      case 'json':
-        return (
-          <Textarea
-            value={typeof attrs.fieldValue === 'string' ? attrs.fieldValue : JSON.stringify(attrs.fieldValue || {}, null, 2)}
-            onChange={(e) => {
-              try {
-                handleChange(JSON.parse(e.target.value));
-              } catch {
-                handleChange(e.target.value);
-              }
-            }}
-            placeholder={attrs.fieldDescription || 'Enter JSON data'}
-            className="min-h-[120px] font-mono"
-          />
         );
       default:
         return (
           <Input
-            value={(attrs.fieldValue as string) || ''}
+            value={(currentValue as string) || ''}
             onChange={(e) => handleChange(e.target.value)}
-            placeholder={attrs.fieldDescription || `Enter ${attrs.fieldName?.toLowerCase()}`}
+            placeholder={fieldMetadata.description || `Enter ${fieldMetadata.name?.toLowerCase()}`}
+            data-testid={`default-input-${attrs.fieldId}`}
+            {...commonInputA11y}
           />
         );
     }
@@ -122,18 +191,32 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, updateAttributes,
 
   const handleRemove = () => {
     if (editor && attrs.fieldId) {
+      // Prevent deletion of required fields
+      if (fieldMetadata.required) {
+        // Could show a toast or alert here
+        console.warn('Cannot delete required field:', fieldMetadata.name);
+        return;
+      }
+
+      // Notify parent component about field removal
+      const onFieldRemove = schemaFieldExtension?.options?.onFieldRemove;
+
+      if (onFieldRemove && attrs.fieldId) {
+        onFieldRemove(attrs.fieldId);
+      }
+
       editor.commands.deleteNode('schemaField');
     }
   };
 
   return (
-    <NodeViewWrapper className="my-1">
+    <NodeViewWrapper className="my-1 relative" data-testid={`schema-field-${attrs.fieldId}`}>
       <Card className="transition-all duration-200 hover:shadow-md">
         <CardContent className="p-2">
           <div className="flex items-start gap-2">
             <div className="flex items-center mt-1">
-              {!attrs.isDynamic && (
-                <TooltipProvider>
+              {!fieldMetadata.isDynamic && (
+                <TooltipProvider delayDuration={200}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Pin className="h-3 w-3 text-muted-foreground/40" />
@@ -150,26 +233,41 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, updateAttributes,
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <h3 className="font-normal text-xs text-muted-foreground">
-                    {attrs.fieldName || 'Untitled Field'}
-                    {attrs.fieldRequired && <span className="text-red-500 ml-1">*</span>}
+                    {fieldMetadata.name || 'Untitled Field'}
+                    {fieldMetadata.required && <span className="text-red-500 ml-1">*</span>}
                   </h3>
                 </div>
-                
+
                 {/* Show remove button only for dynamic fields */}
-                {attrs.isDynamic && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemove}
-                    className="h-6 w-6 p-0 text-muted-foreground/60 hover:text-destructive"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
+                {fieldMetadata.isDynamic && (
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={fieldMetadata.required}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handleRemove();
+                          }}
+                          className="h-6 w-6 p-0 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                          data-testid={`remove-field-button-${attrs.fieldId}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{fieldMetadata.required ? 'Required field cannot be deleted' : 'Remove field'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
-              
-              {attrs.fieldDescription && (
-                <p className="text-xs text-muted-foreground/70">{attrs.fieldDescription}</p>
+
+              {fieldMetadata.description && (
+                <p id={descriptionId} className="text-xs text-muted-foreground/70">{fieldMetadata.description}</p>
               )}
               
               <div className="[&>*]:border-none [&>*]:shadow-none [&>*]:bg-transparent [&>*]:outline-none [&>*:focus]:outline-none [&>*:focus]:ring-0 [&>*]:bg-muted/30 [&>*:focus]:bg-muted/70 [&>*]:transition-colors">
@@ -179,6 +277,62 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, updateAttributes,
           </div>
         </CardContent>
       </Card>
+
+      {/* Bottom divider area with hover buttons */}
+      <div className="group/bottom relative">
+        <div className="h-4 flex items-center">
+          <div className="w-full h-px bg-border opacity-0 group-hover/bottom:opacity-100 transition-opacity"></div>
+        </div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover/bottom:opacity-100 transition-opacity z-10">
+          <div className="flex items-center gap-1 bg-background border rounded-md shadow-sm px-2 py-1">
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-muted/80 rounded-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleAddParagraphAfter();
+                    }}
+                    data-testid={`add-paragraph-after-${attrs.fieldId}`}
+                  >
+                    <AlignLeft className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add paragraph below</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="w-px h-4 bg-border"></div>
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-muted/80 rounded-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleAddFieldAfter();
+                    }}
+                    data-testid={`add-field-after-${attrs.fieldId}`}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add field below</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      </div>
     </NodeViewWrapper>
   );
 };
@@ -189,34 +343,28 @@ const SchemaField = Node.create({
   atom: true,
   isolating: true,
   selectable: false,
+  addOptions() {
+    return {
+      onFieldRemove: () => {},
+      onFieldChange: () => {},
+      fieldMetadata: {},
+      fieldValues: {},
+    };
+  },
   addAttributes() {
     return {
       fieldId: { default: null },
-      fieldType: { default: 'text' },
-      fieldName: { default: '' },
-      fieldValue: { default: null },
-      fieldRequired: { default: false },
-      fieldDescription: { default: '' },
-      fieldOptions: { default: [] },
-      isDynamic: { default: false },
     };
   },
   parseHTML() {
     return [
       {
-        tag: 'div[data-type="schema-field"]',
+        tag: 'div[data-type="field"]',
         getAttrs: (element) => {
           if (typeof element === 'string') return {};
-          
+
           return {
             fieldId: element.getAttribute('fieldid') || null,
-            fieldType: element.getAttribute('fieldtype') || 'text',
-            fieldName: element.getAttribute('fieldname') || '',
-            fieldValue: element.getAttribute('fieldvalue') || null,
-            fieldRequired: element.getAttribute('fieldrequired') === 'true',
-            fieldDescription: element.getAttribute('fielddescription') || '',
-            fieldOptions: element.getAttribute('fieldoptions')?.split(',') || [],
-            isDynamic: element.getAttribute('isdynamic') === 'true',
           };
         },
       },
@@ -225,18 +373,11 @@ const SchemaField = Node.create({
   renderHTML({ node, HTMLAttributes }) {
     const attrs = node.attrs as SchemaFieldAttrs;
     return [
-      'div', 
+      'div',
       mergeAttributes(
-        { 'data-type': 'schema-field' },
+        { 'data-type': 'field' },
         {
           fieldid: attrs.fieldId,
-          fieldtype: attrs.fieldType,
-          fieldname: attrs.fieldName,
-          fieldvalue: attrs.fieldValue,
-          fieldrequired: attrs.fieldRequired,
-          fielddescription: attrs.fieldDescription,
-          fieldoptions: attrs.fieldOptions?.join(',') || '',
-          isdynamic: attrs.isDynamic,
         },
         HTMLAttributes
       )
@@ -253,7 +394,7 @@ const SchemaField = Node.create({
           handleDOMEvents: {
             input: (view, event) => {
               const target = event.target as HTMLElement;
-              const schemaField = target.closest('[data-type="schema-field"]');
+              const schemaField = target.closest('[data-type="field"]');
               if (schemaField) {
                 // Completely prevent the editor from processing this
                 event.stopPropagation();
@@ -264,7 +405,7 @@ const SchemaField = Node.create({
             },
             keydown: (view, event) => {
               const target = event.target as HTMLElement;
-              const schemaField = target.closest('[data-type="schema-field"]');
+              const schemaField = target.closest('[data-type="field"]');
               if (schemaField) {
                 // Prevent all keydown events from reaching the editor
                 event.stopPropagation();
@@ -274,7 +415,7 @@ const SchemaField = Node.create({
             },
             keyup: (view, event) => {
               const target = event.target as HTMLElement;
-              const schemaField = target.closest('[data-type="schema-field"]');
+              const schemaField = target.closest('[data-type="field"]');
               if (schemaField) {
                 event.stopPropagation();
                 return true;
@@ -283,7 +424,7 @@ const SchemaField = Node.create({
             },
             keypress: (view, event) => {
               const target = event.target as HTMLElement;
-              const schemaField = target.closest('[data-type="schema-field"]');
+              const schemaField = target.closest('[data-type="field"]');
               if (schemaField) {
                 event.stopPropagation();
                 return true;
@@ -298,4 +439,3 @@ const SchemaField = Node.create({
 });
 
 export default SchemaField;
-

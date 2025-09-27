@@ -3,19 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "featureFlags": {
-    "approvalFlows": false,
-    "community": true,
-    "crossProjectDataMigrations": true,
-    "systemAuthors": false,
-    "search": false,
-    "assetLibrary": false,
-    "pseudonym": false,
-    "profileLinks": false,
-    "profilePicture": false,
-    "emailAuth": false,
-    "profileName": false
-  },
+
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -23,7 +11,7 @@
     "lint": "oxlint src && eslint src",
     "compile": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",
     "coverage": "vitest run --coverage",
@@ -71,10 +59,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
-    "@oxlint/linux-x64-gnu": "^1.6.0",
     "@playwright/test": "^1.44.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.24.0",
-    "@swc/core-linux-x64-gnu": "^1.13.3",
     "@tailwindcss/typography": "^0.5.15",
     "@testing-library/jest-dom": "^6.6.3",
     "@types/node": "^22.5.5",
@@ -88,6 +73,7 @@
     "globals": "^15.9.0",
     "jsdom": "^24.0.0",
     "lovable-tagger": "^1.1.7",
+    "nock": "^14.0.10",
     "oxlint": "^1.6.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",

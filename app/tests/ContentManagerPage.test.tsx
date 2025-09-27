@@ -196,8 +196,8 @@ describe('ContentManagerPage - Selection Actions', () => {
     );
     
     // Wait for content to load
-    await waitFor(async () => {
-      expect(await screen.findByText('Loading content...')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText('Loading content...')).toBeNull();
     });
     
     // Select items
@@ -239,8 +239,8 @@ describe('ContentManagerPage - Selection Actions', () => {
     );
     
     // Wait for content to load
-    await waitFor(async () => {
-      expect(await screen.findByText('Loading content...')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText('Loading content...')).toBeNull();
     });
     
     // Select one item
@@ -274,8 +274,8 @@ describe('ContentManagerPage - Selection Actions', () => {
     );
     
     // Wait for content to load
-    await waitFor(async () => {
-      expect(await screen.findByText('Loading content...')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText('Loading content...')).toBeNull();
     });
     
     // Select items

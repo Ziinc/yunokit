@@ -16,7 +16,7 @@ import {
 vi.mock('../../src/lib/supabase', () => ({
   supabase: {
     functions: {
-      invoke: vi.fn()
+      invoke: vi.fn().mockResolvedValue({ data: null, error: null })
     }
   }
 }));

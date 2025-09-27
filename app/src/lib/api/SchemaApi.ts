@@ -76,7 +76,7 @@ export const updateSchema = async (
   schema: Partial<
     Omit<
       ContentSchemaRow,
-      "id" | "created_at" | "updated_at" | "deleted_at" | "archived_at"
+      "id" | "created_at" | "updated_at" | "deleted_at"
     >
   >,
   workspaceId: number

@@ -4,7 +4,6 @@ export type ContentFieldType =
   | 'number'
   | 'date'
   | 'boolean'
-  | 'enum'
   | 'relation'
   | 'image'
   | 'markdown'
@@ -17,7 +16,7 @@ export interface ContentField {
   required?: boolean;
   description?: string;
   defaultValue?: unknown;
-  options?: string[]; // For enum fields
+  options?: string[];
   relationSchemaId?: string; // For relation fields
 }
 
@@ -93,12 +92,7 @@ export const exampleSchemas: ContentSchema[] = [
         type: 'boolean',
         defaultValue: false,
       },
-      {
-        id: 'category',
-        name: 'Category',
-        type: 'enum',
-        options: ['Technology', 'Design', 'Business'],
-      },
+
       {
         id: 'thumbnail',
         name: 'Thumbnail',
@@ -163,12 +157,7 @@ export const exampleSchemas: ContentSchema[] = [
         type: 'boolean',
         defaultValue: true,
       },
-      {
-        id: 'productType',
-        name: 'Product Type',
-        type: 'enum',
-        options: ['Physical', 'Digital', 'Subscription'],
-      }
+
     ]
   },
   {
@@ -198,12 +187,7 @@ export const exampleSchemas: ContentSchema[] = [
         type: 'boolean',
         defaultValue: false,
       },
-      {
-        id: 'layout',
-        name: 'Layout',
-        type: 'enum',
-        options: ['Full Width', 'Sidebar Left', 'Sidebar Right', 'Two Column'],
-      },
+
       {
         id: 'thumbnail',
         name: 'Thumbnail',

@@ -66,29 +66,3 @@
   transform: scale(1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
-/* Flexible schema styles with dividers */
-.flexible-schema [data-type="schema-field"]:not(:last-child)::after {
-  content: '';
-  display: block;
-  height: 1px;
-  background: var(--border);
-  margin: 16px 0;
-  position: relative;
-}
-
-.flexible-schema [data-type="schema-field"]:not(:last-child):hover::after {
-  background: var(--primary);
-  opacity: 0.3;
-}
-
-/* Content divider hover buttons */
-.content-divider-buttons {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.flexible-schema [data-type="schema-field"]:hover + .content-divider-buttons,
-.content-divider-buttons:hover {
-  opacity: 1;
-} 

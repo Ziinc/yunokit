@@ -40,3 +40,15 @@ export const getCommentsByForum = async (forumId: string) => {
   const qp = new URLSearchParams({ forumId });
   return await supabase.functions.invoke<Comment[]>(`${base}?${qp.toString()}`, { method: 'GET' });
 };
+
+export const getPendingComments = async () => {
+  return await supabase.functions.invoke<Comment[]>(`${base}/pending`, { method: 'GET' });
+};
+
+export const approveComment = async (id: string) => {
+  return await supabase.functions.invoke(`${base}/${id}/approve`, { method: 'POST' });
+};
+
+export const rejectComment = async (id: string) => {
+  return await supabase.functions.invoke(`${base}/${id}/reject`, { method: 'POST' });
+};

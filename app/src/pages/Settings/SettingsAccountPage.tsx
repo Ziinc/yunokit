@@ -37,18 +37,10 @@ const SettingsAccountPage: React.FC = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Account update states
-  const [usernameInput, setUsernameInput] = useState("");
   const [emailInput, setEmailInput] = useState("");
-  const [pseudonymInput, setPseudonymInput] = useState("");
-  const [firstNameInput, setFirstNameInput] = useState("");
-  const [lastNameInput, setLastNameInput] = useState("");
-  const [linkedinInput, setLinkedinInput] = useState("");
-  const [githubInput, setGithubInput] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-  const [isUpdatingPseudonym] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const { toast } = useToast();
@@ -173,7 +165,6 @@ const SettingsAccountPage: React.FC = () => {
 
       setNewPassword("");
       setConfirmPassword("");
-      setCurrentPassword("");
 
       toast({
         title: "Password updated",
@@ -258,158 +249,13 @@ const SettingsAccountPage: React.FC = () => {
             <div className="flex items-center gap-4">
               <div>
                 <h3 className="text-lg font-medium">{user.email}</h3>
-                {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                )}
-                {isFeatureEnabled(FeatureFlags.PSEUDONYM) && (
-                  <p className="text-sm text-muted-foreground">
-                    Writing as: {(user as { pseudonym?: string }).pseudonym}
-                  </p>
-                )}
               </div>
             </div>
           </div>
 
-          {/* Profile Details */}
-          {isFeatureEnabled("profileName") && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-medium mb-4">Profile Details</h3>
-              <form onSubmit={handleUpdateUsername} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      placeholder="Enter your first name"
-                      value={firstNameInput}
-                      onChange={(e) => setFirstNameInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      placeholder="Enter your last name"
-                      value={lastNameInput}
-                      onChange={(e) => setLastNameInput(e.target.value)}
-                    />
-                  </div>
-                </div>
 
-                {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      disabled
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Email can be changed in the account security section
-                      below.
-                    </p>
-                  </div>
-                )}
 
-                {isFeatureEnabled(FeatureFlags.PSEUDONYM) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="pseudonym">Pseudonym</Label>
-                    <Input
-                      id="pseudonym"
-                      placeholder="Enter your writing pseudonym"
-                      value={pseudonymInput}
-                      onChange={(e) => setPseudonymInput(e.target.value)}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      This name will be used for your published content. Leave
-                      empty to use your real name.
-                    </p>
-                  </div>
-                )}
 
-                {isFeatureEnabled(FeatureFlags.PROFILE_LINKS) && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="linkedin">LinkedIn Profile</Label>
-                      <div className="relative">
-                        <Input
-                          id="linkedin"
-                          placeholder="https://linkedin.com/in/username"
-                          value={linkedinInput}
-                          onChange={(e) => setLinkedinInput(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="github">GitHub Profile</Label>
-                      <div className="relative">
-                        <Input
-                          id="github"
-                          placeholder="https://github.com/username"
-                          value={githubInput}
-                          onChange={(e) => setGithubInput(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <Button type="submit" className="gap-2">
-                  {isUpdatingPseudonym ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Profile
-                    </>
-                  )}
-                </Button>
-              </form>
-            </div>
-          )}
-
-          {/* Username Update */}
-          {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-medium mb-4">Update Username</h3>
-              <form onSubmit={handleUpdateUsername} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    placeholder="Enter your username"
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value)}
-                    disabled={isUpdatingUsername}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={isUpdatingUsername}
-                  className="gap-2"
-                >
-                  {isUpdatingUsername ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Username
-                    </>
-                  )}
-                </Button>
-              </form>
-            </div>
-          )}
 
           {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
             <div className="border-t pt-6">

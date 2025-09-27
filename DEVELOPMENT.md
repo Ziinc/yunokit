@@ -1,5 +1,15 @@
 # Development Guide
 
+All tests under app/tests/** specify the specification that the app should be in.
+Any feature that is added must be included as a test spec.
+Any feature that is without a test spec can and SHOULD be safely removed if prompted.
+
+ALWAYS clarify and ask for more information on specific wants when information is ambiguous.
+
+ALWAYS run tests for specific files instead of all tests unless explicitly told to do so.
+
+ALAWAYS refer to SPEC.md for app specification
+
 ## Repository Structure
 
 - **app/**: React web application (Vite + TypeScript + SWR)
@@ -153,10 +163,55 @@ if (response.error) {
 6. **Use database types directly** to avoid transformation overhead
 7. **Transform data only when components require specific formats**
 
+## Testing Guidelines
+
+### Test Structure
 - Tests in `app/tests/` directory
-- Use automocks in `__mocks__/` folders, never `vi.mock()`
-- Use `screen.findBy*` for assertions, avoid `.toHaveAttribute()`
-- Never import `@testing-library/jest-dom`
+- Use `tests/utils/test-utils.tsx` wrapper for consistent provider setup
+- Import components using default imports when they're default exports: `import ComponentName from '../src/path'`
+
+### Assertions
+- **Never use** `toBeInTheDocument()` - use `.toBeDefined()` instead
+- **Never import** `@testing-library/jest-dom` or use any jest-dom APIs
+- Use `screen.findBy*` for async assertions when elements should exist
+- Use `screen.queryBy*` with `.toBeNull()` for negative assertions (elements that shouldn't exist)
+- Avoid `.toHaveAttribute()` - check elements directly
+
+### Mocking
+- Mock APIs using `vi.mock()` with relative paths: `vi.mock('../src/lib/api/ApiName')`
+- Import APIs as modules: `import * as ApiName from '../src/lib/api/ApiName'`
+- Mock return values in `beforeEach`: `(ApiName.functionName as any).mockResolvedValue(data)`
+- Mock Supabase function responses with `{ data: [...], error: null }` structure
+
+### Examples
+
+```typescript
+// ✅ Good: Proper test setup
+import { screen } from '@testing-library/react';
+import { render } from './utils/test-utils';
+import ComponentName from '../src/components/ComponentName';
+import * as ApiName from '../src/lib/api/ApiName';
+
+vi.mock('../src/lib/api/ApiName', () => ({
+  listItems: vi.fn(),
+  createItem: vi.fn()
+}));
+
+beforeEach(() => {
+  (ApiName.listItems as any).mockResolvedValue({
+    data: [{ id: 1, name: 'Test' }],
+    error: null
+  });
+});
+
+// ✅ Good: Correct assertions
+expect(screen.getByText('Test')).toBeDefined();
+expect(screen.queryByText('Not Found')).toBeNull();
+
+// ❌ Bad: Never use these
+expect(element).toBeInTheDocument();
+expect(element).not.toBeInTheDocument();
+```
 
 ## UI Components & Code Style
 
