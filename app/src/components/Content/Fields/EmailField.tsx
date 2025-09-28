@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -11,13 +10,13 @@ interface EmailFieldProps {
   description?: string;
 }
 
-export const EmailField: React.FC<EmailFieldProps> = ({
+const EmailField = ({
   id,
   name,
   value,
   onChange,
   description,
-}) => {
+}: EmailFieldProps) => {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{name}</Label>
@@ -34,3 +33,5 @@ export const EmailField: React.FC<EmailFieldProps> = ({
     </div>
   );
 };
+
+export default EmailField;
