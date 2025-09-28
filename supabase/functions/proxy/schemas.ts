@@ -39,7 +39,6 @@ export const updateSchema = async (
   schemaId: number,
   schema: TablesUpdate<{ schema: "yunocontent" }, "schemas">
 ) => {
-  console.log("schema", schemaId, schema);
   return await client
     .from("schemas")
     .update(schema)
