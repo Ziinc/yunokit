@@ -48,13 +48,11 @@ async function readMigrationFiles(): Promise<MigrationFile[]> {
       .map((file) => file.trim())
       .filter((file) => file !== "");
 
-    console.log('files', files)
     // Read migration files from supabase/migrations directoryfor await (const dirEntry of Deno.readDir("/")) {
     for await (const file of files) {
       const filePath = `./${SCHEMAS[0]}/${file}`;
       const content = await Deno.readTextFile(filePath);
       const match = file.match(/^(\d{14})_(.+)\.sql$/);
-      console.log('match', match)
       if (match) {
         migrations.push({
           version: match[1],
