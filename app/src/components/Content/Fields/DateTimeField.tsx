@@ -1,4 +1,3 @@
-import React from "react";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,13 +15,13 @@ interface DateTimeFieldProps {
   description?: string;
 }
 
-export const DateTimeField: React.FC<DateTimeFieldProps> = ({
+export const DateTimeField = ({
   id,
   name,
   value,
   onChange,
   description,
-}) => {
+}: DateTimeFieldProps) => {
   const date = value ? new Date(value) : new Date();
   
   const handleDateChange = (newDate: Date | undefined) => {
@@ -122,3 +121,5 @@ export const DateTimeField: React.FC<DateTimeFieldProps> = ({
     </div>
   );
 };
+
+export default DateTimeField;
