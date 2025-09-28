@@ -1,4 +1,3 @@
-import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { ContentItemStatus } from "@/lib/api/SchemaApi";
 
@@ -6,7 +5,7 @@ interface ContentStatusBadgeProps {
   status: ContentItemStatus;
 }
 
-export const ContentStatusBadge: React.FC<ContentStatusBadgeProps> = ({ status }) => {
+export const ContentStatusBadge = ({ status }: ContentStatusBadgeProps) => {
   switch (status) {
     case 'published':
       return <Badge className="bg-green-100 text-green-800 max-w-[120px] truncate">Published</Badge>;
@@ -18,3 +17,5 @@ export const ContentStatusBadge: React.FC<ContentStatusBadgeProps> = ({ status }
       return <Badge variant="outline" className="max-w-[120px] truncate">{status}</Badge>;
   }
 };
+
+export default ContentStatusBadge;
