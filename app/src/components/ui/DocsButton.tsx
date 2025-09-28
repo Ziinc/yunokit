@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Book } from "lucide-react";
 
@@ -6,19 +5,19 @@ interface DocsButtonProps {
   href?: string;
 }
 
-export const DocsButton: React.FC<DocsButtonProps> = ({ 
-  href = "https://yunokit.com/docs" 
-}) => {
+export function DocsButton({
+  href = "https://yunokit.com/docs"
+}: DocsButtonProps) {
   return (
-    <Button 
-      variant="outline" 
-      size="sm" 
+    <Button
+      variant="outline"
+      size="sm"
       className="px-2 py-0.5 h-5 text-xs font-normal text-muted-foreground hover:text-primary"
       asChild
     >
-      <a 
+      <a
         href={href}
-        target="_blank" 
+        target="_blank"
         rel="noopener noreferrer"
         className="flex items-center"
       >
@@ -27,4 +26,4 @@ export const DocsButton: React.FC<DocsButtonProps> = ({
       </a>
     </Button>
   );
-}; 
+}
