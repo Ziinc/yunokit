@@ -1,5 +1,5 @@
 
-import React from "react";
+import type { ChangeEvent } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -17,27 +17,27 @@ interface MapFieldProps {
   };
 }
 
-export const MapField: React.FC<MapFieldProps> = ({
+export const MapField = ({
   id,
   name,
   value,
   onChange,
   description,
   mapConfig,
-}) => {
+}: MapFieldProps) => {
   const defaultValue = value || {
     lat: mapConfig?.defaultCenter?.[0] || 40.7128,
     lng: mapConfig?.defaultCenter?.[1] || -74.0060,
   };
-  
-  const handleLatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleLatChange = (e: ChangeEvent<HTMLInputElement>) => {
     const lat = parseFloat(e.target.value);
     if (!isNaN(lat)) {
       onChange({ ...defaultValue, lat });
     }
   };
-  
-  const handleLngChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleLngChange = (e: ChangeEvent<HTMLInputElement>) => {
     const lng = parseFloat(e.target.value);
     if (!isNaN(lng)) {
       onChange({ ...defaultValue, lng });
@@ -86,3 +86,5 @@ export const MapField: React.FC<MapFieldProps> = ({
     </div>
   );
 };
+
+export default MapField;
