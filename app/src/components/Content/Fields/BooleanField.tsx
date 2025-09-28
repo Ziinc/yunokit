@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -11,13 +10,13 @@ interface BooleanFieldProps {
   description?: string;
 }
 
-export const BooleanField: React.FC<BooleanFieldProps> = ({
+export const BooleanField = ({
   id,
   name,
   value,
   onChange,
   description,
-}) => {
+}: BooleanFieldProps) => {
   return (
     <div className="flex flex-col space-y-2">
       <div className="flex items-center justify-between">
@@ -37,3 +36,5 @@ export const BooleanField: React.FC<BooleanFieldProps> = ({
     </div>
   );
 };
+
+export default BooleanField;
