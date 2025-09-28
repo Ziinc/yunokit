@@ -379,7 +379,6 @@ app.post("/connect/workspace/:workspaceId", async (req, res) => {
 
     } else {
       // store the secret role key in the database
-      console.log("storing secret role key", { serviceRoleKey });
       await supabase
         .from("workspaces")
         .update({ api_key: serviceRoleKey.api_key })
