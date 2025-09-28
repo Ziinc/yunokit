@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, AlignLeft } from 'lucide-react';
@@ -8,7 +7,7 @@ interface ContentDividerProps {
   onAddField: () => void;
 }
 
-export const ContentDivider: React.FC<ContentDividerProps> = ({ onAddParagraph, onAddField }) => {
+export const ContentDivider = ({ onAddParagraph, onAddField }: ContentDividerProps) => {
   return (
     <div className="group relative my-2">
       <div className="h-px bg-border"></div>
