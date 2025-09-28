@@ -25,9 +25,7 @@ export const migrations: Migration[] = compileTime(async () => {
         .filter((file) => file.endsWith(".sql"))
       .sort();
 
-
-    console.log(files)
-          for (const file of files) {
+      for (const file of files) {
         if (typeof file === "string") {
           const filePath = path.join(supabaseMigrationsPath, schema, file);
           const content = fs.readFileSync(filePath, "utf8");
