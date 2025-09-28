@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Select,
   SelectContent,
@@ -14,10 +13,10 @@ interface ContentListHeaderProps {
   schemas: ContentSchemaRow[];
 }
 
-export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
+export const ContentListHeader = ({
   handleCreateNew,
-  schemas  = [],
-}) => {
+  schemas = [],
+}: ContentListHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
@@ -35,7 +34,7 @@ export const ContentListHeader: React.FC<ContentListHeaderProps> = ({
             <SelectValue placeholder="Create new content" />
           </SelectTrigger>
           <SelectContent>
-            {schemas.map(schema => (
+            {schemas.map((schema) => (
               <SelectItem key={schema.id} value={schema.id.toString()}>
                 {schema.name}
               </SelectItem>
