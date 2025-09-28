@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense, lazy, type FC } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -29,10 +29,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 import ProtectedRoute from "./components/ProtectedRoute";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 
-const AppContent: React.FC = () => {
-  return (
-    <>
-      <Suspense fallback={null}>
+const AppContent: FC = () => (
+  <>
+    <Suspense fallback={null}>
       <Routes>
         {/* Public Routes */}
         <Route path="/sign-in" element={<SignInPage />} />
@@ -54,19 +53,10 @@ const AppContent: React.FC = () => {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/manager" element={<ContentManagerPage />} />
-          <Route
-            path="/manager/editor/:schemaId/new"
-            element={<ContentItemPage />}
-          />
-          <Route
-            path="/manager/editor/:contentId"
-            element={<ContentItemPage />}
-          />
+          <Route path="/manager/editor/:schemaId/new" element={<ContentItemPage />} />
+          <Route path="/manager/editor/:contentId" element={<ContentItemPage />} />
           <Route path="/builder" element={<ContentSchemaBuilderPage />} />
-          <Route
-            path="/builder/schemas/:schemaId"
-            element={<SchemaEditorPage />}
-          />
+          <Route path="/builder/schemas/:schemaId" element={<SchemaEditorPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />}>
             <Route index element={<Navigate to="account" replace />} />
@@ -86,13 +76,12 @@ const AppContent: React.FC = () => {
           <Route path="/community/posts/:postId/:commentId" element={<PostCommentsPage />} />
         </Route>
       </Routes>
-      </Suspense>
-      <Toaster />
-    </>
-  );
-};
+    </Suspense>
+    <Toaster />
+  </>
+);
 
-const App: React.FC = () => (
+const App: FC = () => (
   <>
     <div id="radix-portal-root" />
     <TooltipProvider>
