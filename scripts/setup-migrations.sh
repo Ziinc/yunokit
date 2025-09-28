@@ -1,8 +1,13 @@
 #!/bin/bash
 
 setup_migrations() {
-    local schemas=("$@")
-    
+    local schemas=()
+
+    # Find all schema directories within supabase/migrations
+    while IFS= read -r -d '' dir; do
+        schemas+=("$(basename "$dir")")
+    done < <(find supabase/migrations -mindepth 1 -maxdepth 1 -type d -print0)
+
     # Copy migration files from schema directories to main migrations
     for schema in "${schemas[@]}"; do
         cp -f "supabase/migrations/${schema}/"*.sql supabase/migrations/ 2>/dev/null || true
@@ -18,4 +23,5 @@ setup_migrations() {
     done
 }
 
-setup_migrations "$@"
+setup_migrations
+
