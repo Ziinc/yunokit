@@ -5,9 +5,9 @@ interface DocsButtonProps {
   href?: string;
 }
 
-export function DocsButton({
+export const DocsButton = ({
   href = "https://yunokit.com/docs"
-}: DocsButtonProps) {
+}: DocsButtonProps) => {
   return (
     <Button
       variant="outline"
@@ -26,4 +26,4 @@ export function DocsButton({
       </a>
     </Button>
   );
-}
+};
