@@ -41,7 +41,6 @@ export const createProxyApp = () => {
       .eq("user_id", user.user.id)
       .single();
 
-    console.log('workspace', workspace)
     if (workspaceError || !workspace) {
       return res.status(401).set(corsHeaders).send("Unauthorized");
     }
