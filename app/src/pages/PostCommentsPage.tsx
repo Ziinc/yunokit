@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +94,7 @@ const getMockComments = (postId: string): Comment[] => [
   }
 ];
 
-const PostCommentsPage: React.FC = () => {
+function PostCommentsPage() {
   const { postId, commentId } = useParams<{ 
     postId: string; 
     commentId?: string; 
@@ -428,6 +428,6 @@ const PostCommentsPage: React.FC = () => {
       </Card>
     </div>
   );
-};
+}
 
 export default PostCommentsPage;
