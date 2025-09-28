@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,7 +32,7 @@ interface CreateForumModalProps {
   onForumCreated: (forum: Forum) => void;
 }
 
-const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) => {
+const CreateForumModal = ({ onForumCreated }: CreateForumModalProps) => {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -69,7 +69,7 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) =
         description: formData.description.trim() || null,
         // Note: The backend should handle the multi_thread field when creating posts
         // For now we're storing it as forum metadata if needed
-      };
+};
       
       const response = await createForum(forumData, currentWorkspace.id);
       
@@ -99,7 +99,7 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) =
     setShowCreateDialog(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !isCreating && formData.name.trim()) {
       e.preventDefault();
       handleCreate();
@@ -199,4 +199,4 @@ const CreateForumModal: React.FC<CreateForumModalProps> = ({ onForumCreated }) =
   );
 };
 
-export default CreateForumModal; 
+export default CreateForumModal;
