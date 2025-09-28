@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import SchemaField from './extensions/SchemaField';
@@ -33,7 +33,7 @@ interface TiptapEditorProps {
 }
 
 // Field type options for the add field dialog
-const FIELD_TYPE_OPTIONS: { value: FieldType; label: string; icon: React.ReactNode }[] = [
+const FIELD_TYPE_OPTIONS: { value: FieldType; label: string; icon: ReactNode }[] = [
   { value: FieldType.TEXT, label: 'Text', icon: <Type className="h-4 w-4" /> },
   { value: FieldType.NUMBER, label: 'Number', icon: <Hash className="h-4 w-4" /> },
   { value: FieldType.BOOLEAN, label: 'Boolean', icon: <ToggleLeft className="h-4 w-4" /> },
@@ -206,7 +206,7 @@ interface MarkdownToolbarProps {
   schema: ContentSchemaRow;
 }
 
-const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor, schema }) => {
+const MarkdownToolbar = ({ editor, schema }: MarkdownToolbarProps) => {
   if (!editor || schema.strict) return null;
 
   return (
@@ -305,7 +305,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor, schema }) => 
       </div>
     </div>
   );
-};
+}
 
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({ 
   schema, 
@@ -314,7 +314,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   editable = true 
 }) => {
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
-  const [dynamicFields, setDynamicFields] = React.useState<SchemaFieldType[]>([]);
+  const [dynamicFields, setDynamicFields] = useState<SchemaFieldType[]>([]);
 
   // Initialize dynamic fields from content if schema is flexible
   useEffect(() => {

@@ -216,8 +216,9 @@ expect(element).not.toBeInTheDocument();
 ## UI Components & Code Style
 
 - Use consolidated `radix-ui` package: `import { Dialog, Button } from "radix-ui"`
-- For Slot usage: `Slot.Slot` from radix-ui package  
+- For Slot usage: `Slot.Slot` from radix-ui package
 - Components in `app/src/components/ui/` follow shadcn/ui patterns
+- Single-component files must export that component as the default export.
 - Pages with tabs must use nested routes for each tab
 - Remove unused imports always
 - Use `useEffect` callbacks created outside the effect
