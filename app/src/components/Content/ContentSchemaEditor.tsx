@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash, FileText, List, Check, FileJson } from "lucide-react";
+import { Trash, FileText, List, Check, FileJson } from "lucide-react";
 import { ContentFieldType } from "@/lib/contentSchema";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { DocsButton } from "@/components/ui/DocsButton";
-import { ContentSchemaRow, SchemaField, SchemaFieldType  } from "@/lib/api/SchemaApi";
+import { ContentSchemaRow, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
+import { SchemaFieldDialog } from "./SchemaFieldDialog";
+import { SchemaQuickstart } from "./SchemaQuickstart";
 
 interface ContentSchemaEditorProps {
   initialSchema?: ContentSchemaRow;
@@ -32,19 +33,6 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
     }
   );
 
-  const [newFieldDialogOpen, setNewFieldDialogOpen] = useState(false);
-  const [newField, setNewField] = useState<SchemaField>({
-    label: "",
-    type: SchemaFieldType.TEXT,
-    required: false,
-    options: [],
-    description: "",
-    default_value: null,
-    relation_schema_id: null,
-  });
-  
-  const [newOption, setNewOption] = useState("");
-
   const getFieldTypeIcon = (type: ContentFieldType) => {
     switch (type) {
       case SchemaFieldType.MARKDOWN:
@@ -60,46 +48,24 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
     }
   };
 
-  const addField = () => {
-    if (!newField.label) {
-      toast({
-        title: "Field label required",
-        description: "Please provide a label for the field",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleAddField = (field: SchemaField) => {
     setSchema({
       ...schema,
-      fields: [...schema.fields, { ...newField }],
+      fields: [...schema.fields, field],
     });
 
-    // Reset new field
-    setNewField({
-      label: "",
-      type: SchemaFieldType.TEXT,
-      required: false,
-      options: [],
-      description: "",
-      default_value: null,
-      relation_schema_id: null,
-    });
-
-    setNewFieldDialogOpen(false);
-    
     toast({
       title: "Field added",
-      description: `Added ${newField.label} field to ${schema.name}`,
+      description: `Added ${field.label} field to ${schema.name}`,
     });
   };
 
-  const removeField = (field: SchemaField) => {
+  const removeField = (id: string) => {
     setSchema({
       ...schema,
-      fields: schema.fields.filter((f) => f !== field),
+      fields: schema.fields.filter((f) => f.id !== id),
     });
-    
+
     toast({
       title: "Field removed",
       description: "The field has been removed",
@@ -126,60 +92,8 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
     });
   };
 
-  const addOption = () => {
-    if (!newOption) return;
-    if (newField.options?.includes(newOption)) {
-      toast({
-        title: "Duplicate option",
-        description: "This option already exists",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setNewField({
-      ...newField,
-      options: [...(newField.options || []), newOption],
-    });
-    setNewOption("");
-  };
-
-  const removeOption = (option: string) => {
-    setNewField({
-      ...newField,
-      options: newField.options?.filter(o => o !== option),
-    });
-  };
-
-  const applyQuickstart = (
-    template: 'article' | 'product' | 'event'
-  ) => {
-    const templates: Record<string, SchemaField[]> = {
-      article: [
-        { label: 'Title', type: SchemaFieldType.TEXT, required: true },
-        { label: 'Summary', type: SchemaFieldType.TEXT },
-        {
-          label: 'Tags',
-          type: SchemaFieldType.ENUM,
-          options: ['General', 'Update', 'Opinion'],
-        },
-        { label: 'Content', type: SchemaFieldType.MARKDOWN, required: true },
-      ],
-      product: [
-        { label: 'Name', type: SchemaFieldType.TEXT, required: true },
-        { label: 'Price', type: SchemaFieldType.NUMBER, required: true },
-        { label: 'Image', type: SchemaFieldType.IMAGE },
-        { label: 'Description', type: SchemaFieldType.MARKDOWN },
-      ],
-      event: [
-        { label: 'Name', type: SchemaFieldType.TEXT, required: true },
-        { label: 'Date', type: SchemaFieldType.DATE, required: true },
-        { label: 'Location', type: SchemaFieldType.TEXT },
-        { label: 'Description', type: SchemaFieldType.MARKDOWN },
-      ],
-    };
-
-    setSchema((s) => ({ ...s, fields: templates[template] }));
+  const handleApplyQuickstart = (fields: SchemaField[]) => {
+    setSchema((s) => ({ ...s, fields }));
   };
 
   return (
@@ -238,140 +152,11 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Fields</h3>
-              <Dialog open={newFieldDialogOpen} onOpenChange={setNewFieldDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <Plus size={16} />
-                    Add Field
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add New Field</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fieldName">Field Name</Label>
-                      <Input
-                        id="fieldName"
-                        value={newField.label}
-                        onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                        placeholder="e.g., Title, Content, IsPublished"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Field Type</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(["text", "number", "date", "boolean", "enum", "relation", "image", "markdown", "json"] as ContentFieldType[]).map((type) => (
-                          <Button
-                            key={type}
-                            variant={newField.type === type ? "default" : "outline"}
-                            className={`justify-start text-left ${newField.type === type ? "" : "border-dashed"}`}
-                            onClick={() => setNewField({ ...newField, type: type as SchemaFieldType })}
-                          >
-                            <div className="flex items-center">
-                              {getFieldTypeIcon(type)}
-                              <span className="ml-2 capitalize">{type}</span>
-                            </div>
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="required"
-                        checked={newField.required || false}
-                        onCheckedChange={(checked) => setNewField({ ...newField, required: checked })}
-                      />
-                      <Label htmlFor="required">Required Field</Label>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={newField.description || ""}
-                        onChange={(e) => setNewField({ ...newField, description: e.target.value })}
-                        placeholder="Instructions for content editors"
-                      />
-                    </div>
-                    
-                    {newField.type === "enum" && (
-                      <div className="space-y-3">
-                        <Label>Options</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={newOption}
-                            onChange={(e) => setNewOption(e.target.value)}
-                            placeholder="Add option..."
-                            className="flex-1"
-                          />
-                          <Button type="button" onClick={addOption} size="sm">
-                            Add
-                          </Button>
-                        </div>
-                        
-                        {newField.options && newField.options.length > 0 && (
-                          <div className="space-y-2 mt-2">
-                            {newField.options.map((option) => (
-                              <div key={option} className="flex items-center justify-between rounded-md border px-3 py-2">
-                                <span>{option}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeOption(option)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Trash size={16} />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-end">
-                    <Button onClick={addField}>
-                      Add Field
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <SchemaFieldDialog onAddField={handleAddField} />
             </div>
-            
+
             {schema.fields.length === 0 ? (
-              <div className="text-center p-6 border border-dashed rounded-md space-y-4">
-                <p className="text-muted-foreground">
-                  No fields added yet. Use a quickstart or click "Add Field" to
-                  build your schema.
-                </p>
-                <div className="flex justify-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => applyQuickstart('article')}
-                  >
-                    Article
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => applyQuickstart('product')}
-                  >
-                    Product
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => applyQuickstart('event')}
-                  >
-                    Event
-                  </Button>
-                </div>
-              </div>
+              <SchemaQuickstart onApply={handleApplyQuickstart} />
             ) : (
               <div className="space-y-2">
                 {schema.fields.map((field) => (
@@ -380,7 +165,7 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                       <div className="flex items-center">
                         {getFieldTypeIcon(field.type)}
                         <div className="ml-3">
-                          <h4 className="font-medium">{field.name}</h4>
+                          <h4 className="font-medium">{field.label}</h4>
                           <p className="text-xs text-muted-foreground">
                             {field.type} {field.required && "• required"}
                           </p>

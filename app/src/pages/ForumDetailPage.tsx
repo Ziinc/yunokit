@@ -16,7 +16,7 @@ const ForumDetailPage: React.FC = () => {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
   const [forum, setForum] = useState<Forum | null>(null);
-  const [posts, setPosts] = useState<{ id: number; title: string; content_data?: any; status: string; created_at: string; user_author_id?: string }[]>([]);
+  const [posts, setPosts] = useState<{ id: number; title: string; content_data?: Record<string, unknown>; status: string; created_at: string; user_author_id?: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

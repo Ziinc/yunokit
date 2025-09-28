@@ -169,15 +169,6 @@ const ForumManagementPage: React.FC = () => {
     }
   };
 
-  const getCurrentForumList = () => {
-    switch (currentTab) {
-      case 'active': return activeForums;
-      case 'archived': return archivedForums;
-      case 'deleted': return deletedForums;
-      default: return activeForums;
-    }
-  };
-
   const getSelectionActions = (): SelectionAction[] => {
     const actions: SelectionAction[] = [];
 
@@ -254,9 +245,9 @@ const ForumManagementPage: React.FC = () => {
               <TableHead className="w-12">
                 <Checkbox
                   checked={allSelected}
-                  ref={(el) => {
-                    if (el && 'indeterminate' in el) {
-                      (el as any).indeterminate = someSelected;
+                  ref={(el: HTMLInputElement | null) => {
+                    if (el) {
+                      el.indeterminate = someSelected;
                     }
                   }}
                   onCheckedChange={(checked) => handleSelectAll(forumList, !!checked)}
