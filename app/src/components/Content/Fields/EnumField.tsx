@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -12,14 +11,14 @@ interface EnumFieldProps {
   description?: string;
 }
 
-export const EnumField: React.FC<EnumFieldProps> = ({
+export const EnumField = ({
   id,
   name,
   value,
   onChange,
   options,
   description,
-}) => {
+}: EnumFieldProps) => {
   return (
     <div className="space-y-2">
       <Label className="font-medium">{name}</Label>
@@ -43,3 +42,5 @@ export const EnumField: React.FC<EnumFieldProps> = ({
     </div>
   );
 };
+
+export default EnumField;
