@@ -239,8 +239,6 @@ const ContentSchemaBuilderPage: React.FC = () => {
   );
 
   const schemas = schemasResponse?.data || [];
-  console.log("schemas", schemas);
-  console.log("schemasResponse", schemasResponse);
 
   // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
