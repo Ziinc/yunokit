@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { refreshSession, getUser, signOut } from "@/lib/api/auth";
+import { useNullableState } from "@/hooks/useNullableState";
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -22,7 +23,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useNullableState<User>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 

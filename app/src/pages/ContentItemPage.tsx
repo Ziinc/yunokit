@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
 import { ContentItem } from "@/lib/api/SchemaApi";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Send, Plus, ArrowRight, FileX2 } from "lucide-react";
+import { ChevronLeft, MessageSquare, Send, Plus, ArrowRight, FileX2, Save } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { BackIconButton } from "@/components/ui/BackIconButton";
 import { useToast } from "@/hooks/use-toast";
+import { createErrorHandler, notifySuccess } from "@/lib/errors";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
@@ -18,23 +19,32 @@ import {
   createContentItem,
   updateContentItem,
   getContentItemById,
-  listContentItemVersions
 } from "@/lib/api/ContentApi";
-import ContentItemHistoryPanel from "@/components/Content/ContentItemHistoryPanel";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
 import type { Json } from "../../database.types";
 import { JSONContent } from "@tiptap/core";
+import { isString } from "@/lib/guards";
+import { useNullableState } from "@/hooks/useNullableState";
+import { generateUUID } from "@/lib/utils";
+import { nowISO } from "@/utils/date";
+// Remove css-constants over-abstraction; use Tailwind utilities directly
 
-const ContentItemPage: React.FC = () => {
+const ContentItemPage = () => {
   const { contentId, schemaId } = useParams<{ contentId?: string; schemaId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
-  const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const errorHandler = createErrorHandler(toast);
+  const [selectedLine, setSelectedLine] = useNullableState<number>(null);
   const [inlineCommentText, setInlineCommentText] = useState("");
   const [diffView, setDiffView] = useState<"unified" | "split">("unified");
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const saveHandlerRef = useRef<() => void>(() => {});
+
+  const registerSaveHandler = useCallback((handler: () => void) => {
+    saveHandlerRef.current = handler;
+  }, []);
   
   const contentIdNumber = contentId ? Number(contentId) : null;
   const schemaIdNumber = schemaId ? Number(schemaId) : null;
@@ -100,14 +110,6 @@ const ContentItemPage: React.FC = () => {
   // Set up initial content
   const initialContent = getContentData(contentItem) || {};
 
-  useSWR(
-    historyOpen && currentWorkspace && contentIdNumber
-      ? `content-item-history-${contentIdNumber}`
-      : null,
-    () => listContentItemVersions(contentIdNumber!, currentWorkspace!.id),
-    { revalidateOnFocus: false }
-  );
-
   // Mock previous version for diffing (for demo purposes)
   const [previousVersion] = useState<ContentItem | undefined>(() => {
     if (!contentItem) return undefined;
@@ -118,7 +120,7 @@ const ContentItemPage: React.FC = () => {
       ...contentItem,
       data: {
         ...contentData,
-        content: typeof contentData.content === 'string' 
+        content: isString(contentData.content) 
           ? contentData.content.replace("React is a JavaScript library", "React is a popular JavaScript library")
               .replace("helped me understand", "really helped me understand")
           : contentData.content
@@ -190,76 +192,72 @@ const ContentItemPage: React.FC = () => {
       data: JSONContent
     }
   ) => {
-    console.log(currentWorkspace, schemaIdNumber)
     if (!currentWorkspace || !schema) {
-      toast({
+      errorHandler.handleError(new Error("Workspace or schema not found"), {
         title: "Error",
-        description: "Workspace or schema not found",
-        variant: "destructive",
+        fallback: "Workspace or schema not found"
       });
       return;
     }
 
-    console.log('schema?.archived_at')
     if (!contentIdNumber && schema?.archived_at) {
-      toast({
+      errorHandler.handleError(new Error("Schema is archived"), {
         title: "Schema archived",
-        description: "Cannot create content for an archived schema.",
-        variant: "destructive",
+        fallback: "Cannot create content for an archived schema."
       });
       return;
     }
 
-    try {
-      const title = contentItem.title || 'Untitled';
-      
-      if (contentIdNumber) {
-        // Update existing content item
-        const updateData = {
-          title: title as string,
-          data: contentItem.data as Json,
-          updated_at: new Date().toISOString(),
-        };
-    console.log('updateData', updateData)
-        
-        await updateContentItem(contentIdNumber, updateData, currentWorkspace.id);
-        
-        toast({
-          title: "Content updated",
-          description: "The content has been updated successfully."
-        });
-      } else {
-        // Create new content item
-        const createData = {
-          schema_id: schemaIdNumber,
-          title: title as string,
-          data: contentItem.data as Json,
-        };
-        
-        const response = await createContentItem(createData, currentWorkspace.id);
-        
-        if (response.data) {
-          // Navigate to the edit page for the newly created item
-          navigate(`/manager/editor/${response.data.id}`);
+    await errorHandler.withErrorHandling(
+      async () => {
+        const title = contentItem.title || 'Untitled';
+
+        if (contentIdNumber) {
+          // Update existing content item
+          const updateData = {
+            title: title as string,
+            data: contentItem.data as Json,
+            updated_at: new Date().toISOString(),
+          };
+
+          await updateContentItem(contentIdNumber, updateData, currentWorkspace.id);
+
+          notifySuccess(toast, {
+            title: "Content updated",
+            description: "The content has been updated successfully."
+          });
+        } else {
+          // Create new content item
+          const createData = {
+            schema_id: schemaIdNumber,
+            title: title as string,
+            data: contentItem.data as Json,
+          };
+
+          const response = await createContentItem(createData, currentWorkspace.id);
+
+          if (response.data) {
+            // Navigate to the edit page for the newly created item
+            navigate(`/manager/editor/${response.data.id}`);
+          }
+
+          notifySuccess(toast, {
+            title: "Content created",
+            description: "The content has been created successfully."
+          });
         }
-        
-        toast({
-          title: "Content created",
-          description: "The content has been created successfully."
-        });
-      }
-      
-      // Refresh the content item data
-      mutateContentItem();
-      
-    } catch (error) {
-      console.error('Error saving content item:', error);
-      toast({
+
+        // Refresh the content item data
+        mutateContentItem();
+      },
+      {
         title: "Error",
-        description: "Failed to save content. Please try again.",
-        variant: "destructive",
-      });
-    }
+        fallback: "Failed to save content. Please try again.",
+        prefix: "Error saving content item"
+      }
+    );
+
+    // No need to handle errors explicitly - the errorHandler does it for us
   };
   
   const handleAddInlineComment = () => {
@@ -275,11 +273,11 @@ const ContentItemPage: React.FC = () => {
         comments: [
           ...updatedComments[existingCommentsIndex].comments,
           {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             text: inlineCommentText,
             author: "Current User",
             authorAvatar: "/placeholder.svg",
-            timestamp: new Date().toISOString()
+            timestamp: nowISO()
           }
         ]
       };
@@ -292,11 +290,11 @@ const ContentItemPage: React.FC = () => {
           lineNumber: selectedLine,
           comments: [
             {
-              id: crypto.randomUUID(),
+              id: generateUUID(),
               text: inlineCommentText,
               author: "Current User",
               authorAvatar: "/placeholder.svg",
-              timestamp: new Date().toISOString()
+              timestamp: nowISO()
             }
           ]
         }
@@ -315,7 +313,7 @@ const ContentItemPage: React.FC = () => {
   // Show loading state
   if (isLoadingSchema || (contentId && isLoadingContentItem)) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex-center-justify h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading...</p>
@@ -327,7 +325,7 @@ const ContentItemPage: React.FC = () => {
   // Show error state
   if (schemaError || contentItemError) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex-center-justify h-64">
         <div className="text-center">
           <p className="text-destructive mb-4">Error loading content</p>
           <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
@@ -339,7 +337,7 @@ const ContentItemPage: React.FC = () => {
   // Show schema not found
   if (!schema) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex-center-justify h-64">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Schema not found</p>
           <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
@@ -351,8 +349,8 @@ const ContentItemPage: React.FC = () => {
   // Show content item not found
   if (contentId && !contentItem) {
     return (
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <div className="flex items-center gap-4">
+      <div className={`max-w-7xl mx-auto p-6 space-content-lg`}>
+        <div className={`flex items-center justify-start gap-4`}>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -369,12 +367,12 @@ const ContentItemPage: React.FC = () => {
             </Tooltip>
           </TooltipProvider>
         </div>
-        <div className="flex items-center justify-center h-[50vh]">
-          <div className="text-center">
-            <FileX2 className="h-12 w-12 text-muted-foreground mx-auto" />
-            <p className="mt-4 text-muted-foreground">Content item not found</p>
-          </div>
-        </div>
+            <div className="flex-center-justify h-[50vh]">
+              <div className="text-center">
+                <FileX2 className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="mt-4 text-muted-foreground">Content item not found</p>
+              </div>
+            </div>
       </div>
     );
   }
@@ -384,8 +382,8 @@ const ContentItemPage: React.FC = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
+      <div className={`max-w-7xl mx-auto p-6 space-content-lg`}>
+      <div className={`flex items-center justify-start gap-4`}>
         <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
         
         <div className="flex-1">
@@ -396,18 +394,21 @@ const ContentItemPage: React.FC = () => {
             {contentId ? 'Update your content item' : 'Create a new content item'}
           </p>
         </div>
-        {contentId && (
-          <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)}>
-            History
-          </Button>
-        )}
+        <Button
+          onClick={() => saveHandlerRef.current?.()}
+          disabled={!hasChanges}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          Save
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
         <div className="col-span-1">
           {contentItem?.status === 'pending_review' && previousVersion ? (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
+            <div className="space-content">
+              <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Content Review</h2>
                 <ToggleGroup type="single" value={diffView} onValueChange={(value) => value && setDiffView(value as "unified" | "split")}>
                   <ToggleGroupItem value="unified">Unified View</ToggleGroupItem>
@@ -417,10 +418,10 @@ const ContentItemPage: React.FC = () => {
               
               <div className="border rounded-md">
                 <div className="bg-muted p-3 border-b flex justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className={`flex items-center justify-start gap-2`}>
                     <span className="text-sm font-medium">Comparing changes</span>
                   </div>
-                  <div className="flex gap-2 text-xs text-muted-foreground">
+                  <div className={`flex items-center justify-start gap-2 text-xs text-muted-foreground`}>
                     <span>{format(new Date(previousVersion.updatedAt), "MMM d, yyyy")}</span>
                     <ArrowRight size={12} className="my-auto" />
                     <span>{format(new Date(contentItem.updatedAt), "MMM d, yyyy")}</span>
@@ -429,11 +430,11 @@ const ContentItemPage: React.FC = () => {
 
                 <ScrollArea className="h-96">
                   <div className="p-4 space-y-1 font-mono text-sm">
-                    {mockDiffLines.map((line, index) => {
+                    {mockDiffLines.map((line) => {
                       const hasComments = inlineComments.some(c => c.lineNumber === line.lineNumber);
                       
                       return (
-                        <div key={index} className="group">
+                        <div key={line.lineNumber} className="group">
                           <div 
                             className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-muted/50 ${
                               selectedLine === line.lineNumber ? 'bg-blue-50 border border-blue-200' : ''
@@ -450,7 +451,7 @@ const ContentItemPage: React.FC = () => {
                             </span>
                             <span className="flex-1">{line.content}</span>
                             {hasComments && (
-                              <MessageSquare size={12} className="text-blue-500" />
+                              <MessageSquare size={12} className="text-info" />
                             )}
                             <Button 
                               size="sm" 
@@ -513,7 +514,7 @@ const ContentItemPage: React.FC = () => {
                           onClick={handleAddInlineComment}
                           disabled={!inlineCommentText.trim()}
                         >
-                          <Send className="h-4 w-4" />
+                          <Send className="icon-sm" />
                         </Button>
                         <Button 
                           size="sm" 
@@ -534,6 +535,8 @@ const ContentItemPage: React.FC = () => {
                   initialData={initialContent}
                   initialTitle={contentItem?.title || ""}
                   onSave={handleSave}
+                  onChangesDetected={setHasChanges}
+                  registerSaveHandler={registerSaveHandler}
                 />
               )}
             </div>
@@ -544,16 +547,14 @@ const ContentItemPage: React.FC = () => {
                 initialData={initialContent}
                 initialTitle={contentItem?.title || ""}
                 onSave={handleSave}
+                onChangesDetected={setHasChanges}
+                registerSaveHandler={registerSaveHandler}
               />
             )
           )}
         </div>
       </div>
       </div>
-      <ContentItemHistoryPanel
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-      />
     </>
   );
 };

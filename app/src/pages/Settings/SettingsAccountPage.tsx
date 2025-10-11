@@ -25,11 +25,12 @@ import {
   Trash2,
   LogOut,
 } from "lucide-react";
-import { isFeatureEnabled, FeatureFlags } from "@/lib/featureFlags";
+// Feature flags removed; email auth settings disabled
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { getErrorMessage } from "@/lib/utils";
 
-const SettingsAccountPage: React.FC = () => {
+const SettingsAccountPage = () => {
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -75,8 +76,7 @@ const SettingsAccountPage: React.FC = () => {
       console.error("Update email error:", error);
       toast({
         title: "Failed to update email",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
     } finally {
@@ -133,8 +133,7 @@ const SettingsAccountPage: React.FC = () => {
       console.error("Update password error:", error);
       toast({
         title: "Failed to update password",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
     } finally {
@@ -171,8 +170,7 @@ const SettingsAccountPage: React.FC = () => {
       console.error("Delete account error:", error);
       toast({
         title: "Failed to delete account",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
       setIsDeleting(false);
@@ -183,9 +181,9 @@ const SettingsAccountPage: React.FC = () => {
   if (!user) {
     return (
       <TabsContent value="account" className="space-y-4 mt-6">
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex-center-justify min-h-[400px]">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="icon-lg animate-spin text-primary" />
             <p className="text-muted-foreground">Loading account settings...</p>
           </div>
         </div>
@@ -216,14 +214,14 @@ const SettingsAccountPage: React.FC = () => {
 
 
 
-          {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
+          {false && (
             <div className="border-t pt-6">
               <h3 className="text-lg font-medium mb-4">Update Email</h3>
               <form onSubmit={handleUpdateEmail} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                     <Input
                       id="email"
                       type="email"
@@ -238,7 +236,7 @@ const SettingsAccountPage: React.FC = () => {
                 <Button type="submit" disabled={isUpdatingEmail}>
                   {isUpdatingEmail ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 icon-sm animate-spin" />
                       Updating...
                     </>
                   ) : (
@@ -253,14 +251,14 @@ const SettingsAccountPage: React.FC = () => {
           )}
 
           {/* Password Update - Only for email/password accounts, not for OAuth */}
-          {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
+          {false && (
             <div className="border-t pt-6">
               <h3 className="text-lg font-medium mb-4">Update Password</h3>
               <form onSubmit={handleUpdatePassword} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                     <Input
                       id="new-password"
                       type="password"
@@ -275,7 +273,7 @@ const SettingsAccountPage: React.FC = () => {
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm New Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                     <Input
                       id="confirm-password"
                       type="password"
@@ -290,7 +288,7 @@ const SettingsAccountPage: React.FC = () => {
                 <Button type="submit" disabled={isUpdatingPassword}>
                   {isUpdatingPassword ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 icon-sm animate-spin" />
                       Updating...
                     </>
                   ) : (
@@ -314,7 +312,7 @@ const SettingsAccountPage: React.FC = () => {
               }}
               className="w-fit gap-2"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="icon-sm" />
               Sign Out
             </Button>
           </div>
@@ -328,7 +326,7 @@ const SettingsAccountPage: React.FC = () => {
 
             <div className="space-y-4">
               <Alert variant="destructive" className="mb-4">
-                <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="icon-sm" />
                 <AlertTitle>Delete Account</AlertTitle>
                 <AlertDescription>
                   This action permanently deletes your account and all
@@ -354,12 +352,12 @@ const SettingsAccountPage: React.FC = () => {
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="icon-sm animate-spin" />
                     Deleting Account...
                   </>
                 ) : (
                   <>
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="icon-sm" />
                     Delete Account
                   </>
                 )}

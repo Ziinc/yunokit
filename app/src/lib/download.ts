@@ -1,4 +1,5 @@
 import { ContentItem } from './api/SchemaApi';
+import { toISODateString } from '@/utils/date';
 
 type ExportFormat = 'csv' | 'json' | 'jsonl';
 
@@ -57,7 +58,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 };
 
 export const downloadContent = async (items: ContentItem[], format: ExportFormat): Promise<void> => {
-  const timestamp = new Date().toISOString().slice(0, 10);
+  const timestamp = toISODateString();
   
   let content: string;
   let mimeType: string;

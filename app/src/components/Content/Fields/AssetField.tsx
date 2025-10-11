@@ -2,9 +2,12 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+// DestructiveButton removed; use base Button with destructive variant
 import { Image, FileUp, X, FileImage } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
+import { hasItems } from "@/lib/guards";
+import { Z_INDEX } from "@/lib/css-constants";
 
 interface AssetFieldProps {
   id: string;
@@ -80,14 +83,14 @@ export const AssetField: React.FC<AssetFieldProps> = ({
       <Label htmlFor={id}>{name}</Label>
       
       <div className="space-y-2">
-        {selectedAssets.length > 0 ? (
-          <div className={isMultiple ? "grid grid-cols-2 gap-2" : ""}>
+        {hasItems(selectedAssets) ? (
+          <div className={isMultiple ? `grid grid-cols-2 gap-2` : ""}>
             {selectedAssets.map(asset => (
               <Card key={asset.id} className="p-2 relative group">
-                <div className="absolute top-2 right-2 z-10">
+                <div className={`absolute top-2 right-2 ${Z_INDEX.dropdown}`}>
                   <Button
-                    type="button"
                     variant="destructive"
+                    type="button"
                     size="icon"
                     className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleRemoveAsset(asset.id)}
@@ -130,7 +133,7 @@ export const AssetField: React.FC<AssetFieldProps> = ({
             <DialogHeader>
               <DialogTitle>Asset Library</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto py-4">
+            <div className={`grid grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto py-4`}>
               {filteredAssets.map(asset => (
                 <Card 
                   key={asset.id} 
@@ -147,7 +150,7 @@ export const AssetField: React.FC<AssetFieldProps> = ({
                         className="w-full h-full object-cover"
                       />
                       {selectedAssetIds.includes(asset.id) && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                        <div className={`absolute inset-0 bg-primary/20 flex items-center justify-center`}>
                           <div className="bg-primary text-primary-foreground rounded-full p-1">
                             <Image className="h-4 w-4" />
                           </div>
@@ -155,7 +158,7 @@ export const AssetField: React.FC<AssetFieldProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="aspect-video flex items-center justify-center bg-muted rounded-sm">
+                    <div className={`aspect-video flex items-center justify-center bg-muted rounded-sm`}>
                       <FileImage className="h-8 w-8 text-muted-foreground" />
                     </div>
                   )}

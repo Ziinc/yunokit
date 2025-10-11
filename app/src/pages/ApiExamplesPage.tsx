@@ -3,11 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Code, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ContentSchemaRow, SchemaField } from "@/lib/api/SchemaApi";
-import { useToast } from "@/hooks/use-toast";
 
-export const ApiExamplesPage: React.FC = () => {
-  const [copied, setCopied] = useState<string | null>(null);
+import { useToast } from "@/hooks/use-toast";
+import { useNullableState } from "@/hooks/useNullableState";
+// Use Tailwind utilities directly; remove css-constants
+
+export const ApiExamplesPage = () => {
+  const [copied, setCopied] = useNullableState<string>(null);
   const { toast } = useToast();
 
   const copyToClipboard = (text: string, id: string) => {
@@ -20,39 +22,7 @@ export const ApiExamplesPage: React.FC = () => {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  // Generate a sample response for a schema
-  const generateSampleResponse = (schema: ContentSchemaRow) => {
-    const sample: Record<string, unknown> = {
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    };
 
-          schema.fields.forEach((field: SchemaField) => {
-      switch(field.type) {
-        case "string":
-          sample[field.name] = `Sample ${field.name}`;
-          break;
-        case "number":
-          sample[field.name] = 42;
-          break;
-        case "boolean":
-          sample[field.name] = true;
-          break;
-        case "array":
-          sample[field.name] = ["item1", "item2", "item3"];
-          break;
-        case "date":
-          sample[field.name] = new Date().toISOString();
-          break;
-        case "object":
-          sample[field.name] = { key: "value" };
-          break;
-        default:
-          sample[field.name] = "Sample value";
-      }
-    });
-    
-    return sample;
-  };
 
   return (
     <div className="space-y-6">
@@ -81,7 +51,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey)`}</code>
               <Button
                 size="icon"
                 variant="ghost"
-                className="absolute top-2 right-2 h-8 w-8"
+                className={`absolute top-2 right-2 h-8 w-8`}
                 onClick={() => copyToClipboard(`import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'YOUR_SUPABASE_URL'
@@ -89,7 +59,7 @@ const supabaseKey = 'YOUR_SUPABASE_KEY'
 
 export const supabase = createClient(supabaseUrl, supabaseKey)`, "setup")}
               >
-                {copied === "setup" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied === "setup" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
               </Button>
             </div>
           </CardContent>
@@ -109,7 +79,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey)`, "setup")}
           <CardContent className="p-0">
             <Tabs defaultValue="posts">
               <div className="px-6 pt-2">
-                <TabsList className="grid grid-cols-3 mb-4">
+                <TabsList className={`grid grid-cols-3 mb-4`}>
                   <TabsTrigger value="posts">Forum Posts</TabsTrigger>
                   <TabsTrigger value="comments">Comments</TabsTrigger>
                   <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -117,7 +87,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey)`, "setup")}
               </div>
 
               <TabsContent value="posts" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-6`}>
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Get Forum Posts</h3>
                     <div className="relative rounded-md bg-muted p-4">
@@ -166,7 +136,7 @@ const getForumPosts = async (sort = 'new') => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Get forum posts with optional sorting
 const getForumPosts = async (sort = 'new') => {
   let query = supabase
@@ -208,7 +178,7 @@ const getForumPosts = async (sort = 'new') => {
   return data
 }`, "get-posts")}
                       >
-                        {copied === "get-posts" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "get-posts" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
 
@@ -240,7 +210,7 @@ const createForumPost = async (postData) => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Create a new forum post
 const createForumPost = async (postData) => {
   const { data, error } = await supabase
@@ -263,7 +233,7 @@ const createForumPost = async (postData) => {
   return data[0]
 }`, "create-post")}
                       >
-                        {copied === "create-post" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "create-post" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
                   </div>
@@ -294,7 +264,7 @@ const createForumPost = async (postData) => {
               </TabsContent>
 
               <TabsContent value="comments" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-6`}>
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Get Comments for a Post</h3>
                     <div className="relative rounded-md bg-muted p-4">
@@ -346,7 +316,7 @@ const getCommentsForPost = async (postId) => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Get comments for a specific post
 const getCommentsForPost = async (postId) => {
   const { data, error } = await supabase
@@ -391,7 +361,7 @@ const getCommentsForPost = async (postId) => {
   return rootComments
 }`, "get-comments")}
                       >
-                        {copied === "get-comments" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "get-comments" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
 
@@ -431,7 +401,7 @@ const addComment = async (commentData) => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Add a new comment to a post
 const addComment = async (commentData) => {
   const { data, error } = await supabase
@@ -462,7 +432,7 @@ const addComment = async (commentData) => {
   return data[0]
 }`, "add-comment")}
                       >
-                        {copied === "add-comment" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "add-comment" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
                   </div>
@@ -511,7 +481,7 @@ const addComment = async (commentData) => {
               </TabsContent>
 
               <TabsContent value="chat" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-6`}>
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Get Chat Messages</h3>
                     <div className="relative rounded-md bg-muted p-4">
@@ -543,7 +513,7 @@ const getChatMessages = async (conversationId, limit = 50) => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Get chat messages for a conversation
 const getChatMessages = async (conversationId, limit = 50) => {
   const { data, error } = await supabase
@@ -568,7 +538,7 @@ const getChatMessages = async (conversationId, limit = 50) => {
   return data.reverse() // Return in chronological order
 }`, "get-chats")}
                       >
-                        {copied === "get-chats" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "get-chats" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
 
@@ -598,7 +568,7 @@ const sendChatMessage = async (messageData) => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Send a new chat message
 const sendChatMessage = async (messageData) => {
   const { data, error } = await supabase
@@ -619,7 +589,7 @@ const sendChatMessage = async (messageData) => {
   return data[0]
 }`, "send-chat")}
                       >
-                        {copied === "send-chat" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "send-chat" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
 
@@ -652,7 +622,7 @@ const subscription = subscribeToChat('conversation-123', (newMessage) => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Subscribe to real-time chat messages
 const subscribeToChat = (conversationId, callback) => {
   return supabase
@@ -676,7 +646,7 @@ const subscription = subscribeToChat('conversation-123', (newMessage) => {
 // To unsubscribe when component unmounts:
 // subscription.unsubscribe()`, "realtime-chat")}
                       >
-                        {copied === "realtime-chat" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "realtime-chat" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
                   </div>
@@ -756,7 +726,7 @@ const createConversation = async (conversationData) => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className={`absolute top-2 right-2 h-8 w-8`}
                         onClick={() => copyToClipboard(`// Create a new chat conversation
 const createConversation = async (conversationData) => {
   const { data, error } = await supabase
@@ -798,7 +768,7 @@ const createConversation = async (conversationData) => {
   return data[0]
 }`, "create-conversation")}
                       >
-                        {copied === "create-conversation" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied === "create-conversation" ? <Check className="icon-sm" /> : <Copy className="icon-sm" />}
                       </Button>
                     </div>
                   </div>
@@ -808,301 +778,7 @@ const createConversation = async (conversationData) => {
           </CardContent>
         </Card>
 
-        {/* TODO: Update with ContentSchemaRow examples */}
-        {[].map((schema) => (
-          <Card key={schema.id} id={`api-${schema.id}`} className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Code className="h-5 w-5" />
-                {schema.name} API
-              </CardTitle>
-              <CardDescription>
-                Interact with {schema.name.toLowerCase()} data using Supabase client
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Tabs defaultValue="get">
-                <div className="px-6 pt-2">
-                  <TabsList className="grid grid-cols-4 mb-4">
-                    <TabsTrigger value="get">Get</TabsTrigger>
-                    <TabsTrigger value="create">Create</TabsTrigger>
-                    <TabsTrigger value="update">Update</TabsTrigger>
-                    <TabsTrigger value="delete">Delete</TabsTrigger>
-                  </TabsList>
-                </div>
 
-                <TabsContent value="get" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Fetch all {schema.name}</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{`// Get all ${schema.name.toLowerCase()}
-const get${schema.name} = async () => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .select('*')
-  
-  if (error) {
-    console.error('Error fetching ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data
-}`}</code>
-                        </pre>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute top-2 right-2 h-8 w-8"
-                          onClick={() => copyToClipboard(`// Get all ${schema.name.toLowerCase()}
-const get${schema.name} = async () => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .select('*')
-  
-  if (error) {
-    console.error('Error fetching ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data
-}`, `get-${schema.id}`)}
-                        >
-                          {copied === `get-${schema.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-
-                      <h3 className="text-lg font-medium">Fetch a single {schema.name.toLowerCase()}</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{`// Get a specific ${schema.name.toLowerCase()} by ID
-const get${schema.name}ById = async (id) => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .select('*')
-    .eq('id', id)
-    .single()
-  
-  if (error) {
-    console.error('Error fetching ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data
-}`}</code>
-                        </pre>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute top-2 right-2 h-8 w-8"
-                          onClick={() => copyToClipboard(`// Get a specific ${schema.name.toLowerCase()} by ID
-const get${schema.name}ById = async (id) => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .select('*')
-    .eq('id', id)
-    .single()
-  
-  if (error) {
-    console.error('Error fetching ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data
-}`, `get-single-${schema.id}`)}
-                        >
-                          {copied === `get-single-${schema.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Example Response</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{JSON.stringify([generateSampleResponse(schema)], null, 2)}</code>
-                        </pre>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="create" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Create a new {schema.name.toLowerCase()}</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{`// Create a new ${schema.name.toLowerCase()}
-const create${schema.name} = async (${schema.name.toLowerCase()}Data) => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .insert([${schema.name.toLowerCase()}Data])
-    .select()
-  
-  if (error) {
-    console.error('Error creating ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data[0]
-}`}</code>
-                        </pre>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute top-2 right-2 h-8 w-8"
-                          onClick={() => copyToClipboard(`// Create a new ${schema.name.toLowerCase()}
-const create${schema.name} = async (${schema.name.toLowerCase()}Data) => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .insert([${schema.name.toLowerCase()}Data])
-    .select()
-  
-  if (error) {
-    console.error('Error creating ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data[0]
-}`, `create-${schema.id}`)}
-                        >
-                          {copied === `create-${schema.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Example Response</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{JSON.stringify(generateSampleResponse(schema), null, 2)}</code>
-                        </pre>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="update" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Update a {schema.name.toLowerCase()}</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{`// Update an existing ${schema.name.toLowerCase()}
-const update${schema.name} = async (id, updates) => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .update(updates)
-    .eq('id', id)
-    .select()
-  
-  if (error) {
-    console.error('Error updating ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data[0]
-}`}</code>
-                        </pre>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute top-2 right-2 h-8 w-8"
-                          onClick={() => copyToClipboard(`// Update an existing ${schema.name.toLowerCase()}
-const update${schema.name} = async (id, updates) => {
-  const { data, error } = await supabase
-    .from('${schema.id}')
-    .update(updates)
-    .eq('id', id)
-    .select()
-  
-  if (error) {
-    console.error('Error updating ${schema.name.toLowerCase()}:', error)
-    return null
-  }
-  
-  return data[0]
-}`, `update-${schema.id}`)}
-                        >
-                          {copied === `update-${schema.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Example Response</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{JSON.stringify(generateSampleResponse(schema), null, 2)}</code>
-                        </pre>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="delete" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Delete a {schema.name.toLowerCase()}</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{`// Delete a ${schema.name.toLowerCase()} by ID
-const delete${schema.name} = async (id) => {
-  const { error } = await supabase
-    .from('${schema.id}')
-    .delete()
-    .eq('id', id)
-  
-  if (error) {
-    console.error('Error deleting ${schema.name.toLowerCase()}:', error)
-    return false
-  }
-  
-  return true
-}`}</code>
-                        </pre>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute top-2 right-2 h-8 w-8"
-                          onClick={() => copyToClipboard(`// Delete a ${schema.name.toLowerCase()} by ID
-const delete${schema.name} = async (id) => {
-  const { error } = await supabase
-    .from('${schema.id}')
-    .delete()
-    .eq('id', id)
-  
-  if (error) {
-    console.error('Error deleting ${schema.name.toLowerCase()}:', error)
-    return false
-  }
-  
-  return true
-}`, `delete-${schema.id}`)}
-                        >
-                          {copied === `delete-${schema.id}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Example Response</h3>
-                      <div className="relative rounded-md bg-muted p-4">
-                        <pre className="font-mono text-sm overflow-x-auto">
-                          <code>{`{
-  "success": true
-}`}</code>
-                        </pre>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        ))}
       </div>
     </div>
   );

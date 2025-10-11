@@ -10,6 +10,8 @@ ALWAYS run tests for specific files instead of all tests unless explicitly told 
 
 ALAWAYS refer to SPEC.md for app specification
 
+Code should be concise and succinct, with no backward compatability or fallbacks consideration, unless explicitly asked.
+
 ## Repository Structure
 
 - **app/**: React web application (Vite + TypeScript + SWR)

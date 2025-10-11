@@ -9,6 +9,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createForum } from '@/lib/api/ForumsApi';
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+import { createErrorHandler, notifySuccess } from "@/lib/errors";
 
 interface CreateForumData {
   name: string;
@@ -35,6 +36,7 @@ interface CreateForumModalProps {
 const CreateForumModal = ({ onForumCreated }: CreateForumModalProps) => {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
+  const errorHandler = createErrorHandler(toast);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState<CreateForumData>({
@@ -45,53 +47,54 @@ const CreateForumModal = ({ onForumCreated }: CreateForumModalProps) => {
 
   const handleCreate = async () => {
     if (!formData.name.trim()) {
-      toast({
+      errorHandler.handleError(new Error("Forum name is required"), {
         title: "Name required",
-        description: "Please enter a forum name.",
-        variant: "destructive"
+        fallback: "Please enter a forum name."
       });
       return;
     }
 
     if (!currentWorkspace?.id) {
-      toast({
+      errorHandler.handleError(new Error("No workspace selected"), {
         title: "No workspace selected",
-        description: "Please select a workspace to create a forum.",
-        variant: "destructive"
+        fallback: "Please select a workspace to create a forum."
       });
       return;
     }
     
-    try {
-      setIsCreating(true);
-      const forumData = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || null,
-        // Note: The backend should handle the multi_thread field when creating posts
-        // For now we're storing it as forum metadata if needed
-};
-      
-      const response = await createForum(forumData, currentWorkspace.id);
-      
-      if (response.data) {
-        onForumCreated(response.data);
-        setFormData({ name: '', description: '', commentThreading: 'multi' });
-        setShowCreateDialog(false);
-        toast({
-          title: "Forum created",
-          description: "New forum has been created successfully.",
-        });
+    setIsCreating(true);
+
+    await errorHandler.withErrorHandling(
+      async () => {
+        const forumData = {
+          name: formData.name.trim(),
+          description: formData.description.trim() || null,
+          // Note: The backend should handle the multi_thread field when creating posts
+          // For now we're storing it as forum metadata if needed
+        };
+
+        const response = await createForum(forumData, currentWorkspace.id);
+
+        if (response.data) {
+          notifySuccess(toast, {
+            title: "Success",
+            description: "Forum created successfully"
+          });
+          onForumCreated(response.data);
+          setFormData({ name: '', description: '', commentThreading: 'single' });
+          setShowCreateDialog(false);
+        } else {
+          throw new Error("Failed to create forum");
+        }
+      },
+      {
+        title: "Error",
+        fallback: "Failed to create forum. Please try again.",
+        prefix: "Failed to create forum"
       }
-    } catch (error) {
-      console.error("Error creating forum:", error);
-      toast({
-        title: "Creation failed",
-        description: "There was an error creating the forum. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreating(false);
-    }
+    );
+
+    setIsCreating(false);
   };
 
   const handleCancel = () => {
@@ -110,7 +113,7 @@ const CreateForumModal = ({ onForumCreated }: CreateForumModalProps) => {
     <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
+          <Plus className="icon-sm" />
           Create Forum
         </Button>
       </DialogTrigger>
@@ -186,7 +189,7 @@ const CreateForumModal = ({ onForumCreated }: CreateForumModalProps) => {
           <Button onClick={handleCreate} disabled={isCreating || !formData.name.trim()}>
             {isCreating ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 icon-sm animate-spin" />
                 Creating...
               </>
             ) : (

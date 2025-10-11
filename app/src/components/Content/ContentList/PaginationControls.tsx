@@ -1,12 +1,4 @@
-import React from "react";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "@/components/ui/pagination";
+import { SharedPagination } from "@/components/ui/shared-pagination";
 import { 
   Select, 
   SelectContent, 
@@ -24,14 +16,14 @@ interface PaginationControlsProps {
   pageSizeOptions?: number[];
 }
 
-export const PaginationControls: React.FC<PaginationControlsProps> = ({
+export const PaginationControls = ({
   currentPage,
   totalPages,
   onPageChange,
   itemsPerPage,
   onItemsPerPageChange,
   pageSizeOptions = [10, 25, 50, 100]
-}) => {
+}: PaginationControlsProps) => {
   return (
     <div className="flex items-center justify-between">
       <div>
@@ -53,48 +45,11 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
       </div>
       
       <div className="flex items-center">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              {currentPage === 1 ? (
-                <PaginationPrevious
-                  className="pointer-events-none opacity-50"
-                  tabIndex={-1}
-                  aria-disabled="true"
-                />
-              ) : (
-                <PaginationPrevious
-                  onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
-                />
-              )}
-            </PaginationItem>
-            
-            {[...Array(totalPages)].map((_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink
-                  isActive={currentPage === i + 1}
-                  onClick={() => onPageChange(i + 1)}
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            
-            <PaginationItem>
-              {currentPage === totalPages ? (
-                <PaginationNext
-                  className="pointer-events-none opacity-50"
-                  tabIndex={-1}
-                  aria-disabled="true"
-                />
-              ) : (
-                <PaginationNext
-                  onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
-                />
-              )}
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        <SharedPagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
       </div>
     </div>
   );

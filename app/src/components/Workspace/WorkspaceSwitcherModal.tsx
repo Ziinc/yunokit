@@ -47,6 +47,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/utils";
 
 interface WorkspaceSwitcherModalProps {
   open: boolean;
@@ -216,8 +217,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
     } catch (error) {
       toast({
         title: "Failed to link project",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
     } finally {

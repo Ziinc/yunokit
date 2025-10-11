@@ -45,15 +45,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  isFeatureEnabled,
-  FeatureFlags,
-  FeatureFlag,
-} from "@/lib/featureFlags";
+// Feature flags removed; all gated features disabled by default
 import { isAuthenticated } from "@/lib/api/auth";
-const SignInPage: React.FC = () => {
+import { getErrorMessage } from "@/lib/utils";
+import { useNullableState } from "@/hooks/useNullableState";
+// Use Tailwind utilities directly; remove css-constants
+const SignInPage = () => {
   // State for OAuth loading indicators
-  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading, clearOauthLoading] = useNullableState<string>(null);
 
   // Testimonial quotes organized by micro app
   const testimonialsByApp = {
@@ -217,13 +216,10 @@ const SignInPage: React.FC = () => {
       console.error("Sign in error:", error);
       toast({
         title: "Sign in failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Authentication failed. Please try again",
+        description: getErrorMessage(error, "Authentication failed. Please try again"),
         variant: "destructive",
       });
-      setOauthLoading(null);
+      clearOauthLoading();
     }
   };
 
@@ -254,8 +250,7 @@ const SignInPage: React.FC = () => {
       console.error("Sign in error:", error);
       toast({
         title: "Sign in failed",
-        description:
-          error instanceof Error ? error.message : "Invalid email or password",
+        description: getErrorMessage(error, "Invalid email or password"),
         variant: "destructive",
       });
     } finally {
@@ -310,10 +305,7 @@ const SignInPage: React.FC = () => {
       console.error("Registration error:", error);
       toast({
         title: "Registration failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Could not create your account",
+        description: getErrorMessage(error, "Could not create your account"),
         variant: "destructive",
       });
     } finally {
@@ -353,8 +345,7 @@ const SignInPage: React.FC = () => {
       console.error("Password reset error:", error);
       toast({
         title: "Failed to send reset email",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
     } finally {
@@ -451,7 +442,7 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+    <div className={`min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100`}>
       {/* Floating sparkles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <Sparkles className="absolute top-[10%] left-[5%] text-yellow-400 h-10 w-10 animate-pulse" />
@@ -481,10 +472,10 @@ const SignInPage: React.FC = () => {
         />
       </div>
 
-      <div className="p-4 z-10 flex flex-col lg:flex-row max-w-7xl w-full gap-8 items-center justify-center">
-        <Card className="w-full max-w-md shadow-xl z-10">
+      <div className={`p-4 ${Z_INDEX.dropdown} flex flex-col lg:flex-row max-w-7xl w-full gap-8 flex items-center justify-center`}>
+        <Card className={`w-full max-w-md shadow-xl ${Z_INDEX.dropdown}`}>
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-48 h-12 flex items-center justify-center">
+            <div className={`mx-auto mb-4 w-48 h-12 flex items-center justify-center`}>
               <img
                 src="/branding.png"
                 alt="Yunokit Logo"
@@ -502,13 +493,13 @@ const SignInPage: React.FC = () => {
           </CardHeader>
 
           {showRegister ? (
-            isFeatureEnabled(FeatureFlags.EMAIL_AUTH) ? (
+            false ? (
               <form onSubmit={handleRegister}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="register-email">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                       <Input
                         id="register-email"
                         type="email"
@@ -599,13 +590,11 @@ const SignInPage: React.FC = () => {
             <>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
-                  {isFeatureEnabled(
-                    FeatureFlags.GITHUB_AUTH as FeatureFlag
-                  ) && (
+                  {false && (
                     <Button
                       onClick={() => handleOAuthSignIn("github")}
                       className="w-full bg-gray-900 hover:bg-gray-800 text-white"
-                      disabled={!!oauthLoading}
+                      disabled={oauthLoading !== null}
                     >
                       {oauthLoading === "github" ? (
                         <>
@@ -630,7 +619,7 @@ const SignInPage: React.FC = () => {
                   <Button
                     onClick={() => handleOAuthSignIn("google")}
                     className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300"
-                    disabled={!!oauthLoading}
+                    disabled={oauthLoading !== null}
                   >
                     {oauthLoading === "google" ? (
                       <>
@@ -662,11 +651,11 @@ const SignInPage: React.FC = () => {
                     )}
                   </Button>
 
-                  {isFeatureEnabled("microsoftAuth") && (
+                  {false && (
                     <Button
                       onClick={() => handleOAuthSignIn("microsoft")}
                       className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                      disabled={!!oauthLoading}
+                      disabled={oauthLoading !== null}
                     >
                       {oauthLoading === "microsoft" ? (
                         <>
@@ -692,7 +681,7 @@ const SignInPage: React.FC = () => {
                   )}
                 </div>
 
-                {isFeatureEnabled(FeatureFlags.EMAIL_AUTH) && (
+                {false && (
                   <form onSubmit={handleEmailSignIn}>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
@@ -709,7 +698,7 @@ const SignInPage: React.FC = () => {
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                           <Input
                             id="email"
                             type="email"
@@ -723,7 +712,7 @@ const SignInPage: React.FC = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <div className="flex justify-between items-center">
+                        <div className="flex items-center justify-between">
                           <Label htmlFor="password">Password</Label>
                           <Dialog
                             open={resetDialogOpen}
@@ -777,7 +766,7 @@ const SignInPage: React.FC = () => {
                                   >
                                     {isResetSending ? (
                                       <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Loader2 className="mr-2 icon-sm animate-spin" />
                                         Sending...
                                       </>
                                     ) : (
@@ -790,7 +779,7 @@ const SignInPage: React.FC = () => {
                           </Dialog>
                         </div>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                           <Input
                             id="password"
                             type="password"
@@ -810,7 +799,7 @@ const SignInPage: React.FC = () => {
                       >
                         {isSigningIn ? (
                           <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-2 icon-sm animate-spin" />
                             Signing in...
                           </>
                         ) : (
@@ -824,7 +813,7 @@ const SignInPage: React.FC = () => {
 
               <CardFooter className="flex flex-col">
                 <div className="text-center w-full">
-                  {isFeatureEnabled("emailAuth") && (
+                  {false && (
                     <p className="text-sm text-muted-foreground mb-4">
                       Don't have an account?{" "}
                       <button
@@ -876,9 +865,9 @@ const SignInPage: React.FC = () => {
         </Card>
 
         {/* Marketing Banner */}
-        <div className="hidden lg:flex flex-col max-w-xl w-full h-[800px] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl px-16 py-8 text-white shadow-xl relative">
+        <div className={`hidden lg:flex lg:flex-col max-w-xl w-full h-[800px] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl px-16 py-8 text-white shadow-xl relative`}>
           {/* Micro App Icons with Navigation */}
-          <div className="flex justify-center items-center gap-6 mb-8">
+          <div className={`flex items-center justify-center gap-6 mb-8`}>
             <button
               type="button"
               onClick={prevSlide}
@@ -887,29 +876,29 @@ const SignInPage: React.FC = () => {
               <ChevronLeft className="h-5 w-5 text-white" />
             </button>
             
-            {slides.map((slide, index) => (
+            {slides.map((slide) => (
               <button
-                key={index}
+                key={slide.appName}
                 type="button"
                 onClick={() => {
-                  setSlideIndex(index);
+                  setSlideIndex(slides.findIndex(s => s.appName === slide.appName));
                   updateTestimonials();
                 }}
                 className={`group flex flex-col items-center transition-all duration-300 ${
-                  index === slideIndex 
+                  slides[slideIndex].appName === slide.appName 
                     ? 'scale-110' 
                     : 'scale-100 opacity-70 hover:opacity-90 hover:scale-105'
                 }`}
               >
                 <div className={`p-4 rounded-2xl bg-white transition-all duration-300 shadow-lg ${
-                  index === slideIndex 
+                  slides[slideIndex].appName === slide.appName 
                     ? 'bg-opacity-100 shadow-xl ring-4 ring-yellow-300 ring-opacity-50' 
                     : 'bg-opacity-80 hover:bg-opacity-90'
                 }`}>
                   {slide.appIcon}
                 </div>
                 <span className={`mt-2 text-xs font-medium transition-all duration-300 ${
-                  index === slideIndex 
+                  slides[slideIndex].appName === slide.appName 
                     ? 'text-yellow-200 font-bold' 
                     : 'text-white text-opacity-80'
                 }`}>
@@ -927,7 +916,7 @@ const SignInPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="mb-5 flex items-center justify-center relative">
+          <div className={`mb-5 flex items-center justify-center relative`}>
             {currentSlide.icon}
             <h2 className="text-3xl font-bold text-center">{currentSlide.heading}</h2>
             <Sparkles className="h-10 w-10 ml-3 animate-pulse text-yellow-300" />
@@ -936,11 +925,11 @@ const SignInPage: React.FC = () => {
           <p className="text-lg mb-6 font-medium">{currentSlide.description}</p>
 
           {/* Features grid */}
-          <div className="flex flex-col gap-2 mb-6">
-            {currentSlide.features.map((feature, index) => (
+          <div className={`flex flex-col gap-2 mb-6`}>
+            {currentSlide.features.map((feature) => (
               <div
-                key={index}
-                className="flex items-center hover:bg-white hover:bg-opacity-10 rounded-lg p-2 transition-all"
+                key={feature.title}
+                className={`flex items-center justify-start hover:bg-white hover:bg-opacity-10 rounded-lg p-2 transition-all`}
               >
                 <div className="mr-3 bg-white bg-opacity-20 rounded-full p-1.5 flex-shrink-0">
                   {feature.icon}
@@ -967,8 +956,8 @@ const SignInPage: React.FC = () => {
           <div className="mt-auto">
             <div className="-mx-16 border-t border-white border-opacity-20"></div>
             <div className="pt-6">
-              <div className="flex flex-col items-center justify-center">
-                <div className="flex items-center">
+            <div className="flex flex-col items-center justify-center">
+                <div className="flex items-center justify-start">
                   <Clock className="h-5 w-5 mr-2 text-yellow-300" />
                   <p className="text-sm font-medium">Save 5+ hours every week!*</p>
                 </div>

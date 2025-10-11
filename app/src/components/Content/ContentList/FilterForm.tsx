@@ -2,12 +2,13 @@ import React, { useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Search, Filter } from "lucide-react";
+import { Search, RotateCcw } from "lucide-react";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ContentSchemaRow } from '@/lib/api/SchemaApi';
+import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 
 const filterSchema = z.object({
   schemaId: z.string().optional(),
@@ -57,22 +59,6 @@ export const FilterForm: React.FC<FilterFormProps> = ({
     control: form.control
   });
 
-  // Check if current form values are different from initial/active filters
-  const hasChanges = useMemo(() => {
-    // Convert empty strings to "all" for comparison
-    const normalizeValue = (value: string | undefined) => value || "all";
-    
-    // Get the current active filters
-    const activeSchemaId = normalizeValue(initialValues?.schemaId);
-    const activeSearch = initialValues?.search || "";
-
-    // Compare current values with active filters
-    return (
-      formValues.search !== activeSearch ||
-      normalizeValue(formValues.schemaId) !== activeSchemaId
-    );
-  }, [formValues, initialValues]);
-
   // Calculate if any filters are active
   const hasActiveFilters = useMemo(() => {
     if (!initialValues) return false;
@@ -82,6 +68,15 @@ export const FilterForm: React.FC<FilterFormProps> = ({
       initialValues.schemaId
     );
   }, [initialValues]);
+
+  // Create debounced callback for search changes
+  const debouncedSubmit = useDebounceCallback((values: FilterValues) => {
+    const normalizedValues = {
+      ...values,
+      schemaId: values.schemaId === "all" ? "" : values.schemaId
+    };
+    onSubmitFilters(normalizedValues);
+  }, 500);
 
   // Reset form with new values when initialValues change
   useEffect(() => {
@@ -96,30 +91,30 @@ export const FilterForm: React.FC<FilterFormProps> = ({
     }
   }, [initialValues, form]);
 
-  const handleSubmit = (values: FilterValues) => {
-    // Check if all values are in default state
-    const isDefaultState = 
-      !values.search && 
-      values.schemaId === "all";
+  // Auto-submit on form changes with differential debouncing
+  useEffect(() => {
+    if (!formValues) return;
 
-    if (isDefaultState) {
-      resetFilters();
+    // Immediate submission for schema changes
+    if (formValues.schemaId !== initialValues?.schemaId) {
+      debouncedSubmit.cancel?.(); // Cancel pending search debounces
+      const normalizedValues = {
+        ...formValues,
+        schemaId: formValues.schemaId === "all" ? "" : formValues.schemaId
+      };
+      onSubmitFilters(normalizedValues);
       return;
     }
 
-    const normalizedValues = {
-      ...values,
-      schemaId: values.schemaId === "all" ? "" : values.schemaId
-    };
-    onSubmitFilters(normalizedValues);
-  };
+    // Debounced submission for search changes
+    if (formValues.search !== initialValues?.search) {
+      debouncedSubmit(formValues);
+    }
+  }, [formValues, initialValues, debouncedSubmit, onSubmitFilters]);
 
   return (
     <Form {...form} key={`form-${initialValues?.schemaId || 'all'}`}>
-      <form 
-        onSubmit={form.handleSubmit(handleSubmit)} 
-        className="flex flex-wrap items-center gap-2"
-      >
+      <div className="flex flex-wrap items-center gap-2">
         <FormField
           control={form.control}
           name="search"
@@ -146,23 +141,26 @@ export const FilterForm: React.FC<FilterFormProps> = ({
             const schemaIdValue = field.value || "all";
             return (
               <FormItem className="w-[140px] mr-1">
-                <Select 
-                  onValueChange={field.onChange} 
-                  value={schemaIdValue}
-                  defaultValue="all"
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="All Schemas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Schemas</SelectItem>
-                    {schemas.map(schema => (
-                      <SelectItem key={schema.id} value={schema.id.toString()}>
-                        {schema.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel className="text-xs text-muted-foreground mb-1">Schema</FormLabel>
+                <FormControl>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={schemaIdValue}
+                    defaultValue="all"
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="All Schemas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Schemas</SelectItem>
+                      {schemas.map(schema => (
+                        <SelectItem key={schema.id} value={schema.id.toString()}>
+                          {schema.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
               </FormItem>
             );
           }}
@@ -176,23 +174,15 @@ export const FilterForm: React.FC<FilterFormProps> = ({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-9"
+              className="h-9 w-9 p-0"
               onClick={resetFilters}
+              title="Reset filters"
             >
-              Reset
+              <RotateCcw className="h-4 w-4" />
             </Button>
           )}
-          <Button 
-            type="submit" 
-            size="sm" 
-            className="h-9" 
-            disabled={!hasChanges}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Apply
-          </Button>
         </div>
-      </form>
+      </div>
     </Form>
   );
 };

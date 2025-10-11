@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { checkSupabaseConnection, listProjects } from "@/lib/supabase";
 import useSWR from "swr";
+import { getErrorMessage } from "@/lib/utils";
 
-const SettingsWorkspacesPage: React.FC = () => {
+const SettingsWorkspacesPage = () => {
   const { workspaces, isLoading, refreshWorkspaces, currentWorkspace, setCurrentWorkspace } = useWorkspace();
   const { toast } = useToast();
   const [workspaceLimit, setWorkspaceLimit] = useState<{ 
@@ -106,7 +108,7 @@ const SettingsWorkspacesPage: React.FC = () => {
       console.error("Delete workspace error:", error);
       toast({
         title: "Failed to delete workspace",
-        description: error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive"
       });
       
@@ -142,8 +144,8 @@ const SettingsWorkspacesPage: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            <div className="flex-center-justify py-8">
+              <Loader2 className="icon-lg text-primary animate-spin" />
             </div>
           ) : (
             <>
@@ -151,7 +153,7 @@ const SettingsWorkspacesPage: React.FC = () => {
               {workspaceLimit && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <CheckCircle2 className="icon-sm text-green-500" />
                     <span className="text-sm text-muted-foreground">
                       You have {workspaceLimit.currentCount} workspace{workspaceLimit.currentCount !== 1 ? 's' : ''} on your {workspaceLimit.planName} plan
                       {workspaceLimit.isAlphaPhase && (
@@ -173,7 +175,7 @@ const SettingsWorkspacesPage: React.FC = () => {
                   
                   {workspaceLimit.additionalWorkspaces > 0 && (
                     <div className="flex items-center gap-2 ml-7">
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <AlertTriangle className="icon-sm text-amber-500" />
                       <span className="text-sm text-muted-foreground">
                         {workspaceLimit.additionalWorkspaces} workspace{workspaceLimit.additionalWorkspaces !== 1 ? 's' : ''} above your plan's {workspaceLimit.includedWorkspaces} included workspace{workspaceLimit.includedWorkspaces !== 1 ? 's' : ''}
                         {!workspaceLimit.isAlphaPhase && (
@@ -196,13 +198,13 @@ const SettingsWorkspacesPage: React.FC = () => {
 
               {/* Existing Workspaces */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Your Workspaces</h3>
-                  <Button onClick={() => setShowCreateModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Your Workspaces</h3>
+                    <Button onClick={() => setShowCreateModal(true)}>
+                    <Plus className="icon-sm mr-2" />
                     Create Workspace
-                  </Button>
-                </div>
+                    </Button>
+                  </div>
                 {workspaces.map(workspace => {
                   const isCurrentWorkspace = workspace.id === currentWorkspace?.id;
                   const hasProject = !!workspace.project_ref;
@@ -212,8 +214,8 @@ const SettingsWorkspacesPage: React.FC = () => {
                   const isHealthy = project?.status === "ACTIVE_HEALTHY";
 
                   return (
-                    <Card key={workspace.id} className={isCurrentWorkspace ? "border-primary border-2" : ""}>
-                      <CardContent className="flex items-center justify-between p-4">
+                    <Card key={workspace.id} className={cn(isCurrentWorkspace && "border-primary border-2") }>
+                      <CardContent className="flex items-center justify-between padding-card">
                         <div className="flex items-center gap-3 flex-grow">
                           <div className="flex-grow">
                             <div className="flex items-center gap-2 mb-1">
@@ -231,17 +233,12 @@ const SettingsWorkspacesPage: React.FC = () => {
                             {/* Project status indicator */}
                             {hasProject && project ? (
                               <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
-                                <span
-                                  className={
-                                    "inline-block w-2 h-2 rounded-full " +
-                                    (isHealthy ? "bg-green-500" : "bg-red-500")
-                                  }
-                                />
+                                <span className={cn("inline-block w-2 h-2 rounded-full", isHealthy ? "bg-success" : "bg-danger")} />
                                 {project.name} {!isHealthy && `(${project.status})`}
                               </div>
                             ) : (
-                              <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-0.5 text-xs font-medium text-amber-700">
-                                <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                              <div className="inline-flex items-center gap-2 rounded-full bg-warning/10 px-3 py-0.5 text-xs font-medium text-warning">
+                                <span className="inline-block w-2 h-2 rounded-full bg-warning" />
                                 No project linked
                               </div>
                             )}
@@ -265,7 +262,7 @@ const SettingsWorkspacesPage: React.FC = () => {
                             title="Delete workspace"
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
+                            <Trash2 className="icon-sm mr-2" />
                             Delete Workspace
                           </Button>
                         </div>

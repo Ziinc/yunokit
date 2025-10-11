@@ -1,6 +1,6 @@
 import { supabase } from "../supabase";
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from "../../../database.types";
+import type { Database } from "../../../database.types";
 import { getUser } from "./auth";
 
 type DbClient = SupabaseClient<Database>;

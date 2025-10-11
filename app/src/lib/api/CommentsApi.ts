@@ -1,5 +1,6 @@
 import { supabase } from '../supabase';
 import type { Comment } from '@/types/comments';
+import { buildApiUrl } from './utils';
 
 const base = 'proxy/community/comments';
 
@@ -12,8 +13,10 @@ export const getCommentById = async (id: string) => {
 };
 
 export const getCommentsByContentItem = async (contentItemId: string) => {
-  const qp = new URLSearchParams({ contentItemId });
-  return await supabase.functions.invoke<Comment[]>(`${base}?${qp.toString()}`, { method: 'GET' });
+  return await supabase.functions.invoke<Comment[]>(
+    buildApiUrl(base, { query: { contentItemId } }),
+    { method: 'GET' }
+  );
 };
 
 
@@ -32,13 +35,17 @@ export const deleteComment = async (id: string) => {
 
 
 export const getThreadedComments = async (contentItemId: string) => {
-  const qp = new URLSearchParams({ contentItemId });
-  return await supabase.functions.invoke<Comment[]>(`${base}/thread?${qp.toString()}`, { method: 'GET' });
+  return await supabase.functions.invoke<Comment[]>(
+    buildApiUrl(base, { path: 'thread', query: { contentItemId } }),
+    { method: 'GET' }
+  );
 };
 
 export const getCommentsByForum = async (forumId: string) => {
-  const qp = new URLSearchParams({ forumId });
-  return await supabase.functions.invoke<Comment[]>(`${base}?${qp.toString()}`, { method: 'GET' });
+  return await supabase.functions.invoke<Comment[]>(
+    buildApiUrl(base, { query: { forumId } }),
+    { method: 'GET' }
+  );
 };
 
 export const getPendingComments = async () => {

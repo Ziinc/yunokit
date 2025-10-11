@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,9 +8,11 @@ import { SelectionActionsBar, SelectionAction } from "@/components/ui/SelectionA
 import { Loader2, MessageSquare, Archive, Trash2, ArchiveRestore, Undo2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { notifyError } from "@/lib/errors";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { listForums, archiveForum, deleteForum, unarchiveForum, restoreForum, permanentDeleteForum } from '@/lib/api/ForumsApi';
 import CreateForumModal from '@/components/Community/CreateForumModal';
+import { useNullableState } from "@/hooks/useNullableState";
 
 interface Forum {
   id: number;
@@ -21,7 +24,7 @@ interface Forum {
   archived_at?: string;
 }
 
-const ForumManagementPage: React.FC = () => {
+const ForumManagementPage = () => {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
   const navigate = useNavigate();
@@ -29,7 +32,7 @@ const ForumManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedForums, setSelectedForums] = useState<Set<number>>(new Set());
   const [currentTab, setCurrentTab] = useState('active');
-  const [highlightedForumId, setHighlightedForumId] = useState<number | null>(null);
+  const [highlightedForumId, setHighlightedForumId] = useNullableState<number>(null);
 
   // Clear selection when tab changes
   useEffect(() => {
@@ -48,11 +51,10 @@ const ForumManagementPage: React.FC = () => {
         const { data } = await listForums(currentWorkspace.id);
         setForums(data || []);
       } catch (error) {
-        console.error("Error loading forums:", error);
-        toast({
+        notifyError(toast, error, {
           title: "Error",
-          description: "Failed to load forums. Please try again.",
-          variant: "destructive"
+          fallback: "Failed to load forums. Please try again.",
+          prefix: "Error loading forums",
         });
       } finally {
         setLoading(false);
@@ -126,12 +128,11 @@ const ForumManagementPage: React.FC = () => {
         description: `${selectedIds.length} forum(s) ${actionText} successfully.`,
       });
     } catch (error) {
-      console.error(`Error ${action}ing forums:`, error);
       const actionText = action === 'permanent-delete' ? 'permanently delete' : action;
-      toast({
+      notifyError(toast, error, {
         title: "Error",
-        description: `Failed to ${actionText} forums. Please try again.`,
-        variant: "destructive"
+        fallback: `Failed to ${actionText} forums. Please try again.`,
+        prefix: `Error ${action}ing forums`,
       });
     }
   };
@@ -177,13 +178,13 @@ const ForumManagementPage: React.FC = () => {
         actions.push(
           {
             label: "Archive",
-            icon: <Archive className="h-4 w-4" />,
+            icon: <Archive className="icon-sm" />,
             onClick: () => handleBulkAction('archive'),
             variant: "outline"
           },
           {
             label: "Delete",
-            icon: <Trash2 className="h-4 w-4" />,
+            icon: <Trash2 className="icon-sm" />,
             onClick: () => handleBulkAction('delete'),
             variant: "destructive"
           }
@@ -193,13 +194,13 @@ const ForumManagementPage: React.FC = () => {
         actions.push(
           {
             label: "Unarchive",
-            icon: <ArchiveRestore className="h-4 w-4" />,
+            icon: <ArchiveRestore className="icon-sm" />,
             onClick: () => handleBulkAction('unarchive'),
             variant: "outline"
           },
           {
             label: "Delete",
-            icon: <Trash2 className="h-4 w-4" />,
+            icon: <Trash2 className="icon-sm" />,
             onClick: () => handleBulkAction('delete'),
             variant: "destructive"
           }
@@ -209,13 +210,13 @@ const ForumManagementPage: React.FC = () => {
         actions.push(
           {
             label: "Restore",
-            icon: <Undo2 className="h-4 w-4" />,
+            icon: <Undo2 className="icon-sm" />,
             onClick: () => handleBulkAction('restore'),
             variant: "outline"
           },
           {
             label: "Permanent Delete",
-            icon: <X className="h-4 w-4" />,
+            icon: <X className="icon-sm" />,
             onClick: () => handleBulkAction('permanent-delete'),
             variant: "destructive"
           }
@@ -275,7 +276,7 @@ const ForumManagementPage: React.FC = () => {
                 return (
                   <TableRow 
                     key={forum.id}
-                    className={isHighlighted ? "forum-highlight" : ""}
+                    className={cn(isHighlighted && "forum-highlight")}
                   >
                     <TableCell>
                       <Checkbox
@@ -291,7 +292,7 @@ const ForumManagementPage: React.FC = () => {
                           disabled={status !== 'active'}
                         >
                           <div className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4" />
+                            <MessageSquare className="icon-sm" />
                             {forum.name}
                           </div>
                         </button>
@@ -364,8 +365,8 @@ const ForumManagementPage: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex-center-justify py-12">
+            <Loader2 className="icon-lg animate-spin text-muted-foreground" />
           </div>
         ) : (
           <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">

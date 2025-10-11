@@ -1,4 +1,24 @@
 import { ContentItem } from "./SchemaApi";
+import {
+  COMMON_BOOLEAN_FIELDS,
+  COMMON_CONTENT_FIELDS,
+  COMMON_METADATA_FIELDS,
+  COMMON_ENUM_OPTIONS,
+  IMAGE_ASSET_TYPES,
+  createRelationField,
+  createEnumField,
+  createMultiselectField
+} from "./templateFieldConstants";
+import { generateUUID } from "../utils";
+
+/**
+ * Generates a short ID with an optional prefix
+ */
+function generateShortId(prefix?: string): string {
+  const shortId = crypto.randomUUID().slice(0, 8)
+  return prefix ? `${prefix}-${shortId}` : shortId
+}
+import { nowISO } from "@/utils/date";
 
 // Local type for template generation - different from database ContentSchemaRow
 interface ContentSchema {
@@ -27,43 +47,43 @@ interface ContentSchema {
 export const generateEcommerceTemplate = (): { schemas: ContentSchema[], contentItems: ContentItem[] } => {
   // Create schemas
   const productSchema: ContentSchema = {
-    id: `product-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('product'),
     name: 'Product',
     description: 'Product catalog with variants, pricing, and inventory',
     isCollection: true,
     schemaType: 'collection',
     fields: [
-      { id: 'name', name: 'Product Name', type: 'markdown', required: true },
-      { id: 'description', name: 'Description', type: 'markdown', required: true },
+      { ...COMMON_CONTENT_FIELDS.name(), name: 'Product Name' },
+      { ...COMMON_CONTENT_FIELDS.description(), required: true },
       { id: 'price', name: 'Price', type: 'markdown', required: true },
-      { id: 'images', name: 'Images', type: 'asset', assetTypes: ['image/jpeg', 'image/png', 'image/webp'], isMultiple: true },
-      { id: 'inStock', name: 'In Stock', type: 'boolean', defaultValue: true },
+      COMMON_CONTENT_FIELDS.images(),
+      COMMON_BOOLEAN_FIELDS.inStock(),
       { id: 'sku', name: 'SKU', type: 'markdown' },
       { id: 'weight', name: 'Weight (kg)', type: 'markdown' },
       { id: 'dimensions', name: 'Dimensions', type: 'json' },
       { id: 'variants', name: 'Variants', type: 'json', description: 'Color, size, etc.' },
-      { id: 'featured', name: 'Featured Product', type: 'boolean', defaultValue: false },
-      { id: 'categoryId', name: 'Category', type: 'relation', relationTarget: 'category' }
+      COMMON_BOOLEAN_FIELDS.featured('Product'),
+      createRelationField('categoryId', 'Category', 'category')
     ]
   };
 
   const categorySchema: ContentSchema = {
-    id: `category-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('category'),
     name: 'Category',
     description: 'Product categories and subcategories',
     isCollection: true,
     schemaType: 'collection',
     fields: [
-      { id: 'name', name: 'Category Name', type: 'markdown', required: true },
-      { id: 'description', name: 'Description', type: 'markdown' },
-      { id: 'image', name: 'Image', type: 'asset', assetTypes: ['image/jpeg', 'image/png', 'image/webp'] },
-      { id: 'parentCategory', name: 'Parent Category', type: 'relation', relationTarget: 'category' },
-      { id: 'featured', name: 'Featured Category', type: 'boolean', defaultValue: false }
+      { ...COMMON_CONTENT_FIELDS.name(), name: 'Category Name' },
+      COMMON_CONTENT_FIELDS.description(),
+      { id: 'image', name: 'Image', type: 'asset', assetTypes: IMAGE_ASSET_TYPES },
+      createRelationField('parentCategory', 'Parent Category', 'category'),
+      COMMON_BOOLEAN_FIELDS.featured('Category')
     ]
   };
 
   const customerSchema: ContentSchema = {
-    id: `customer-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('customer'),
     name: 'Customer',
     description: 'Customer profiles and accounts',
     isCollection: true,
@@ -75,12 +95,12 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       { id: 'phone', name: 'Phone', type: 'markdown' },
       { id: 'address', name: 'Address', type: 'json' },
       { id: 'orders', name: 'Orders', type: 'relation', relationTarget: 'order', isMultiple: true },
-      { id: 'customerSince', name: 'Customer Since', type: 'datetime', defaultValue: new Date().toISOString() }
+      { id: 'customerSince', name: 'Customer Since', type: 'datetime', defaultValue: nowISO() }
     ]
   };
 
   const orderSchema: ContentSchema = {
-    id: `order-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('order'),
     name: 'Order',
     description: 'Customer orders and order history',
     isCollection: true,
@@ -89,7 +109,7 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       { id: 'orderNumber', name: 'Order Number', type: 'markdown', required: true },
       { id: 'customer', name: 'Customer', type: 'relation', relationTarget: 'customer', required: true },
       { id: 'products', name: 'Products', type: 'relation', relationTarget: 'product', isMultiple: true, required: true },
-      { id: 'orderDate', name: 'Order Date', type: 'datetime', defaultValue: new Date().toISOString() },
+      { id: 'orderDate', name: 'Order Date', type: 'datetime', defaultValue: nowISO() },
       { id: 'status', name: 'Status', type: 'enum', options: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] },
       { id: 'totalAmount', name: 'Total Amount', type: 'markdown', required: true },
       { id: 'paymentMethod', name: 'Payment Method', type: 'enum', options: ['Credit Card', 'PayPal', 'Bank Transfer', 'Cash on Delivery'] },
@@ -98,7 +118,7 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
   };
 
   const cartSchema: ContentSchema = {
-    id: `cart-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('cart'),
     name: 'Shopping Cart',
     description: 'Customer shopping cart',
     isCollection: true,
@@ -106,8 +126,8 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
     fields: [
       { id: 'customer', name: 'Customer', type: 'relation', relationTarget: 'customer' },
       { id: 'items', name: 'Cart Items', type: 'json', required: true },
-      { id: 'createdAt', name: 'Created At', type: 'datetime', defaultValue: new Date().toISOString() },
-      { id: 'updatedAt', name: 'Updated At', type: 'datetime', defaultValue: new Date().toISOString() },
+      { id: 'createdAt', name: 'Created At', type: 'datetime', defaultValue: nowISO() },
+      { id: 'updatedAt', name: 'Updated At', type: 'datetime', defaultValue: nowISO() },
       { id: 'totalItems', name: 'Total Items', type: 'markdown' },
       { id: 'totalAmount', name: 'Total Amount', type: 'markdown' }
     ]
@@ -116,13 +136,13 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
   // Create sample content items
   const categories: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: categorySchema.id,
       title: 'Electronics',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'Electronics',
         description: 'Electronic devices and accessories',
@@ -132,13 +152,13 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       updatedBy: 'admin@example.com'
     },
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: categorySchema.id,
       title: 'Clothing',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'Clothing',
         description: 'Apparel and fashion items',
@@ -151,13 +171,13 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
 
   const products: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: productSchema.id,
       title: 'Wireless Headphones',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'Wireless Headphones',
         description: 'High-quality wireless headphones with noise cancellation',
@@ -171,13 +191,13 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
       updatedBy: 'admin@example.com',
     },
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: productSchema.id,
       title: 'Cotton T-Shirt',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'Cotton T-Shirt',
         description: 'Comfortable 100% cotton t-shirt',
@@ -194,13 +214,13 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
 
   const customers: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: customerSchema.id,
       title: 'John Doe',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         firstName: 'John',
         lastName: 'Doe',
@@ -212,7 +232,7 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
           state: 'CA',
           zip: '12345'
         }),
-        customerSince: new Date().toISOString()
+        customerSince: nowISO()
       },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',
@@ -231,27 +251,27 @@ export const generateEcommerceTemplate = (): { schemas: ContentSchema[], content
 export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentItems: ContentItem[] } => {
   // Create schemas
   const postSchema: ContentSchema = {
-    id: `post-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('post'),
     name: 'Blog Post',
     description: 'Blog posts with rich content',
     isCollection: true,
     schemaType: 'collection',
     fields: [
-      { id: 'title', name: 'Title', type: 'markdown', required: true },
-      { id: 'content', name: 'Content', type: 'markdown', required: true },
-      { id: 'excerpt', name: 'Excerpt', type: 'markdown' },
-      { id: 'featuredImage', name: 'Featured Image', type: 'asset', assetTypes: ['image/jpeg', 'image/png', 'image/webp'] },
-      { id: 'publishDate', name: 'Publish Date', type: 'datetime', defaultValue: new Date().toISOString() },
-      { id: 'author', name: 'Author', type: 'relation', relationTarget: 'author', required: true },
-      { id: 'category', name: 'Category', type: 'relation', relationTarget: 'blogCategory' },
-      { id: 'tags', name: 'Tags', type: 'multiselect', options: ['Technology', 'Design', 'Marketing', 'Business', 'Lifestyle'] },
-      { id: 'featured', name: 'Featured Post', type: 'boolean', defaultValue: false },
-      { id: 'relatedPosts', name: 'Related Posts', type: 'relation', relationTarget: 'post', isMultiple: true }
+      COMMON_CONTENT_FIELDS.title(),
+      COMMON_CONTENT_FIELDS.content(),
+      COMMON_CONTENT_FIELDS.excerpt(),
+      COMMON_CONTENT_FIELDS.featuredImage(),
+      COMMON_METADATA_FIELDS.publishDate(),
+      createRelationField('author', 'Author', 'author', true),
+      createRelationField('category', 'Category', 'blogCategory'),
+      createMultiselectField('tags', 'Tags', [...COMMON_ENUM_OPTIONS.categories.blog]),
+      COMMON_BOOLEAN_FIELDS.featured('Post'),
+      createRelationField('relatedPosts', 'Related Posts', 'post', false, true)
     ]
   };
 
   const authorSchema: ContentSchema = {
-    id: `author-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('author'),
     name: 'Author',
     description: 'Blog authors and contributors',
     isCollection: true,
@@ -267,7 +287,7 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
   };
 
   const categorySchema: ContentSchema = {
-    id: `blogCategory-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('blogCategory'),
     name: 'Blog Category',
     description: 'Blog post categories',
     isCollection: true,
@@ -282,7 +302,7 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
   };
 
   const commentSchema: ContentSchema = {
-    id: `comment-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('comment'),
     name: 'Comment',
     description: 'Blog post comments',
     isCollection: true,
@@ -292,7 +312,7 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       { id: 'name', name: 'Commenter Name', type: 'markdown', required: true },
       { id: 'email', name: 'Commenter Email', type: 'email', required: true },
       { id: 'content', name: 'Comment', type: 'markdown', required: true },
-      { id: 'createdAt', name: 'Created At', type: 'datetime', defaultValue: new Date().toISOString() },
+      { id: 'createdAt', name: 'Created At', type: 'datetime', defaultValue: nowISO() },
       { id: 'approved', name: 'Approved', type: 'boolean', defaultValue: false },
       { id: 'parentComment', name: 'Parent Comment', type: 'relation', relationTarget: 'comment' }
     ]
@@ -301,13 +321,13 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
   // Create sample content items
   const authors: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: authorSchema.id,
       title: 'Jane Smith',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'Jane Smith',
         bio: 'Jane is a tech writer with over 10 years of experience in the industry.',
@@ -321,13 +341,13 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
 
   const categories: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: categorySchema.id,
       title: 'Technology',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'Technology',
         description: 'Latest tech news and reviews',
@@ -337,13 +357,13 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       updatedBy: 'admin@example.com',
     },
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: categorySchema.id,
       title: 'Design',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'Design',
         description: 'UI/UX and graphic design',
@@ -356,18 +376,18 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
 
   const posts: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: postSchema.id,
       title: 'Getting Started with React',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         title: 'Getting Started with React',
         content: '# Introduction to React\n\nReact is a JavaScript library for building user interfaces...',
         excerpt: 'Learn the basics of React and how to build your first component.',
-        publishDate: new Date().toISOString(),
+        publishDate: nowISO(),
         author: authors[0].id,
         category: categories[0].id,
         tags: ['Technology', 'React'],
@@ -377,17 +397,17 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       updatedBy: 'jane.smith@example.com',
     },
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: postSchema.id,
       title: 'UI Design Principles',
       status: 'draft',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
       data: {
         title: 'UI Design Principles',
         content: '# Fundamental UI Design Principles\n\nConsistency, feedback, and simplicity...',
         excerpt: 'Learn the key principles of effective UI design.',
-        publishDate: new Date().toISOString(),
+        publishDate: nowISO(),
         author: authors[0].id,
         category: categories[1].id,
         tags: ['Design', 'UI/UX']
@@ -409,7 +429,7 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
 export const generateTutorialsTemplate = (): { schemas: ContentSchema[], contentItems: ContentItem[] } => {
   // Create schemas
   const courseSchema: ContentSchema = {
-    id: `course-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('course'),
     name: 'Course',
     description: 'Educational courses with modules and lessons',
     isCollection: true,
@@ -430,7 +450,7 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
   };
 
   const lessonSchema: ContentSchema = {
-    id: `lesson-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('lesson'),
     name: 'Lesson',
     description: 'Individual lessons within courses',
     isCollection: true,
@@ -448,7 +468,7 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
   };
 
   const moduleSchema: ContentSchema = {
-    id: `module-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('module'),
     name: 'Module',
     description: 'Course modules containing lessons',
     isCollection: true,
@@ -462,7 +482,7 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
   };
 
   const instructorSchema: ContentSchema = {
-    id: `instructor-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('instructor'),
     name: 'Instructor',
     description: 'Course instructors and educators',
     isCollection: true,
@@ -478,7 +498,7 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
   };
 
   const quizSchema: ContentSchema = {
-    id: `quiz-${crypto.randomUUID().slice(0, 8)}`,
+    id: generateShortId('quiz'),
     name: 'Quiz',
     description: 'Assessments for lessons',
     isCollection: true,
@@ -496,13 +516,13 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
   // Create sample content items
   const instructors: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: instructorSchema.id,
       title: 'David Johnson',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         name: 'David Johnson',
         bio: 'Full-stack developer and educator with 15 years of experience.',
@@ -516,13 +536,13 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
 
   const courses: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: courseSchema.id,
       title: 'JavaScript Fundamentals',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         title: 'JavaScript Fundamentals',
         description: 'Learn the core concepts of JavaScript programming from the ground up.',
@@ -541,13 +561,13 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
 
   const modules: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: moduleSchema.id,
       title: 'Getting Started with JavaScript',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         title: 'Getting Started with JavaScript',
         description: 'Introduction to JavaScript and setup',
@@ -561,13 +581,13 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
 
   const lessons: ContentItem[] = [
     {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       schemaId: lessonSchema.id,
       title: 'Introduction to JavaScript',
       status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      publishedAt: nowISO(),
       data: {
         title: 'Introduction to JavaScript',
         content: '# Welcome to JavaScript\n\nIn this lesson, you will learn the basics of JavaScript...',

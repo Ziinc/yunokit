@@ -9,7 +9,7 @@ import { ContentListHeader } from "@/components/Content/ContentList/ContentListH
 import { DataTable, TableColumn } from "@/components/DataTable";
 import { SortOption } from "@/components/Content/ContentList/SortSelect";
 import { ResultsBar } from "@/components/Content/ContentList/ResultsBar";
-import { Loader2, Download, Trash2, EyeOff, Users, FileText, Calendar } from "lucide-react";
+import * as Icons from "@/components/ui/icons";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
   AlertDialog,
@@ -37,16 +37,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { notifyError } from "@/lib/errors";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
 import { downloadContent } from "@/lib/download";
-import { formatDate } from "@/utils/formatDate";
+import { formatDate } from "@/utils/date";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+// Removed css-constants abstraction; use Tailwind utilities directly
 // Note: For this page, we fetch data directly to align with tests that mock API modules and SWR.
 import type { ContentItemRow } from '@/lib/api/ContentApi';
 
 
 // Content Table Configuration
-const ContentTable: React.FC<{
+type ContentTableProps = {
   items: ContentItemRow[];
   schemas: ContentSchemaRow[];
   onRowClick: (item: ContentItemRow) => void;
@@ -56,15 +58,17 @@ const ContentTable: React.FC<{
   itemsPerPage: number;
   onItemsPerPageChange: (value: number) => void;
   onSelectionChange?: (selectedItems: ContentItemRow[]) => void;
-}> = (props) => {
-  const columns: TableColumn<ContentItemRow>[] = [
+};
+
+const ContentTable = (props: ContentTableProps) => {
+  const columns: TableColumn<ContentItemRow>[] = React.useMemo(() => [
     {
       header: "Title",
       accessorKey: "title",
       width: "300px",
       cell: (item) => (
         <div className="flex items-center gap-2">
-          <FileText size={16} className="text-muted-foreground" />
+          <Icons.FileText size={16} className="text-muted-foreground" />
           {item.title}
         </div>
       ),
@@ -84,15 +88,15 @@ const ContentTable: React.FC<{
     },
     {
       header: (
-        <span className="flex items-center gap-2">
-          <Calendar size={14} />
+        <span className="flex-center-gap-2">
+          <Icons.Calendar size={14} />
           Last Updated
         </span>
       ),
       accessorKey: "updated_at",
       cell: (item) => formatDate(item.updated_at),
     },
-  ];
+  ], [props.schemas]);
 
   return (
     <DataTable
@@ -109,7 +113,7 @@ type Author = {
   label: string;
 };
 
-const ContentManagerPage: React.FC = () => {
+const ContentManagerPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -128,7 +132,6 @@ const ContentManagerPage: React.FC = () => {
     allItems: [] as ContentItemRow[],
     schemas: [] as ContentSchemaRow[],
     loading: { content: false, schemas: false },
-    errors: { content: null as unknown, schemas: null as unknown }
   });
 
   // Use ContentSchemaRow directly
@@ -147,25 +150,33 @@ const ContentManagerPage: React.FC = () => {
   });
   
   // Custom hook for data management
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (schemaFilter?: string) => {
     if (!currentWorkspace) return;
 
     setDataState(prev => ({
       ...prev,
       loading: { content: true, schemas: true },
-      errors: { content: null, schemas: null }
     }));
 
     const loadContent = async () => {
       try {
-        const res = await ContentApiMod.listContentItems(currentWorkspace.id);
+        const options: ContentApiMod.ListContentItemsOptions = {};
+        
+        // Only add schemaIds if filtering by specific schema
+        if (schemaFilter && schemaFilter !== "all") {
+          const schemaId = parseInt(schemaFilter);
+          if (!isNaN(schemaId)) {
+            options.schemaIds = [schemaId];
+          }
+        }
+
+        const res = await ContentApiMod.listContentItems(currentWorkspace.id, options);
         return res.data ?? [];
       } catch (error) {
-        console.error("Error loading content:", error);
-        toast({
+        notifyError(toast, error, {
           title: "Error loading content",
-          description: "There was a problem loading your content.",
-          variant: "destructive"
+          fallback: "There was a problem loading your content.",
+          prefix: "Error loading content",
         });
         throw error;
       }
@@ -176,11 +187,10 @@ const ContentManagerPage: React.FC = () => {
         const res = await SchemaApiMod.listSchemas(currentWorkspace.id);
         return res.data ?? [];
       } catch (error) {
-        console.error("Error loading schemas:", error);
-        toast({
+        notifyError(toast, error, {
           title: "Error loading schemas",
-          description: "There was a problem loading your schemas.",
-          variant: "destructive"
+          fallback: "There was a problem loading your schemas.",
+          prefix: "Error loading schemas",
         });
         throw error;
       }
@@ -196,16 +206,12 @@ const ContentManagerPage: React.FC = () => {
       allItems: contentResult.status === 'fulfilled' ? contentResult.value : prev.allItems,
       schemas: schemasResult.status === 'fulfilled' ? schemasResult.value : prev.schemas,
       loading: { content: false, schemas: false },
-      errors: {
-        content: contentResult.status === 'rejected' ? contentResult.reason : null,
-        schemas: schemasResult.status === 'rejected' ? schemasResult.reason : null
-      }
     }));
   }, [currentWorkspace, toast]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadData(filterValues.schemaId);
+  }, [loadData, filterValues.schemaId]);
   
   // Parse and apply filters from URL query parameters
   useEffect(() => {
@@ -316,11 +322,10 @@ const ContentManagerPage: React.FC = () => {
         description: `Your ${format.toUpperCase()} download is ready.`,
       });
     } catch (error) {
-      console.error("Error downloading content:", error);
-      toast({
+      notifyError(toast, error, {
         title: "Download failed",
-        description: error.message || "There was an error downloading your content. Please try again.",
-        variant: "destructive",
+        fallback: "There was an error downloading your content. Please try again.",
+        prefix: "Download failed",
       });
     }
   };
@@ -336,7 +341,7 @@ const ContentManagerPage: React.FC = () => {
       
       // Mutate SWR cache to refresh data
       // Refresh content after delete
-      loadData();
+      loadData(filterValues.schemaId);
       setSelectedItems([]);
       setShowDeleteDialog(false);
       
@@ -345,11 +350,10 @@ const ContentManagerPage: React.FC = () => {
         description: `Successfully deleted ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
       });
     } catch (error) {
-      console.error("Error deleting items:", error);
-      toast({
+      notifyError(toast, error, {
         title: "Delete failed",
-        description: "There was an error deleting the selected items. Please try again.",
-        variant: "destructive",
+        fallback: "There was an error deleting the selected items. Please try again.",
+        prefix: "Delete failed",
       });
     }
   };
@@ -372,7 +376,7 @@ const ContentManagerPage: React.FC = () => {
       
       // Mutate SWR cache to refresh data
       // Refresh content after update
-      loadData();
+      loadData(filterValues.schemaId);
       setSelectedItems([]);
       
       toast({
@@ -380,11 +384,10 @@ const ContentManagerPage: React.FC = () => {
         description: `Successfully unpublished ${ids.length} item${ids.length !== 1 ? 's' : ''}.`,
       });
     } catch (error) {
-      console.error("Error unpublishing items:", error);
-      toast({
+      notifyError(toast, error, {
         title: "Unpublish failed",
-        description: "There was an error unpublishing the selected items. Please try again.",
-        variant: "destructive",
+        fallback: "There was an error unpublishing the selected items. Please try again.",
+        prefix: "Unpublish failed",
       });
     }
   };
@@ -426,11 +429,11 @@ const ContentManagerPage: React.FC = () => {
     }
   };
   
-  const sortOptions: SortOption[] = [
+  const sortOptions: SortOption[] = React.useMemo(() => ([
     { value: "title", label: "Title (A-Z)" },
     { value: "updatedAt", label: "Last Updated" },
     { value: "createdAt", label: "Date Created" },
-  ];
+  ]), []);
   
   return (
     <div className="space-y-6">
@@ -439,8 +442,8 @@ const ContentManagerPage: React.FC = () => {
         schemas={activeSchemas}
       />
       
-      <div className="rounded-md border bg-white">
-        <div className="px-3 py-3 bg-muted/20">
+      <div className={`rounded-md border bg-white`}>
+        <div className={`px-3 py-3 bg-muted/20`}>
           <FilterForm
             onSubmitFilters={onSubmitFilters}
             resetFilters={resetFilters}
@@ -462,28 +465,28 @@ const ContentManagerPage: React.FC = () => {
             actions={[
               {
                 label: "Change Author",
-                icon: <Users size={16} />,
+                icon: <Icons.Users size={16} />,
                 onClick: () => setShowAuthorDialog(true),
               },
               {
                 label: "Unpublish",
-                icon: <EyeOff size={16} />,
+                icon: <Icons.EyeOff size={16} />,
                 onClick: handleUnpublish,
               },
               {
                 label: "Delete",
-                icon: <Trash2 size={16} />,
+                icon: <Icons.Trash2 size={16} />,
                 onClick: () => setShowDeleteDialog(true),
               },
               {
                 label: "Download",
-                icon: <Download size={16} />,
+                icon: <Icons.Download size={16} />,
                 onClick: () => {},
                 customButton: (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8">
-                        <Download size={16} className="mr-2" />
+                        <Icons.Download size={16} className="mr-2" />
                         Download
                       </Button>
                     </DropdownMenuTrigger>
@@ -506,8 +509,8 @@ const ContentManagerPage: React.FC = () => {
         )}
         
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+          <div className="flex-center-justify py-16">
+            <Icons.Loader2 className={`icon-lg animate-spin text-primary mr-2`} />
             <p className="text-lg">Loading content...</p>
           </div>
         ) : (
@@ -571,7 +574,7 @@ const ContentManagerPage: React.FC = () => {
             <Button onClick={handleChangeAuthor} disabled={isChangingAuthor}>
               {isChangingAuthor ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Icons.Loader2 className="mr-2 icon-sm animate-spin" />
                   Applying...
                 </>
               ) : (

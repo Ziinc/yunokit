@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from "react";
 import useSWR from "swr";
 import { getWorkspaces, WorkspaceRow } from "../api/WorkspaceApi";
+import { useNullableState } from "@/hooks/useNullableState";
 
 interface WorkspaceContextType {
   workspaces: WorkspaceRow[];
@@ -18,7 +19,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [currentWorkspace, setCurrentWorkspaceState] =
-    React.useState<WorkspaceRow | null>(null);
+    useNullableState<WorkspaceRow>(null);
   const [initialized, setInitialized] = React.useState(false);
 
   const {

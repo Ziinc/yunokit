@@ -9,14 +9,16 @@ import { QuickstartTemplateDialog } from "@/components/Dashboard/QuickstartTempl
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { isAuthenticated } from "@/lib/api/auth";
-import { formatDate } from "@/utils/formatDate";
+import { formatDate } from "@/utils/date";
 import { listSchemas } from "@/lib/api/SchemaApi";
 import useSWR from "swr";
+import { useNullableState } from "@/hooks/useNullableState";
+// Use Tailwind utilities directly; remove css-constants
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const [quickstartDialogOpen, setQuickstartDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<"ecommerce" | "blogging" | "tutorials" | null>(null);
-  const { currentWorkspace } = useWorkspace();
+  const [selectedTemplate, setSelectedTemplate] = useNullableState<"ecommerce" | "blogging" | "tutorials">(null);
+  const { currentWorkspace, isLoading: workspaceLoading } = useWorkspace();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -56,7 +58,7 @@ const Dashboard: React.FC = () => {
 
   const isLoading = recentEditedLoading || schemasLoading;
 
-  const showQuickstart = schemas.length === 0 && recentlyEditedContent.length === 0;
+  const showQuickstart = !schemasLoading && !workspaceLoading && currentWorkspace && schemas.length === 0;
 
   // Handle authentication check
   useEffect(() => {
@@ -108,8 +110,8 @@ const Dashboard: React.FC = () => {
 
   // Render content list item
   const renderContentItem = (item: ContentItemRow) => (
-    <div className="flex items-center justify-between py-3 group">
-      <div className="flex items-center gap-3">
+    <div className={`flex items-center justify-between py-3 group`}>
+      <div className={`flex items-center justify-start gap-3`}>
         <FileText className="h-5 w-5 text-primary" />
         <div>
           <Link to={`/manager/editor/${item.schema_id}/${item.id}`} className="hover:underline">
@@ -120,7 +122,7 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+              <div className="flex-center-gap-2">
         {item.status === 'draft' && <Badge variant="outline">Draft</Badge>}
         {item.status === 'pending_review' && (
           <Badge variant="secondary" className="bg-amber-100 text-amber-800">Review</Badge>
@@ -134,8 +136,8 @@ const Dashboard: React.FC = () => {
 
   // Loading placeholder
   const renderLoadingPlaceholder = () => (
-    <div className="flex items-center justify-center py-8">
-      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+    <div className="flex-center-justify py-8">
+      <Loader2 className="icon-md animate-spin text-primary mr-2" />
       <p>Loading content...</p>
     </div>
   );
@@ -143,7 +145,7 @@ const Dashboard: React.FC = () => {
   // Empty state
   const renderEmptyState = () => {
     return (
-      <div className="flex flex-col items-center justify-center py-8 min-h-[200px]">
+      <div className={`flex flex-col items-center justify-center py-8 min-h-[200px]`}>
         <Clock className="h-12 w-12 text-muted-foreground" />
         <h3 className="mt-4 text-lg font-medium">No recent activity</h3>
         <p className="mt-2 text-sm text-muted-foreground">Content you edit will appear here</p>
@@ -162,9 +164,9 @@ const Dashboard: React.FC = () => {
 
       {/* Quickstart Templates Section */}
       {showQuickstart && (
-        <Card className="w-full">
+        <Card className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-start gap-standard-sm`}>
               <div>
                 <CardTitle className="text-lg">Quickstart Templates</CardTitle>
                 <CardDescription>
@@ -174,7 +176,7 @@ const Dashboard: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 md:grid-cols-3 gap-standard-md`}>
               <Card className="border border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
                 <CardHeader className="p-4">
                   <ShoppingBag className="h-12 w-12 text-cms-purple mb-3" />
@@ -190,7 +192,7 @@ const Dashboard: React.FC = () => {
                     onClick={() => handleSelectTemplate("ecommerce")}
                   >
                     <span>Use Template</span>
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="icon-sm ml-2" />
                   </Button>
                 </CardFooter>
               </Card>
@@ -210,7 +212,7 @@ const Dashboard: React.FC = () => {
                     onClick={() => handleSelectTemplate("blogging")}
                   >
                     <span>Use Template</span>
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="icon-sm ml-2" />
                   </Button>
                 </CardFooter>
               </Card>
@@ -230,7 +232,7 @@ const Dashboard: React.FC = () => {
                     onClick={() => handleSelectTemplate("tutorials")}
                   >
                     <span>Use Template</span>
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="icon-sm ml-2" />
                   </Button>
                 </CardFooter>
               </Card>
@@ -243,7 +245,7 @@ const Dashboard: React.FC = () => {
         <Card className="w-full">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className={`flex items-center justify-start gap-2 text-lg`}>
                 <Clock className="h-5 w-5 text-primary" />
                 Last Edited
               </CardTitle>
@@ -254,10 +256,10 @@ const Dashboard: React.FC = () => {
             {recentlyEditedContent.length > 0 && (
               <Link 
                 to="/manager?sort=updatedAt" 
-                className="text-sm text-primary font-medium flex items-center hover:underline"
+                className={`text-sm text-primary font-medium flex items-center justify-start hover:underline`}
               >
                 View more
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="icon-sm ml-1" />
               </Link>
             )}
           </CardHeader>

@@ -15,13 +15,15 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { updatePassword } from "@/lib/api/auth";
+import { getErrorMessage } from "@/lib/utils";
+import { useNullableState } from "@/hooks/useNullableState";
 
-const ResetPasswordPage: React.FC = () => {
+const ResetPasswordPage = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useNullableState<string>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -100,10 +102,7 @@ const ResetPasswordPage: React.FC = () => {
       console.error("Password reset error:", error);
       toast({
         title: "Password reset failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Please try again or request a new reset link",
+        description: getErrorMessage(error, "Please try again or request a new reset link"),
         variant: "destructive",
       });
     } finally {
@@ -113,14 +112,14 @@ const ResetPasswordPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-lg text-muted-foreground">
-            Verifying your reset link...
-          </p>
-        </div>
+    <div className="min-h-screen flex-center-justify p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="flex flex-col items-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">
+          Verifying your reset link...
+        </p>
       </div>
+    </div>
     );
   }
 
@@ -148,7 +147,7 @@ const ResetPasswordPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex-center-justify p-4 bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 p-2 rounded-md bg-gradient-to-br from-cms-purple to-cms-blue w-12 h-12 flex items-center justify-center">
@@ -167,7 +166,7 @@ const ResetPasswordPage: React.FC = () => {
             <div className="space-y-2">
               <Label htmlFor="new-password">New Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                 <Input
                   id="new-password"
                   type="password"
@@ -183,7 +182,7 @@ const ResetPasswordPage: React.FC = () => {
             <div className="space-y-2">
               <Label htmlFor="confirm-password">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
                 <Input
                   id="confirm-password"
                   type="password"
@@ -199,7 +198,7 @@ const ResetPasswordPage: React.FC = () => {
             <Button type="submit" className="w-full" disabled={isUpdating}>
               {isUpdating ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 icon-sm animate-spin" />
                   Updating password...
                 </>
               ) : (

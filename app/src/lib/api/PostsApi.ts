@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { buildApiUrl } from './utils';
 
 interface PostData {
   title: string;
@@ -39,6 +40,8 @@ export const deletePost = async (id: number) => {
 };
 
 export const getPostsByForum = async (forumId: number) => {
-  const qp = new URLSearchParams({ forumId: forumId.toString() });
-  return await supabase.functions.invoke<Post[]>(`${base}?${qp.toString()}`, { method: 'GET' });
+  return await supabase.functions.invoke<Post[]>(
+    buildApiUrl(base, { query: { forumId } }),
+    { method: 'GET' }
+  );
 };

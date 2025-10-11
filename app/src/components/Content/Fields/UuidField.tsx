@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { generateUUID } from "@/lib/utils";
+import { BaseField } from "./BaseField";
 
 interface UuidFieldProps {
   id: string;
@@ -23,7 +24,7 @@ export const UuidField: React.FC<UuidFieldProps> = ({
   generateOnCreate,
 }) => {
   const generateUuid = () => {
-    const uuid = crypto.randomUUID();
+    const uuid = generateUUID();
     onChange(uuid);
   };
   
@@ -35,9 +36,8 @@ export const UuidField: React.FC<UuidFieldProps> = ({
   }, []);
   
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{name}</Label>
-      <div className="flex space-x-2">
+    <BaseField id={id} name={name} description={description}>
+      <div className="flex gap-2">
         <Input
           id={id}
           value={value || ""}
@@ -56,9 +56,6 @@ export const UuidField: React.FC<UuidFieldProps> = ({
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
+    </BaseField>
   );
 };

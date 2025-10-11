@@ -102,9 +102,9 @@ export const DataTable = <T extends object>({
                 />
               </TableHead>
             )}
-            {columns.map((column, index) => (
+            {columns.map((column) => (
               <TableHead 
-                key={index} 
+                key={column.accessorKey} 
                 className={cn(column.width && `w-[${column.width}]`, column.className)}
               >
                 {column.header}
@@ -142,8 +142,8 @@ export const DataTable = <T extends object>({
                       </div>
                     </TableCell>
                   )}
-                  {columns.map((column, index) => (
-                    <TableCell key={index} className={column.className}>
+                  {columns.map((column) => (
+                    <TableCell key={column.accessorKey} className={column.className}>
                       {column.cell
                         ? column.cell(item)
                         : (item as Record<string, unknown>)[column.accessorKey] as React.ReactNode}

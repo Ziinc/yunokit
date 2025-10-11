@@ -2,7 +2,7 @@ import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link, useLocation, Navigate, Outlet } from "react-router-dom";
 
-const SettingsPage: React.FC = () => {
+const SettingsPage = () => {
   const location = useLocation();
   const currentTab = location.pathname.split("/settings/")[1] || "account";
 
@@ -41,4 +41,3 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
-

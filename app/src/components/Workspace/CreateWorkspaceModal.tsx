@@ -1,4 +1,4 @@
-import React from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,10 @@ interface CreateWorkspaceModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
+export const CreateWorkspaceModal = ({
   open,
   onOpenChange,
-}) => {
+}: CreateWorkspaceModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>

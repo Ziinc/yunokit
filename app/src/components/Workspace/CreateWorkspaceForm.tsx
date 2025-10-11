@@ -8,6 +8,7 @@ import { createWorkspace } from "@/lib/api/WorkspaceApi";
 import { listProjects } from "@/lib/supabase";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
+import { createErrorHandler, notifySuccess } from "@/lib/errors";
 import {
   Select,
   SelectTrigger,
@@ -31,6 +32,7 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const { refreshWorkspaces, setCurrentWorkspace, workspaces } = useWorkspace();
+  const errorHandler = createErrorHandler(toast);
   const { data: projects = [], isLoading: isLoadingProjects } = useSWR(
     "projects",
     listProjects,
@@ -65,57 +67,56 @@ export const CreateWorkspaceForm: React.FC<CreateWorkspaceFormProps> = ({
     e.preventDefault();
 
     if (!newWorkspaceName.trim()) {
-      toast({
+      errorHandler.handleError(new Error("Workspace name is required"), {
         title: "Workspace name required",
-        description: "Please enter a name for your workspace",
-        variant: "destructive",
+        fallback: "Please enter a name for your workspace"
       });
       return;
     }
 
     if (!selectedProjectId) {
-      toast({
+      errorHandler.handleError(new Error("Project selection is required"), {
         title: "Project selection required",
-        description: "Please select a Supabase project to link to this workspace",
-        variant: "destructive",
+        fallback: "Please select a Supabase project to link to this workspace"
       });
       return;
     }
 
-    try {
-      setIsCreating(true);
-      const newWorkspace = await createWorkspace({
-        name: newWorkspaceName,
-        description: newWorkspaceDescription,
-        project_ref: selectedProjectId,
-      });
+    setIsCreating(true);
 
-      await refreshWorkspaces();
-      setCurrentWorkspace(newWorkspace);
+    await errorHandler.withErrorHandling(
+      async () => {
+        const newWorkspace = await createWorkspace({
+          name: newWorkspaceName,
+          description: newWorkspaceDescription,
+          project_ref: selectedProjectId,
+        });
 
-      toast({
-        title: "Workspace created",
-        description: `${newWorkspaceName} has been created successfully`,
-      });
+        await refreshWorkspaces();
+        setCurrentWorkspace(newWorkspace);
 
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error("Failed to create workspace:", error);
-      toast({
+        notifySuccess(toast, {
+          title: "Workspace created",
+          description: `${newWorkspaceName} has been created successfully`
+        });
+
+        if (onSuccess) {
+          onSuccess();
+        }
+      },
+      {
         title: "Failed to create workspace",
-        description: error instanceof Error ? error.message : "Please try again later",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreating(false);
-    }
+        fallback: "Please try again later",
+        prefix: "Failed to create workspace"
+      }
+    );
+
+    setIsCreating(false);
   };
 
   return (
     <form onSubmit={handleCreateWorkspace} className="space-y-4">
-      <div className="space-y-2">
+      <div className="space-form">
         <Label htmlFor="workspace-name">Workspace Name</Label>
         <Input
           id="workspace-name"

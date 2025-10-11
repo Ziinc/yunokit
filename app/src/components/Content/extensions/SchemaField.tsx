@@ -117,7 +117,7 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos })
     const nodeSize = node.nodeSize;
     const insertPos = pos + nodeSize;
     
-    console.log('Add field after at position:', insertPos);
+    
     
     // TODO: Trigger add field dialog with insertPos
     // This would need to communicate with the TiptapEditor component
@@ -282,7 +282,7 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos })
         <div className="h-4 flex items-center">
           <div className="w-full h-px bg-border opacity-0 group-hover/bottom:opacity-100 transition-opacity"></div>
         </div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover/bottom:opacity-100 transition-opacity z-10">
+        <div className="absolute-center opacity-0 group-hover/bottom:opacity-100 transition-opacity z-10">
           <div className="flex items-center gap-1 bg-background border rounded-md shadow-sm px-2 py-1">
             <TooltipProvider delayDuration={100}>
               <Tooltip>

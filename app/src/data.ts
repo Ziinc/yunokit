@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { isString } from "@/lib/guards";
 
 export type Migration = {
   version: string
@@ -10,7 +11,6 @@ export type Migration = {
   workspace: string
 }
 
-// @ts-ignore
 export const migrations: Migration[] = compileTime(async () => {
   const results: Migration[] = []
   // Read supabase/migrations directly
@@ -26,7 +26,7 @@ export const migrations: Migration[] = compileTime(async () => {
       .sort();
 
       for (const file of files) {
-        if (typeof file === "string") {
+        if (isString(file)) {
           const filePath = path.join(supabaseMigrationsPath, schema, file);
           const content = fs.readFileSync(filePath, "utf8");
           const match = file.match(/^(\d{14})_(.+)\.sql$/);

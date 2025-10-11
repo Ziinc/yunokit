@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { getErrorMessage } from "@/lib/utils";
+import { useNullableState } from "@/hooks/useNullableState";
 
-const AuthCallbackPage: React.FC = () => {
-  const [error, setError] = useState<string | null>(null);
+const AuthCallbackPage = () => {
+  const [error, setError] = useNullableState<string>(null);
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,12 +37,13 @@ const AuthCallbackPage: React.FC = () => {
         }
       } catch (err) {
         console.error("Auth callback error:", err);
-        setError(err instanceof Error ? err.message : "Authentication failed");
-        
+        const msg = getErrorMessage(err, "Authentication failed");
+        setError(msg);
+
         toast({
           title: "Authentication failed",
-          description: err instanceof Error ? err.message : "Could not complete the authentication process",
-          variant: "destructive"
+          description: getErrorMessage(err, "Could not complete the authentication process"),
+          variant: "destructive",
         });
         
         // Redirect to sign-in page after a delay
@@ -52,7 +54,7 @@ const AuthCallbackPage: React.FC = () => {
     };
 
     handleAuthCallback();
-  }, [navigate, toast, location]);
+  }, [navigate, toast]);
 
   if (error) {
     return (
@@ -67,7 +69,7 @@ const AuthCallbackPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex-center-justify p-4">
       <div className="flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <h1 className="text-2xl font-bold">Completing sign in...</h1>

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "../../database.types";
+import type { Database } from "../../database.types";
+import { getErrorMessage } from "@/lib/utils";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
@@ -85,7 +86,7 @@ export const checkSupabaseConnection = async (): Promise<{
     console.error("Connection check error:", error);
     return {
       result: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(error, "Unknown error"),
     };
   }
 };
@@ -116,7 +117,7 @@ export const refreshAccessToken = async (): Promise<{
     console.error("Token refresh error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(error, "Unknown error"),
     };
   }
 };

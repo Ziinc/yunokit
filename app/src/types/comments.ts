@@ -54,7 +54,7 @@ export interface ForumPost {
   views: number;
   likes: number;
   replies: number;
-  commentsCount: number; // Mock field for now
+  commentsCount: number;
   forumId: string;
   author: {
     id: string;
@@ -74,8 +74,8 @@ export interface Forum {
   updated_at?: string;
   deleted_at?: string;
   archived_at?: string;
-  posts_count?: number;  // Mock field for now
-  comments_count?: number; // Mock field for now
+  posts_count?: number;
+  comments_count?: number;
   members_count?: number;
 }
 

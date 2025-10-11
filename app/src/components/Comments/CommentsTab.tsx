@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+// DestructiveBadge removed; use Badge with variant
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +16,8 @@ import {
   Trash2
 } from "lucide-react";
 import { Comment } from "@/types/comments";
+import { cn } from "@/lib/utils";
+import { hasItems } from "@/lib/guards";
 
 type ExtendedComment = Comment & {
   text?: string;
@@ -92,7 +95,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
   };
 
   const handleBulkAction = () => {
-    if (bulkAction && selectedComments.length > 0 && onBulkAction) {
+    if (bulkAction && hasItems(selectedComments) && onBulkAction) {
       onBulkAction(bulkAction, selectedComments);
       setSelectedComments([]);
       setBulkAction("");
@@ -124,42 +127,42 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
           <TabsTrigger 
             value="all" 
             onClick={() => onTabChange("all")}
-            className={currentTab === "all" ? "bg-primary text-primary-foreground" : ""}
+            className={cn(currentTab === "all" && "bg-primary text-primary-foreground")}
           >
             All
           </TabsTrigger>
           <TabsTrigger 
             value="pending" 
             onClick={() => onTabChange("pending")}
-            className={currentTab === "pending" ? "bg-primary text-primary-foreground" : ""}
+            className={cn(currentTab === "pending" && "bg-primary text-primary-foreground")}
           >
             Pending
           </TabsTrigger>
           <TabsTrigger 
             value="flagged" 
             onClick={() => onTabChange("flagged")}
-            className={currentTab === "flagged" ? "bg-primary text-primary-foreground" : ""}
+            className={cn(currentTab === "flagged" && "bg-primary text-primary-foreground")}
           >
             Flagged
           </TabsTrigger>
           <TabsTrigger 
             value="spam" 
             onClick={() => onTabChange("spam")}
-            className={currentTab === "spam" ? "bg-primary text-primary-foreground" : ""}
+            className={cn(currentTab === "spam" && "bg-primary text-primary-foreground")}
           >
             Spam
           </TabsTrigger>
           <TabsTrigger 
             value="replies" 
             onClick={() => onTabChange("replies")}
-            className={currentTab === "replies" ? "bg-primary text-primary-foreground" : ""}
+            className={cn(currentTab === "replies" && "bg-primary text-primary-foreground")}
           >
             Replies
           </TabsTrigger>
         </TabsList>
 
         {/* Bulk Actions */}
-        {selectedComments.length > 0 && (
+        {hasItems(selectedComments) && (
           <div className="mt-4 p-3 bg-muted/50 rounded-md flex items-center gap-3">
             <span className="text-sm font-medium">{selectedComments.length} comments selected</span>
             <Select value={bulkAction} onValueChange={setBulkAction}>
@@ -186,7 +189,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedComments.length === filteredComments.length && filteredComments.length > 0}
+                  checked={selectedComments.length === filteredComments.length && hasItems(filteredComments)}
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>
@@ -207,7 +210,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({
               </TableRow>
             ) : (
               filteredComments.map((comment) => (
-                <TableRow key={comment.id} className={comment.parentId ? "bg-muted/30" : ""}>
+                <TableRow key={comment.id} className={cn(!!comment.parentId && "bg-muted/30") }>
                   <TableCell>
                     <Checkbox
                       checked={selectedComments.includes(comment.id)}
@@ -278,7 +281,7 @@ variant={
                           className="h-8 w-8 p-0"
                           title="Flag comment"
                         >
-                          <Flag size={16} className="text-yellow-500" />
+                          <Flag size={16} className="text-warning" />
                         </Button>
                       )}
 

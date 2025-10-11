@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 import type { Database } from "../../../database.types";
+import { buildApiUrl } from "./utils";
 
 type SchemaRow = Database["yunocontent"]["Tables"]["schemas"]["Row"];
 export interface ContentSchemaRow extends Omit<SchemaRow, "fields"> {
@@ -45,40 +46,18 @@ export interface ContentItem {
   data: Record<string, unknown>;
 }
 
-export interface ContentItemComment {
-  id: string;
-  contentItemId: string;
-  userId: string;
-  userName: string;
-  text: string;
-  createdAt: string;
-  fieldId?: string; // Optional - if comment is about a specific field
-  resolved?: boolean;
-}
 
 export const listSchemas = async (workspaceId: number) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-  });
-
   return await supabase.functions.invoke<ContentSchemaRow[]>(
-    `proxy/content/schemas?${qp.toString()}`,
-    {
-      method: "GET",
-    }
+    buildApiUrl("proxy/content/schemas", { workspaceId }),
+    { method: "GET" }
   );
 };
 
 export const getSchema = async (id: number, workspaceId: number) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-  });
-
   return await supabase.functions.invoke<ContentSchemaRow>(
-    `proxy/content/schemas/${id}?${qp.toString()}`,
-    {
-      method: "GET",
-    }
+    buildApiUrl("proxy/content/schemas", { path: id, workspaceId }),
+    { method: "GET" }
   );
 };
 
@@ -86,16 +65,9 @@ export const createSchema = async (
   schema: Partial<ContentSchemaRow>,
   workspaceId: number
 ) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-  });
-
   return await supabase.functions.invoke<ContentSchemaRow>(
-    `proxy/content/schemas?${qp.toString()}`,
-    {
-      method: "POST",
-      body: schema,
-    }
+    buildApiUrl("proxy/content/schemas", { workspaceId }),
+    { method: "POST", body: schema }
   );
 };
 
@@ -109,16 +81,9 @@ export const updateSchema = async (
   >,
   workspaceId: number
 ) => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-  });
-
   return await supabase.functions.invoke<ContentSchemaRow>(
-    `proxy/content/schemas/${schemaId}?${qp.toString()}`,
-    {
-      method: "PUT",
-      body: schema,
-    }
+    buildApiUrl("proxy/content/schemas", { path: schemaId, workspaceId }),
+    { method: "PUT", body: schema }
   );
 };
 
@@ -126,11 +91,8 @@ export const deleteSchema = async (
   id: number,
   workspaceId: number
 ): Promise<void> => {
-  const qp = new URLSearchParams({
-    workspaceId: workspaceId.toString(),
-  });
-
-  await supabase.functions.invoke(`proxy/content/schemas/${id}?${qp.toString()}`, {
-    method: "DELETE",
-  });
+  await supabase.functions.invoke(
+    buildApiUrl("proxy/content/schemas", { path: id, workspaceId }),
+    { method: "DELETE" }
+  );
 };

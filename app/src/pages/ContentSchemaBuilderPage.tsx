@@ -7,7 +7,6 @@ import {
   File,
   Layers,
   Loader2,
-  Archive,
   Trash2,
   Calendar,
 } from "lucide-react";
@@ -46,13 +45,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatDate } from "@/utils/formatDate";
+import { formatDate } from "@/utils/date";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
-import { isFeatureEnabled, FeatureFlags, type FeatureFlag } from "@/lib/featureFlags";
+// Feature flags removed — archived functionality is disabled
 import useSWR from "swr";
 
 // Schema Table Component
-const SchemaTable: React.FC<{
+type SchemaTableProps = {
   schemas: ContentSchemaRow[];
   onRowClick: (schema: ContentSchemaRow) => void;
   currentPage: number;
@@ -61,7 +60,9 @@ const SchemaTable: React.FC<{
   itemsPerPage: number;
   onItemsPerPageChange: (value: number) => void;
   onSelectionChange?: (selectedSchemas: ContentSchemaRow[]) => void;
-}> = ({
+};
+
+const SchemaTable = ({
   schemas,
   onRowClick,
   currentPage,
@@ -70,7 +71,7 @@ const SchemaTable: React.FC<{
   itemsPerPage,
   onItemsPerPageChange,
   onSelectionChange,
-}) => {
+}: SchemaTableProps) => {
   const [selectedSchemas, setSelectedSchemas] = useState<number[]>([]);
 
   const handleSelectSchema = (e: React.MouseEvent, schemaId: number) => {
@@ -116,22 +117,24 @@ const SchemaTable: React.FC<{
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[40px]">
-              <Checkbox
-                checked={isAllSelected || isPartiallySelected}
-                onCheckedChange={handleSelectAll}
-                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary square-checkbox rounded-none"
-              />
+            <TableHead className="w-[50px] text-center">
+              <div className="flex items-center justify-center">
+                <Checkbox
+                  checked={isAllSelected || isPartiallySelected}
+                  onCheckedChange={handleSelectAll}
+                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+              </div>
             </TableHead>
-            <TableHead className="w-[300px]">Name</TableHead>
-            <TableHead className="w-[120px]">Type</TableHead>
-            <TableHead className="w-[120px]">Fields</TableHead>
-            <TableHead className="w-[200px]">Description</TableHead>
-            <TableHead>
-              <span className="flex items-center gap-2">
-                <Calendar size={14} />
+            <TableHead className="w-[280px]">Name</TableHead>
+            <TableHead className="w-[100px] text-center">Type</TableHead>
+            <TableHead className="w-[80px] text-center">Fields</TableHead>
+            <TableHead className="w-[220px]">Description</TableHead>
+            <TableHead className="w-[140px]">
+              <div className="flex items-center gap-2">
+                <Calendar className="icon-sm" />
                 Last Updated
-              </span>
+              </div>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -150,10 +153,10 @@ const SchemaTable: React.FC<{
                 data-selected={selectedSchemas.includes(schema.id)}
                 onClick={() => onRowClick(schema)}
               >
-                <TableCell className="p-2">
+                <TableCell className="text-center">
                   <div
                     onClick={(e) => handleSelectSchema(e, schema.id)}
-                    className="h-full flex items-center justify-center"
+                    className="flex items-center justify-center"
                   >
                     <Checkbox
                       checked={selectedSchemas.includes(schema.id)}
@@ -161,27 +164,32 @@ const SchemaTable: React.FC<{
                     />
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
+                <TableCell className="font-medium">
+                  <div className="flex-center-gap-2">
                     {schema.type === "collection" ? (
-                      <Files className="h-4 w-4" />
+                      <Files className="icon-sm flex-shrink-0" />
                     ) : (
-                      <File className="h-4 w-4" />
+                      <File className="icon-sm flex-shrink-0" />
                     )}
-                    {schema.name}
+                    <span className="truncate">{schema.name}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  {schema.type === "collection" ? "Collection" : "Single"}
+                <TableCell className="text-center">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                    {schema.type === "collection" ? "Collection" : "Single"}
+                  </span>
                 </TableCell>
-                <TableCell>
-                  {schema.fields?.length || 0} field
-                  {(schema.fields?.length || 0) !== 1 ? "s" : ""}
+                <TableCell className="text-center text-muted-foreground">
+                  {schema.fields?.length || 0}
                 </TableCell>
-                <TableCell className="text-muted-foreground truncate">
-                  {schema.description || "No description"}
+                <TableCell className="text-muted-foreground">
+                  <div className="truncate max-w-[200px]">
+                    {schema.description || "No description"}
+                  </div>
                 </TableCell>
-                <TableCell>{formatDate(schema.updated_at)}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {formatDate(schema.updated_at)}
+                </TableCell>
               </TableRow>
             ))
           )}
@@ -209,7 +217,7 @@ const SchemaTable: React.FC<{
 };
 
 
-const ContentSchemaBuilderPage: React.FC = () => {
+const ContentSchemaBuilderPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [schemaTypeFilter, setSchemaTypeFilter] = useState<
@@ -242,38 +250,21 @@ const ContentSchemaBuilderPage: React.FC = () => {
 
   // Filter schemas based on type filter and search query
   const filteredSchemas = useMemo(() => {
-    // First filter by type and archived status
+    // Archived features are disabled: always hide archived schemas
     const filtered = schemas.filter((schema) => {
-      if (
-        !isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) &&
-        schema.archived_at
-      )
-        return false;
-      if (schemaTypeFilter === "archived")
-        return (
-          isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) &&
-          schema.archived_at
-        );
-      if (schemaTypeFilter === "collection")
-        return schema.type === "collection" && !schema.archived_at;
-      if (schemaTypeFilter === "single")
-        return schema.type === "single" && !schema.archived_at;
-      return (
-        !schema.archived_at ||
-        (isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) &&
-          schema.archived_at)
-      ); // "all" shows everything except archived unless feature enabled
+      if (schema.archived_at) return false;
+      if (schemaTypeFilter === "collection") return schema.type === "collection";
+      if (schemaTypeFilter === "single") return schema.type === "single";
+      return true; // "all"
     });
 
-    // Then apply search filter
     if (!searchQuery.trim()) return filtered;
 
     const searchLower = searchQuery.toLowerCase();
     return filtered.filter(
       (schema) =>
         schema.name?.toLowerCase().includes(searchLower) ||
-        (schema.description &&
-          schema.description.toLowerCase().includes(searchLower))
+        (schema.description && schema.description.toLowerCase().includes(searchLower))
     );
   }, [schemas, schemaTypeFilter, searchQuery]);
 
@@ -324,51 +315,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
     }
   };
 
-  const handleArchiveSchemas = async () => {
-    try {
-      const updatedSchemas = await Promise.all(
-        selectedSchemas.map(async (schema) => {
-          const updated = { ...schema, archived_at: new Date().toISOString() };
-          const response = await updateSchema(schema.id, updated, currentWorkspace!.id);
-
-          if (response.error) {
-            console.error("Error archiving schema:", response.error);
-            throw new Error(response.error.message);
-          }
-
-          return response.data;
-        })
-      );
-
-      mutateSchemas((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          data: prev.data.map((schema) =>
-            selectedSchemas.find((s) => s.id === schema.id)
-              ? updatedSchemas.find((u) => u.id === schema.id)!
-              : schema
-          ),
-        };
-      });
-
-      setSelectedSchemas([]);
-
-      toast({
-        title: "Schemas archived",
-        description: `Successfully archived ${selectedSchemas.length} schema${
-          selectedSchemas.length !== 1 ? "s" : ""
-        }.`,
-      });
-    } catch (error) {
-      console.error("Error archiving schemas:", error);
-      toast({
-        title: "Error archiving schemas",
-        description: "There was a problem archiving the selected schemas.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Archive action removed (feature disabled)
 
   const handleDeleteSchemas = async () => {
     try {
@@ -442,10 +389,10 @@ const ContentSchemaBuilderPage: React.FC = () => {
       {/* Search, filters and schema list with white background */}
       <div className="bg-white border rounded-lg">
         {/* Search and filter in the same row */}
-        <div className="p-6 pb-0 space-y-6">
+        <div className="p-6 pb-0 space-content-lg">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
               <Input
                 placeholder="Search schemas by name or description..."
                 value={searchQuery}
@@ -478,16 +425,8 @@ const ContentSchemaBuilderPage: React.FC = () => {
                   <File size={16} />
                   Singles
                 </TabsTrigger>
-                {isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag) && (
-                  <TabsTrigger
-                    value="archived"
-                    className="flex items-center gap-2"
-                  >
-                    <Archive size={16} />
-                    Archived
-                  </TabsTrigger>
-                )}
-              </TabsList>
+                {/* Archived tab removed (feature disabled) */}
+                </TabsList>
             </Tabs>
           </div>
         </div>
@@ -495,8 +434,8 @@ const ContentSchemaBuilderPage: React.FC = () => {
         {/* Schema list */}
         <div>
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+            <div className="flex-center-justify py-16">
+              <Loader2 className="icon-lg animate-spin text-primary mr-2" />
               <p className="text-lg">Loading schemas...</p>
             </div>
           ) : paginatedSchemas.length === 0 ? (
@@ -506,7 +445,7 @@ const ContentSchemaBuilderPage: React.FC = () => {
                   No schemas match your search criteria
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-content">
                   <div className="text-muted-foreground">
                     No schemas found. Create your first schema to get started.
                   </div>
@@ -523,15 +462,6 @@ const ContentSchemaBuilderPage: React.FC = () => {
                 <SelectionActionsBar
                   selectedCount={selectedSchemas.length}
                   actions={[
-                    ...(isFeatureEnabled(FeatureFlags.SCHEMA_ARCHIVING as FeatureFlag)
-                      ? [
-                          {
-                            label: "Archive",
-                            icon: <Archive size={16} />,
-                            onClick: handleArchiveSchemas,
-                          },
-                        ]
-                      : []),
                     {
                       label: "Delete",
                       icon: <Trash2 size={16} />,

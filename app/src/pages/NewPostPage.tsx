@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { createPost } from "@/lib/api/PostsApi";
+import { Z_INDEX } from "@/lib/css-constants";
 
-const NewPostPage: React.FC = () => {
+const NewPostPage = () => {
   const navigate = useNavigate();
   const { forumId } = useParams<{ forumId: string }>();
   const { toast } = useToast();
@@ -116,7 +117,7 @@ const NewPostPage: React.FC = () => {
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
           <Link to={`/community/forums/${forumId}`} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="icon-sm" />
             Back to Forum
           </Link>
         </Button>
@@ -137,10 +138,10 @@ const NewPostPage: React.FC = () => {
       </Card>
 
       {isSubmitting && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className={`fixed inset-0 bg-black/50 flex items-center justify-center ${Z_INDEX.modal}`}>
           <Card className="p-6">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="icon-md animate-spin" />
               <span>Creating post...</span>
             </div>
           </Card>

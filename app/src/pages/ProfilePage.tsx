@@ -5,8 +5,10 @@ import { LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getErrorMessage } from "@/lib/utils";
+// Use Tailwind utilities directly; remove css-constants
 
-const ProfilePage: React.FC = () => {
+const ProfilePage = () => {
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -19,7 +21,7 @@ const ProfilePage: React.FC = () => {
         description: "You have been signed out of your account.",
       });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "An error occurred while signing out.";
+      const message = getErrorMessage(error, "An error occurred while signing out.");
       toast({
         title: "Error signing out",
         description: message,
@@ -36,11 +38,11 @@ const ProfilePage: React.FC = () => {
           <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
         </div>
         
-        <Card className="sm:mx-auto sm:max-w-md">
+        <Card className={`sm:max-w-md sm:mx-auto`}>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Sign In</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-content">
             <Button onClick={() => navigate('/sign-in')} className="w-full">
               Go to Sign In
             </Button>
@@ -60,14 +62,14 @@ const ProfilePage: React.FC = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-3 gap-6`}>
         <div className="md:col-span-1">
           <Card>
             <CardHeader>
               <CardTitle>User Profile</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-col items-center gap-4">
+            <CardContent className="space-content-lg">
+              <div className={`flex flex-col items-center gap-4`}>
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>

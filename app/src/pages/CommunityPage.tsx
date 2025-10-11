@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
 
-const CommunityPage: React.FC = () => {
+const CommunityPage = () => {
   const location = useLocation();
 
   // Redirect /community to /community/forums

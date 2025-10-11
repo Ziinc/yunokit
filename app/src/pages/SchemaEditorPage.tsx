@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   DragDropContext,
   Draggable,
+  Droppable,
   DropResult,
 } from "@hello-pangea/dnd";
 import {
@@ -59,6 +60,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+// DestructiveBadge removed; use Badge with variant="destructive"
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -73,16 +75,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { StrictModeDroppable } from "@/components/StrictModeDroppable";
+// StrictModeDroppable no longer needed with updated dnd library
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { generateUUID } from "@/lib/utils";
+import { isString } from "@/lib/guards";
 import { listContentItemsBySchema, deleteContentItem } from "@/lib/api/ContentApi";
 import useSWR from "swr";
 import { getSchema, updateSchema, deleteSchema } from "@/lib/api/SchemaApi";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
+import { useNullableState } from "@/hooks/useNullableState";
 
 // Field type definitions with their icons and labels
 const FIELD_TYPES = {
@@ -114,14 +119,14 @@ const FIELD_TYPES = {
 } as const;
 
 
-const SchemaEditorPage: React.FC = () => {
+const SchemaEditorPage = () => {
   const { schemaId: schemaIdString } = useParams();
   const schemaId = Number(schemaIdString);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showAddField, setShowAddField] = useState(false);
   const [showDeleteField, setShowDeleteField] = useState(false);
-  const [selectedField, setSelectedField] = useState<SchemaField | null>(null);
+  const [selectedField, setSelectedField] = useNullableState<SchemaField>(null);
   const [showRenameField, setShowRenameField] = useState(false);
   const [showEditSchemaName, setShowEditSchemaName] = useState(false);
   const [showEditSchemaDescription, setShowEditSchemaDescription] = useState(false);
@@ -181,8 +186,6 @@ const SchemaEditorPage: React.FC = () => {
   const contentItems = contentItemsResponse?.data || [];
   const contentCount = Array.isArray(contentItems) ? contentItems.length : 0;
 
-  console.log("schema", schema);
-
   const ensureNotArchived = () => {
     if (isArchived) {
       toast({
@@ -213,13 +216,11 @@ const SchemaEditorPage: React.FC = () => {
   }, [currentWorkspace]);
 
   useEffect(() => {
-    if (schema && !newSchemaName) {
+    if (schema) {
       setNewSchemaName(schema.name);
-    }
-    if (schema && !newSchemaDescription) {
       setNewSchemaDescription(schema.description || "");
     }
-  }, [schema, newSchemaName, newSchemaDescription]);
+  }, [schema]);
 
   const handleDragEnd = async (result: DropResult) => {
     if (!schema || !result.destination) return;
@@ -307,7 +308,7 @@ const SchemaEditorPage: React.FC = () => {
 
     try {
       const field: SchemaField = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         label: newField.label,
         description: newField.description,
         options: newField.options,
@@ -347,7 +348,6 @@ const SchemaEditorPage: React.FC = () => {
       const updatedSchema = {
         fields: updatedFields,
       };
-      console.log("updatedSchema", updatedSchema);
 
       const updatedSchemaResponse = await updateSchema(
         schema.id,
@@ -896,17 +896,18 @@ const SchemaEditorPage: React.FC = () => {
         return (
           <Textarea
             value={
-              typeof newField.default_value === "string"
+              isString(newField.default_value)
                 ? newField.default_value
                 : JSON.stringify(newField.default_value, null, 2)
             }
             onChange={(e) => {
-              try {
-                const parsed = JSON.parse(e.target.value);
-                setNewField({ ...newField, default_value: parsed });
-              } catch {
-                setNewField({ ...newField, default_value: e.target.value });
-              }
+              let parsed;
+        try {
+          parsed = JSON.parse(e.target.value);
+        } catch {
+          parsed = e.target.value;
+        }
+              setNewField({ ...newField, default_value: parsed });
             }}
             placeholder="Enter default JSON..."
             className="font-mono"
@@ -966,7 +967,7 @@ const SchemaEditorPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex-center-gap-2">
             <BackIconButton label="Back" onClick={() => navigate(-1)} />
             <h1 className="text-2xl font-bold">{schema.name}</h1>
             <Badge
@@ -975,19 +976,19 @@ const SchemaEditorPage: React.FC = () => {
               {schema.type === "collection" ? "Collection" : "Single"}
             </Badge>
             <Badge variant="secondary" className="ml-2">
-              <Table className="h-4 w-4 mr-1" />
+              <Table className="icon-sm mr-1" />
               {(schema.fields || []).length} Fields
             </Badge>
             {isArchived && (
               <Badge variant="destructive" className="ml-2">
-                <Archive className="h-4 w-4 mr-1" /> Archived
+                <Archive className="icon-sm mr-1" /> Archived
               </Badge>
             )}
             <Button
               variant="ghost"
               size="sm"
               className="ml-2 -mr-2 h-auto px-0 font-normal"
-              onClick={() => navigate(`/manager?schema-id=${schema.id}`)}
+                                        onClick={() => navigate(`/manager?schema=${schema.id}`)}
             >
               <Badge variant="secondary" className="hover:bg-secondary/80">
                 <Pencil className="h-3 w-3 mr-1" />
@@ -1016,8 +1017,8 @@ const SchemaEditorPage: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>Add New Field</DialogTitle>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
+              <div className="grid gap-standard-md py-4">
+                <div className="grid gap-standard-sm">
                   <Label htmlFor="name">Field Name</Label>
                   <Input
                     id="name"
@@ -1187,35 +1188,35 @@ const SchemaEditorPage: React.FC = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="icon-sm" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => navigate(`/manager/editor/${schema.id}/new`)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 icon-sm" />
                 Create Content
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/manager?schema-id=${schema.id}`)}>
-                <FileEdit className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={() => navigate(`/manager?schema=${schema.id}`)}>
+                <FileEdit className="mr-2 icon-sm" />
                 Browse Content
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {!isArchived && (
                 <>
                   <DropdownMenuItem onClick={() => setShowEditSchemaName(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <Pencil className="mr-2 icon-sm" />
                     Rename Schema
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowEditSchemaDescription(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
+                    <Edit className="mr-2 icon-sm" />
                     Edit Description
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowChangeSchemaType(true)}>
-                    <Settings className="mr-2 h-4 w-4" />
+                    <Settings className="mr-2 icon-sm" />
                     Change Type
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleArchiveSchema}>
-                    <Archive className="mr-2 h-4 w-4" />
+                    <Archive className="mr-2 icon-sm" />
                     Archive Schema
                   </DropdownMenuItem>
                 </>
@@ -1223,9 +1224,9 @@ const SchemaEditorPage: React.FC = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setShowDeleteSchema(true)}
-                className="text-red-600 focus:text-red-600"
+                className="text-destructive focus:text-destructive"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className="mr-2 icon-sm" />
                 Delete Schema
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -1234,7 +1235,7 @@ const SchemaEditorPage: React.FC = () => {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <StrictModeDroppable droppableId="fields">
+        <Droppable droppableId="fields">
           {(provided) => (
             <div
               {...provided.droppableProps}
@@ -1258,7 +1259,7 @@ const SchemaEditorPage: React.FC = () => {
                         {...provided.draggableProps}
                         className="border-b last:border-b-0 rounded-md min-h-[80px]"
                       >
-                        <CardContent className="flex items-center justify-between p-4">
+                        <CardContent className="flex items-center justify-between padding-card pt-4">
                           <div className="flex items-center gap-4">
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -1266,7 +1267,7 @@ const SchemaEditorPage: React.FC = () => {
                                   className="flex items-center gap-3 cursor-move px-2 py-3 -mx-2 -my-1 rounded hover:bg-muted/50 transition-colors"
                                   {...provided.dragHandleProps}
                                 >
-                                  <GripVertical className="h-6 w-6 text-muted-foreground" />
+                                  <GripVertical className="icon-md text-muted-foreground" />
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -1331,7 +1332,7 @@ const SchemaEditorPage: React.FC = () => {
               <div className="[&>div]:min-h-[80px]">{provided.placeholder}</div>
             </div>
           )}
-        </StrictModeDroppable>
+        </Droppable>
       </DragDropContext>
 
       {/* Helper text at the bottom */}
@@ -1483,12 +1484,12 @@ const SchemaEditorPage: React.FC = () => {
               {schema?.type === "collection" && contentCount > 1 && (
                 <div className="space-y-3 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/10">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                    <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                    <AlertCircle className="icon-sm text-warning" />
+                    <h4 className="font-semibold text-warning">
                       Multiple Items Detected
                     </h4>
                   </div>
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  <p className="text-sm text-warning">
                     This schema contains {contentCount} items. Changing to Single type will only keep one item.
                   </p>
                   <div className="space-y-2">

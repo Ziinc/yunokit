@@ -1,4 +1,6 @@
-export interface Asset {
+import { generateUUID } from "@/lib/utils";
+
+interface Asset {
   id: string;
   fileName: string;
   fileSize: number;
@@ -44,7 +46,7 @@ export class AssetsApi {
     } else {
       assets.push({
         ...asset,
-        id: asset.id || crypto.randomUUID(),
+        id: asset.id || generateUUID(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
@@ -81,7 +83,7 @@ export class AssetsApi {
         }
         
         const asset: Asset = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           fileName: file.name,
           fileSize: file.size,
           mimeType: file.type,

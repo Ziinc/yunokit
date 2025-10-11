@@ -33,19 +33,20 @@ export const RelationField: React.FC<RelationFieldProps> = ({
   const [selectedItems, setSelectedItems] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { currentWorkspace } = useWorkspace();
+  const workspaceId = currentWorkspace?.id;
   
   // Load available items when component mounts or relationSchemaId changes
   useEffect(() => {
     const loadAvailableItems = async () => {
-      if (!relationSchemaId) return;
+      if (!relationSchemaId || !workspaceId) return;
       
       setIsLoading(true);
       try {
-        if (!currentWorkspace) return;
-        const items = await listContentItemsBySchema(
+        const res = await listContentItemsBySchema(
           Number(relationSchemaId),
-          currentWorkspace.id
+          workspaceId
         );
+        const items = res.data ?? [];
         // Filter out already selected items and only show published items
         const filteredItems = items.filter(item => 
           item.status === 'published' && !value.includes(item.id)
@@ -60,7 +61,7 @@ export const RelationField: React.FC<RelationFieldProps> = ({
     };
 
     loadAvailableItems();
-  }, [relationSchemaId, value]);
+  }, [relationSchemaId, value, workspaceId]);
 
   // Load selected items details when value changes
   useEffect(() => {
@@ -71,11 +72,12 @@ export const RelationField: React.FC<RelationFieldProps> = ({
       }
 
       try {
-        if (!currentWorkspace) return;
-        const items = await listContentItemsBySchema(
+        if (!workspaceId) return;
+        const res = await listContentItemsBySchema(
           Number(relationSchemaId),
-          currentWorkspace.id
+          workspaceId
         );
+        const items = res.data ?? [];
         const selected = items.filter(item => value.includes(item.id));
         setSelectedItems(selected);
       } catch (error) {
@@ -85,7 +87,7 @@ export const RelationField: React.FC<RelationFieldProps> = ({
     };
 
     loadSelectedItems();
-  }, [value, relationSchemaId]);
+  }, [value, relationSchemaId, workspaceId]);
   
   const handleSelect = (itemId: string) => {
     if (isMultiple) {
@@ -143,7 +145,7 @@ export const RelationField: React.FC<RelationFieldProps> = ({
             disabled={isLoading}
           >
             {isLoading ? "Loading..." : isMultiple ? "Select items..." : selectedItems.length > 0 ? selectedItems[0].title : "Select an item..."}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="ml-2 icon-sm shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0">
@@ -160,7 +162,7 @@ export const RelationField: React.FC<RelationFieldProps> = ({
                       onSelect={() => handleSelect(item.id)}
                     >
                       <Check
-                        className={`mr-2 h-4 w-4 ${
+                        className={`mr-2 icon-sm ${
                           value.includes(item.id) ? "opacity-100" : "opacity-0"
                         }`}
                       />

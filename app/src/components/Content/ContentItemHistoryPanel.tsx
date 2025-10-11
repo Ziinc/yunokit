@@ -2,6 +2,7 @@ import React from "react";
 import { format } from "date-fns";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { hasItems } from "@/lib/guards";
 
 interface Version {
   id: number;
@@ -26,8 +27,8 @@ export const ContentItemHistoryPanel: React.FC<ContentItemHistoryPanelProps> = (
         <SheetTitle>Version History</SheetTitle>
       </SheetHeader>
       <ScrollArea className="h-full pr-4 mt-4">
-        <div className="space-y-4">
-          {versions && versions.length > 0 ? (
+        <div className="space-content">
+          {hasItems(versions) ? (
             versions.map((v) => (
               <div key={v.id}>
                 <p className="text-xs text-muted-foreground">

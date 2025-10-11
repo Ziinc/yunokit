@@ -1,9 +1,14 @@
+import React from 'react';
 import { vi } from 'vitest';
 
-export const AuthContext = {
-  isAuthenticated: false,
+// Match real module's public API
+export const useAuth = () => ({
   user: null,
-  login: vi.fn().mockResolvedValue({}),
-  logout: vi.fn().mockResolvedValue(undefined),
-  refreshToken: vi.fn().mockResolvedValue({}),
-}; 
+  isAuthenticated: false,
+  isLoading: false,
+  signOut: vi.fn().mockResolvedValue(undefined),
+});
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => (
+  <div data-testid="auth-provider">{children}</div>
+);

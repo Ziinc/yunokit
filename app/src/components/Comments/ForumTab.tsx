@@ -1,13 +1,15 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, MessageCircle, PinIcon, ThumbsUp, Trash } from "lucide-react";
 import { ForumPost } from "@/types/comments";
+import { ModerationSearchBar } from "@/components/ui/moderation-search-bar";
+import { StatusBadge } from "@/components/ui/status-badge";
+
 
 interface ForumTabProps {
   posts: ForumPost[];
@@ -19,7 +21,7 @@ interface ForumTabProps {
   formatDate: (dateString: string) => string;
 }
 
-const ForumTab: React.FC<ForumTabProps> = ({
+const ForumTab = ({
   posts,
   postsSearchQuery,
   setPostsSearchQuery,
@@ -27,7 +29,7 @@ const ForumTab: React.FC<ForumTabProps> = ({
   handlePinPost,
   handleChangePostStatus,
   formatDate
-}) => {
+}: ForumTabProps) => {
   const [currentPostTab, setCurrentPostTab] = useState<string>("all");
   
   // Filter posts based on search query and current tab
@@ -55,28 +57,22 @@ const ForumTab: React.FC<ForumTabProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <div className="flex-1">
-              <Input 
-                placeholder="Search posts..." 
-                value={postsSearchQuery}
-                onChange={(e) => setPostsSearchQuery(e.target.value)}
-              />
-            </div>
-            <Select value={currentPostTab} onValueChange={setCurrentPostTab}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Posts</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="flagged">Flagged</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-                <SelectItem value="pinned">Pinned</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline">New Post</Button>
-          </div>
+          <ModerationSearchBar
+            searchQuery={postsSearchQuery}
+            onSearchChange={setPostsSearchQuery}
+            searchPlaceholder="Search posts..."
+            currentFilter={currentPostTab}
+            onFilterChange={setCurrentPostTab}
+            filterPlaceholder="Filter status"
+            filterOptions={[
+              { value: "all", label: "All Posts" },
+              { value: "published", label: "Published" },
+              { value: "flagged", label: "Flagged" },
+              { value: "archived", label: "Archived" },
+              { value: "pinned", label: "Pinned" }
+            ]}
+            additionalActions={<Button variant="outline">New Post</Button>}
+          />
 
           <Table>
             <TableHeader>
@@ -101,7 +97,7 @@ const ForumTab: React.FC<ForumTabProps> = ({
                   <TableRow key={post.id}>
                     <TableCell>
                       <div className="flex items-start gap-2">
-                        {post.pinned && <PinIcon size={14} className="text-amber-500 mt-1" />}
+                        {post.pinned && <PinIcon size={14} className="text-warning mt-1" />}
                         <div>
                           <div className="font-medium">{post.title}</div>
                           <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
@@ -120,22 +116,17 @@ const ForumTab: React.FC<ForumTabProps> = ({
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-muted flex-shrink-0 overflow-hidden">
-                          <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
+                          <img 
+                            src={post.author.avatar} 
+                            alt={post.author.name} 
+                            className="w-full h-full object-cover" 
+                          />
                         </div>
                         <span className="text-sm">{post.author.name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={
-                          post.status === "published" ? "default" : 
-                          post.status === "flagged" ? "destructive" : 
-                          "secondary"
-                        }
-                        className="capitalize"
-                      >
-                        {post.status}
-                      </Badge>
+                      <StatusBadge status={post.status} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3 text-muted-foreground text-xs">
@@ -165,7 +156,7 @@ const ForumTab: React.FC<ForumTabProps> = ({
                           className="h-8 w-8 p-0"
                           title={post.pinned ? "Unpin post" : "Pin post"}
                         >
-                          <PinIcon size={16} className={post.pinned ? "text-amber-500" : ""} />
+                          <PinIcon size={16} className={post.pinned ? "text-warning" : ""} />
                         </Button>
                         <Select
                           value={post.status}

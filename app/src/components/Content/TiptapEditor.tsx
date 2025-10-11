@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Type, Hash, ToggleLeft, List, ListOrdered, Bold, Italic, Strikethrough, AlignLeft } from 'lucide-react';
 import './TiptapEditor.css';
+// Use Tailwind utilities directly; remove css-constants
 import { JSONContent, Editor } from '@tiptap/core';
 
 // Define proper field types
@@ -210,7 +211,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor, schema }) => 
   if (!editor || schema.strict) return null;
 
   return (
-    <div className="border-b border-gray-200 p-2">
+    <div className={`border-b p-2`}>
       <div className="flex space-x-1">
         <TooltipProvider>
           <Tooltip>
@@ -316,29 +317,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dynamicFields, setDynamicFields] = React.useState<SchemaFieldType[]>([]);
 
-  // Initialize dynamic fields from content if schema is flexible
-  useEffect(() => {
-    if (schema.strict) return;
-
-    //   const dynamicFieldsFromContent: SchemaFieldType[] = [];
-    //   if (content && typeof content === 'object' && 'fields' in content) {
-    //   content.fields.forEach((field: { id: string; value: unknown; isDynamic?: boolean; label: string; type: FieldType; required?: boolean; description?: string; options?: string[] }) => {
-    //     if (field.isDynamic) {
-    //       dynamicFieldsFromContent.push({
-    //         id: field.id,
-    //         label: field.label,
-    //         type: field.type,
-    //         required: field.required || false,
-    //         description: field.description || null,
-    //         default_value: null,
-    //         options: field.options || [],
-    //         relation_schema_id: null,
-    //       });
-    //     }
-    //   });
-    // }
-    // setDynamicFields(dynamicFieldsFromContent);
-  }, [content, schema.strict]);
+  // (Removed unused effect: dynamic fields initialization placeholder)
 
   // Memoize all fields (schema + dynamic)
   const allFields = useMemo(() => {
@@ -439,10 +418,27 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     onChange({ fields: updatedFields });
   }, [mergedContent.fields, onChange]);
 
-  // Initialize content on mount and when schema changes
+  // Prepare sync logic outside of effect per style guide
+  const syncIfChanged = useCallback(() => {
+    try {
+      const current = JSON.stringify(content);
+      const next = JSON.stringify(mergedContent);
+      if (current !== next) {
+        onChange(mergedContent);
+      }
+    } catch {
+      // Fallback: if serialization fails, avoid calling onChange repeatedly
+      // and only attempt a best-effort sync when shapes differ minimally
+      if (!(content && typeof content === 'object' && 'fields' in (content as any))) {
+        onChange(mergedContent);
+      }
+    }
+  }, [content, mergedContent, onChange]);
+
+  // Initialize/sync content only when it actually differs to avoid update loops
   useEffect(() => {
-    onChange(mergedContent);
-  }, [mergedContent, onChange]);
+    syncIfChanged();
+  }, [syncIfChanged]);
 
   const editor = useEditor({
     extensions: [
@@ -467,7 +463,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg">
+    <div className={`border rounded-lg`}>
       <MarkdownToolbar editor={editor} schema={schema} />
       <div data-testid="editor-content" className="p-4">
         {/* Render schema fields */}

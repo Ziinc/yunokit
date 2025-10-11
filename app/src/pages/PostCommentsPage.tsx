@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, MessageSquare, Reply } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ForumPost, Comment, Forum } from '@/types/comments';
+import { useNullableState } from "@/hooks/useNullableState";
 
 // Mock data - to be replaced with real API calls
 const getMockPost = (postId: string, forumId: string): ForumPost => ({
@@ -94,18 +95,18 @@ const getMockComments = (postId: string): Comment[] => [
   }
 ];
 
-const PostCommentsPage: React.FC = () => {
+const PostCommentsPage = () => {
   const { postId, commentId } = useParams<{ 
     postId: string; 
     commentId?: string; 
   }>();
   const { toast } = useToast();
-  const [forum, setForum] = useState<Forum | null>(null);
-  const [post, setPost] = useState<ForumPost | null>(null);
+  const [forum, setForum] = useNullableState<Forum>(null);
+  const [post, setPost] = useNullableState<ForumPost>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useNullableState<string>(null);
   const [replyContent, setReplyContent] = useState('');
 
   useEffect(() => {
@@ -252,7 +253,7 @@ const PostCommentsPage: React.FC = () => {
               size="sm"
               onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
             >
-              <Reply className="h-4 w-4 mr-1" />
+              <Reply className="icon-sm mr-1" />
               Reply
             </Button>
           )}
@@ -294,8 +295,8 @@ const PostCommentsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex-center-justify py-12">
+        <Loader2 className="icon-lg animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -350,14 +351,14 @@ const PostCommentsPage: React.FC = () => {
                 <span>{post.author.name}</span>
                 <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                 <div className="flex items-center gap-1">
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="icon-sm" />
                   <span>{comments.length}</span>
                 </div>
               </div>
             </div>
             <Button asChild variant="outline">
               <Link to="/community/forums">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="icon-sm mr-2" />
                 Back to Forums
               </Link>
             </Button>

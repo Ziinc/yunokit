@@ -28,15 +28,15 @@ export const AuthorsSection: React.FC<AuthorsSectionProps> = ({
           Team members available for content publishing
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+              <CardContent className="space-content-lg">
         {/* Team Members */}
         <div>
           <h3 className="text-lg font-medium mb-4">Team Member Authors</h3>
 
-          <div className="space-y-4">
+          <div className="space-content">
             {teamMembers.map((member) => (
               <Card key={member.id}>
-                <CardContent className="p-6">
+                <CardContent className="padding-card-lg">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <div>

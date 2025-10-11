@@ -6,11 +6,12 @@
 
 </div>
 
-Yunokit is a suite of micro-apps for Supabase apps.
+Yunokit is a plugin suite of out-of-the-box features for Supabase apps.
 
 - **yunocontent**: Content Management System
+- **yunocommunity**: Forums
 
-Yunokit works by connecting directly to your Supabase projects and installing micro-apps on custom schemas on your database. Each custom schema has a full data API, allowing one-click addition of features to your apps. Manage micro-apps through the Yunokit admin panel at [app.yunokit.com](https://app.yunokit.com), with no need to build custom admin interfaces.
+Yunokit works by connecting directly to your Supabase projects and installing plugins on custom schemas on your database. Each custom schema has a full data API, allowing one-click addition of features to your apps. Manage micro-apps through the Yunokit admin panel at [app.yunokit.com](https://app.yunokit.com).
 
 Yunokit is like PostgreSQL extensions, but for full fledge app features.
 

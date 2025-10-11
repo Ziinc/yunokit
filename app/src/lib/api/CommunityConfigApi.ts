@@ -1,5 +1,5 @@
 import { supabase } from "../supabase";
-import type { Database } from "../../database.types";
+import type { Database } from "../../../database.types";
 
 type ConfigRow = Database["yunocommunity"]["Tables"]["config"]["Row"];
 

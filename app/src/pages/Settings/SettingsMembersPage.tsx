@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+// Destructive UI wrappers removed; use base Button with destructive variant
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UserPlus, UserMinus } from "lucide-react";
+import { getErrorMessage } from "@/lib/utils";
+import { notifyError } from "@/lib/errors";
 
 interface Member {
   id: string;
@@ -14,7 +17,7 @@ interface Member {
   status: "active" | "pending";
 }
 
-const SettingsMembersPage: React.FC = () => {
+const SettingsMembersPage = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState("");
@@ -33,11 +36,10 @@ const SettingsMembersPage: React.FC = () => {
         ];
         setMembers(mockMembers);
       } catch (error) {
-        console.error("Failed to fetch members:", error);
-        toast({
+        notifyError(toast, error, {
           title: "Error",
-          description: "Failed to load members",
-          variant: "destructive"
+          fallback: "Failed to load members",
+          prefix: "Failed to fetch members",
         });
       } finally {
         setIsLoading(false);
@@ -78,11 +80,10 @@ const SettingsMembersPage: React.FC = () => {
         description: "Member has been invited successfully"
       });
     } catch (error) {
-      console.error("Invite member error:", error);
-      toast({
+      notifyError(toast, error, {
         title: "Failed to send invitation",
-        description: error instanceof Error ? error.message : "Please try again later",
-        variant: "destructive"
+        fallback: "Please try again later",
+        prefix: "Invite member error",
       });
     } finally {
       setIsInviting(false);
@@ -99,11 +100,10 @@ const SettingsMembersPage: React.FC = () => {
         description: "Member has been removed successfully"
       });
     } catch (error) {
-      console.error("Remove member error:", error);
-      toast({
+      notifyError(toast, error, {
         title: "Failed to remove member",
-        description: error instanceof Error ? error.message : "Please try again later",
-        variant: "destructive"
+        fallback: "Please try again later",
+        prefix: "Remove member error",
       });
     }
   };
@@ -119,8 +119,8 @@ const SettingsMembersPage: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            <div className="flex-center-justify py-8">
+              <Loader2 className="icon-lg text-primary animate-spin" />
             </div>
           ) : (
             <>
@@ -143,7 +143,7 @@ const SettingsMembersPage: React.FC = () => {
                       size="icon"
                       onClick={() => handleRemoveMember(member.id)}
                     >
-                      <UserMinus className="h-4 w-4" />
+                      <UserMinus className="icon-sm" />
                     </Button>
                   </div>
                 ))}
@@ -153,7 +153,7 @@ const SettingsMembersPage: React.FC = () => {
               <div className="border-t pt-6">
                 <h3 className="text-lg font-medium mb-4">Invite New Member</h3>
                 <form onSubmit={handleInviteMember} className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-form">
                     <Label htmlFor="member-email">Email Address</Label>
                     <Input
                       id="member-email"
@@ -172,12 +172,12 @@ const SettingsMembersPage: React.FC = () => {
                   >
                     {isInviting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="icon-sm animate-spin" />
                         Sending Invitation...
                       </>
                     ) : (
                       <>
-                        <UserPlus className="h-4 w-4" />
+                        <UserPlus className="icon-sm" />
                         Send Invitation
                       </>
                     )}

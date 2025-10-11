@@ -1,4 +1,4 @@
-export interface SupabaseProject {
+interface SupabaseProject {
   id: string;
   name: string;
   region: string;

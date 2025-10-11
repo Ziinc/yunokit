@@ -1,14 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { TiptapEditor } from "./TiptapEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 
 // Simple JSON syntax highlighter
 const highlightJSON = (jsonString: string): string => {
@@ -30,6 +27,8 @@ interface ContentItemEditorProps {
     title: string;
     data: Record<string, unknown>;
   }) => void;
+  onChangesDetected?: (hasChanges: boolean) => void;
+  registerSaveHandler?: (handler: () => void) => void;
 }
 
 export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
@@ -37,14 +36,15 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
   initialData = {},
   initialTitle = "",
   onSave,
+  onChangesDetected,
+  registerSaveHandler,
 }) => {
   const { toast } = useToast();
   const [content, setContent] = useState<Record<string, unknown>>(initialData);
   const [title, setTitle] = useState<string>(initialTitle);
   const [activeTab, setActiveTab] = useState<string>("fields");
 
-
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     // Validate title
     if (!title.trim()) {
       toast({
@@ -82,47 +82,43 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
       }
     }
 
-    console.log('content to save', content);
     onSave({
       title: title.trim(),
       data: content
     });
-  };
+  }, [content, onSave, title, toast]);
 
-  const handleTiptapChange = (newContent: Record<string, unknown>) => {
-    console.log("newContent", newContent);
-    setContent(newContent);
+  const notifyChanges = useCallback(() => {
+    if (!onChangesDetected) {
+      return;
+    }
+
+    const titleChanged = title !== initialTitle;
+    const contentChanged = JSON.stringify(content) !== JSON.stringify(initialData);
+    const hasChanges = titleChanged || contentChanged;
+
+    onChangesDetected(hasChanges);
+  }, [content, initialData, initialTitle, onChangesDetected, title]);
+
+  const registerSaveEffect = useCallback(() => {
+    registerSaveHandler?.(handleSave);
+    return () => {
+      registerSaveHandler?.(() => {});
+    };
+  }, [handleSave, registerSaveHandler]);
+
+  useEffect(() => {
+    notifyChanges();
+  }, [notifyChanges]);
+
+  useEffect(registerSaveEffect, [registerSaveEffect]);
+
+  const handleTiptapChange = (newContent: Record<string, unknown> | { fields: { id: string; value: unknown; isDynamic?: boolean }[] }) => {
+    setContent(newContent as Record<string, unknown>);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">
-            {schema.type === 'collection' ? "Edit Item" : `Edit ${schema.name}`}
-          </h1>
-          {!schema.strict && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1 text-blue-600">
-                    <Info className="h-4 w-4" />
-                    <span className="text-sm font-medium">Flexible Schema</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>This schema allows you to add custom fields. Use the "Add Field" button to create new content blocks as needed.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <Button onClick={handleSave}>Save</Button>
-        </div>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="fields">Content Fields</TabsTrigger>
@@ -130,20 +126,20 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
         </TabsList>
         
         <TabsContent value="fields" className="space-y-6 pt-4">
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="content-title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title
-              </label>
-              <Input
-                id="content-title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter the title..."
-                className="text-lg font-semibold"
-              />
-            </div>
+          <div className="border-b-2 border-gray-300 bg-gray-100 p-4 -mx-6">
+            <label htmlFor="content-title" className="sr-only">
+              Title
+            </label>
+            <Input
+              id="content-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter the title..."
+              className="!text-4xl font-bold border-none shadow-none !ring-0 p-0 bg-transparent"
+            />
+          </div>
+          <div className="max-w-4xl mx-auto">
             <TiptapEditor
               schema={schema}
               content={content}

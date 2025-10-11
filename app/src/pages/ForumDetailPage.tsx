@@ -9,13 +9,14 @@ import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import { getForumById } from '@/lib/api/ForumsApi';
 import { getPostsByForum } from '@/lib/api/PostsApi';
 import { Forum } from '@/types/comments';
+import { useNullableState } from "@/hooks/useNullableState";
 
 
-const ForumDetailPage: React.FC = () => {
+const ForumDetailPage = () => {
   const { forumId } = useParams<{ forumId: string }>();
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
-  const [forum, setForum] = useState<Forum | null>(null);
+  const [forum, setForum] = useNullableState<Forum>(null);
 
   interface ForumPost {
     id: number;
@@ -72,8 +73,8 @@ const ForumDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex-center-justify py-12">
+        <Loader2 className="icon-lg animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -96,7 +97,7 @@ const ForumDetailPage: React.FC = () => {
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link to="/community/forums" className="hover:text-foreground flex items-center gap-1">
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="icon-sm" />
           Forums
         </Link>
         <span>/</span>
@@ -121,7 +122,7 @@ const ForumDetailPage: React.FC = () => {
             </div>
             <Button asChild>
               <Link to={`/community/forums/${forumId}/new-post`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="icon-sm mr-2" />
                 New Post
               </Link>
             </Button>

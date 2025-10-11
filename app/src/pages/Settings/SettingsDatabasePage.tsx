@@ -10,22 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Database,
-  AlertCircle,
-  Check,
-  RefreshCw,
-  Eye,
-  Play,
-  Square,
-  Power,
-  PowerOff,
-  Unlink,
-  Server,
-  Globe,
-  CheckCircle2,
-  ChevronRight,
-} from "lucide-react";
+// Destructive UI wrappers removed; use base components with destructive variant
+import * as Icons from "@/components/ui/icons";
 import { groupBy } from "lodash";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -75,6 +61,8 @@ import useSWR from "swr";
 import Prism from "prismjs";
 import "prismjs/themes/prism-okaidia.css";
 import "prismjs/components/prism-sql";
+import { getErrorMessage } from "@/lib/utils";
+import { useNullableState } from "@/hooks/useNullableState";
 
 interface MigrationListItemProps {
   migration: Migration;
@@ -82,10 +70,10 @@ interface MigrationListItemProps {
   isLoading: boolean;
 }
 
-const MigrationListItem: React.FC<MigrationListItemProps> = ({
+const MigrationListItem = ({
   migration,
   onViewSql,
-}) => {
+}: MigrationListItemProps) => {
   const [showSql] = useState(false);
 
   useEffect(() => {
@@ -98,22 +86,22 @@ const MigrationListItem: React.FC<MigrationListItemProps> = ({
     switch (migration.status) {
       case "applied":
         return (
-          <Badge className="bg-green-500">
-            <Check size={12} className="mr-1" />
+          <Badge className="bg-success">
+            <Icons.Check size={12} className="mr-1" />
             Applied
           </Badge>
         );
       case "pending":
         return (
           <Badge variant="secondary">
-            <Square size={12} className="mr-1" />
+            <Icons.Square size={12} className="mr-1" />
             Pending
           </Badge>
         );
       case "failed":
         return (
           <Badge variant="destructive">
-            <AlertCircle size={12} className="mr-1" />
+            <Icons.AlertCircle size={12} className="mr-1" />
             Failed
           </Badge>
         );
@@ -129,7 +117,7 @@ const MigrationListItem: React.FC<MigrationListItemProps> = ({
 
   return (
     <Card className="mb-4">
-      <CardContent className="p-4">
+      <CardContent className="padding-card">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="font-mono text-xs">
@@ -161,7 +149,7 @@ const MigrationListItem: React.FC<MigrationListItemProps> = ({
               onClick={() => onViewSql(migration)}
               className="gap-1 h-7 px-2 text-xs"
             >
-              <Eye size={10} />
+              <Icons.Eye size={10} />
               <span>View SQL</span>
             </Button>
           </div>
@@ -171,10 +159,10 @@ const MigrationListItem: React.FC<MigrationListItemProps> = ({
   );
 };
 
-const MigrationSkeleton: React.FC = () => {
+const MigrationSkeleton = () => {
   return (
     <Card className="mb-4">
-      <CardContent className="p-4">
+      <CardContent className="padding-card">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Skeleton className="h-5 w-16" />
@@ -193,7 +181,7 @@ const MigrationSkeleton: React.FC = () => {
   );
 };
 
-const SettingsDatabasePage: React.FC = () => {
+const SettingsDatabasePage = () => {
   const { toast } = useToast();
   const { currentWorkspace, setCurrentWorkspace } = useWorkspace();
   const [migrations, setMigrations] = useState<Record<string, Migration[]>>({});
@@ -212,7 +200,7 @@ const SettingsDatabasePage: React.FC = () => {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [showRemoveProjectDialog, setShowRemoveProjectDialog] = useState(false);
   const [confirmText, setConfirmText] = useState("");
-  const [workspaceId, setWorkspaceId] = useState<number | null>(null);
+  const [workspaceId, setWorkspaceId] = useNullableState<number>(null);
   const [searchParams] = useSearchParams();
 
   // Use SWR for connection status
@@ -279,10 +267,7 @@ const SettingsDatabasePage: React.FC = () => {
         console.error("OAuth callback error:", error);
         toast({
           title: "Connection failed",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Failed to connect to Supabase",
+          description: getErrorMessage(error, "Failed to connect to Supabase"),
           variant: "destructive",
         });
       }
@@ -332,8 +317,7 @@ const SettingsDatabasePage: React.FC = () => {
       console.error("Error loading migrations:", error);
       toast({
         title: "Error loading migrations",
-        description:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        description: getErrorMessage(error, "Unknown error occurred"),
         variant: "destructive",
       });
     } finally {
@@ -376,8 +360,7 @@ const SettingsDatabasePage: React.FC = () => {
       console.error("Error running migrations:", error);
       toast({
         title: "Error running migrations",
-        description:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        description: getErrorMessage(error, "Unknown error occurred"),
         variant: "destructive",
       });
     } finally {
@@ -403,8 +386,7 @@ const SettingsDatabasePage: React.FC = () => {
       console.error("Connection error:", error);
       toast({
         title: "Connection failed",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
     }
@@ -427,8 +409,7 @@ const SettingsDatabasePage: React.FC = () => {
       console.error("Disconnection error:", error);
       toast({
         title: "Disconnection failed",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
     }
@@ -455,8 +436,7 @@ const SettingsDatabasePage: React.FC = () => {
       console.error("Remove project reference error:", error);
       toast({
         title: "Failed to remove project reference",
-        description:
-          error instanceof Error ? error.message : "Please try again later",
+        description: getErrorMessage(error, "Please try again later"),
         variant: "destructive",
       });
     }
@@ -529,7 +509,7 @@ const SettingsDatabasePage: React.FC = () => {
                     <div className="flex flex-col items-center gap-4">
                       <div className="relative">
                         <div className="h-16 w-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
-                        <Database className="h-8 w-8 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                        <Icons.Database className="h-8 w-8 text-primary absolute-center" />
                       </div>
                       <p className="text-muted-foreground">
                         Checking connection status...
@@ -546,7 +526,7 @@ const SettingsDatabasePage: React.FC = () => {
                           variant="outline"
                           className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 flex gap-1.5 items-center px-3 py-1"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <Icons.CheckCircle2 className="h-3.5 w-3.5" />
                           <span>Connected</span>
                         </Badge>
                       </div>
@@ -562,7 +542,7 @@ const SettingsDatabasePage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
                           <div className="flex flex-col space-y-2 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 border border-emerald-500/20">
                             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                              <Database className="h-4 w-4 text-emerald-500" />
+                              <Icons.Database className="h-4 w-4 text-emerald-500" />
                               <span className="text-sm font-medium">
                                 Project ID
                               </span>
@@ -574,7 +554,7 @@ const SettingsDatabasePage: React.FC = () => {
 
                           <div className="flex flex-col space-y-2 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 border border-emerald-500/20">
                             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                              <Globe className="h-4 w-4 text-emerald-500" />
+                              <Icons.Globe className="h-4 w-4 text-emerald-500" />
                               <span className="text-sm font-medium">
                                 Region
                               </span>
@@ -584,13 +564,13 @@ const SettingsDatabasePage: React.FC = () => {
 
                           <div className="flex flex-col space-y-2 p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 border border-emerald-500/20">
                             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                              <Server className="h-4 w-4 text-emerald-500" />
+                              <Icons.Server className="h-4 w-4 text-emerald-500" />
                               <span className="text-sm font-medium">
                                 Status
                               </span>
                             </div>
                             <p className="text-base text-emerald-600 flex items-center gap-1.5">
-                              <CheckCircle2 className="h-4 w-4" />
+                              <Icons.CheckCircle2 className="h-4 w-4" />
                               {projectDetails.status === "ACTIVE_HEALTHY"
                                 ? "Active"
                                 : projectDetails.status}
@@ -621,7 +601,7 @@ const SettingsDatabasePage: React.FC = () => {
                               className="mt-1"
                               size="sm"
                             >
-                              <Unlink className="mr-2 h-4 w-4" />
+                              <Icons.Unlink className="mr-2 h-4 w-4" />
                               Remove Project Link
                             </Button>
                           </div>
@@ -653,7 +633,7 @@ const SettingsDatabasePage: React.FC = () => {
 
                         <div className="bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 border border-muted rounded-lg p-6 flex flex-col items-center justify-center">
                           <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 p-4 rounded-full mb-4">
-                            <Database className="h-10 w-10 text-emerald-600" />
+                            <Icons.Database className="h-10 w-10 text-emerald-600" />
                           </div>
                           <h3 className="text-lg font-medium mb-2">
                             Supercharge your content
@@ -679,7 +659,7 @@ const SettingsDatabasePage: React.FC = () => {
                               className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 mt-1"
                               size="sm"
                             >
-                              <Power className="mr-2 h-4 w-4" />
+                              <Icons.Power className="mr-2 icon-sm" />
                               Connect to Supabase
                             </Button>
                           </div>
@@ -708,7 +688,7 @@ const SettingsDatabasePage: React.FC = () => {
                       className="gap-2"
                       disabled={isLoading}
                     >
-                      <RefreshCw
+                      <Icons.RefreshCw
                         size={16}
                         className={isLoading ? "animate-spin" : ""}
                       />
@@ -721,7 +701,7 @@ const SettingsDatabasePage: React.FC = () => {
                         className="gap-2"
                         disabled={isLoading}
                       >
-                        <Play size={16} />
+                        <Icons.Play size={16} />
                         <span>Apply All Pending ({totalPendingCount})</span>
                       </Button>
                     )}
@@ -731,7 +711,7 @@ const SettingsDatabasePage: React.FC = () => {
                 {isInitialLoading ? (
                   <Card>
                     <CardContent className="flex items-center justify-center py-12">
-                      <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                      <Icons.RefreshCw className="icon-md animate-spin mr-2" />
                       <span>Loading migrations...</span>
                     </CardContent>
                   </Card>
@@ -740,11 +720,7 @@ const SettingsDatabasePage: React.FC = () => {
                 ) : (
                   <>
                     {/* Pending Migrations by Schema */}
-                    {(
-                      Object.keys(pendingMigrations) as Array<
-                        keyof typeof pendingMigrations
-                      >
-                    ).map((schema) => {
+                    {Object.keys(pendingMigrations).map((schema) => {
                       const schemaPendingMigrations = pendingMigrations[schema];
                       if (schemaPendingMigrations.length === 0) return null;
 
@@ -774,11 +750,7 @@ const SettingsDatabasePage: React.FC = () => {
                     })}
 
                     {/* Applied Migrations by Schema */}
-                    {(
-                      Object.keys(appliedMigrations) as Array<
-                        keyof typeof appliedMigrations
-                      >
-                    ).map((schema) => {
+                    {Object.keys(appliedMigrations).map((schema) => {
                       const schemaAppliedMigrations = appliedMigrations[schema];
                       if (schemaAppliedMigrations.length === 0) return null;
 
@@ -812,8 +784,8 @@ const SettingsDatabasePage: React.FC = () => {
                                     Applied Migrations (
                                     {schemaAppliedMigrations.length})
                                   </span>
-                                  <ChevronRight
-                                    className={`h-4 w-4 transition-transform duration-200 ${
+                                  <Icons.ChevronRight
+                                    className={`icon-sm transition-transform duration-200 ${
                                       isAppliedMigrationsOpen[schema]
                                         ? "rotate-90"
                                         : ""
@@ -871,7 +843,7 @@ const SettingsDatabasePage: React.FC = () => {
                     {totalMigrationsCount === 0 && (
                       <Card>
                         <CardContent className="text-center py-12">
-                          <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                          <Icons.Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                           <h3 className="text-lg font-medium mb-2">
                             No migrations found
                           </h3>
@@ -915,7 +887,7 @@ const SettingsDatabasePage: React.FC = () => {
                         className="mt-1"
                         size="sm"
                       >
-                        <PowerOff className="mr-2 h-4 w-4" />
+                        <Icons.PowerOff className="mr-2 icon-sm" />
                         Disconnect Supabase Account
                       </Button>
                     </CardFooter>

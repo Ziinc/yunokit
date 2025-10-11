@@ -124,6 +124,69 @@
     content: "";
     @apply absolute w-full h-full rounded-full bg-cms-purple/10 -z-10 blur-xl scale-90;
   }
+
+  /* Icon size utilities */
+  .icon-sm {
+    @apply h-4 w-4;
+  }
+  .icon-md {
+    @apply h-6 w-6;
+  }
+  .icon-lg {
+    @apply h-8 w-8;
+  }
+
+  /* Common layout utilities */
+  .flex-center {
+    @apply flex items-center;
+  }
+  .flex-center-justify {
+    @apply flex items-center justify-center;
+  }
+  .flex-center-gap-2 {
+    @apply flex items-center gap-2;
+  }
+  .flex-center-gap-4 {
+    @apply flex items-center gap-4;
+  }
+
+  /* Standardized gap utilities */
+  .gap-standard-xs { @apply gap-1; }
+  .gap-standard-sm { @apply gap-2; }
+  .gap-standard-md { @apply gap-4; }
+  .gap-standard-lg { @apply gap-6; }
+  .gap-standard-xl { @apply gap-8; }
+
+  /* Semantic color utilities */
+  .text-success { @apply text-green-600 dark:text-green-400; }
+  .bg-success { @apply bg-green-500; }
+  .text-warning { @apply text-amber-500; }
+  .bg-warning { @apply bg-amber-500; }
+  .text-info { @apply text-blue-600; }
+  .bg-info { @apply bg-blue-500; }
+  .text-danger { @apply text-destructive; }
+  .bg-danger { @apply bg-red-500; }
+
+  /* Standardized padding utilities for component types */
+  .padding-card { @apply p-4; }
+  .padding-card-lg { @apply p-6; }
+  .padding-button { @apply px-4 py-2; }
+  .padding-button-sm { @apply px-3 py-1; }
+  .padding-button-lg { @apply px-8 py-3; }
+  .padding-section { @apply py-6; }
+  .padding-section-lg { @apply py-12; }
+  .padding-container { @apply px-4 py-6; }
+  .padding-container-lg { @apply px-6 py-8; }
+
+  /* Content spacing utilities */
+  .space-content { @apply space-y-4; }
+  .space-content-lg { @apply space-y-6; }
+  .space-form { @apply space-y-2; }
+
+  /* Absolute centering utility */
+  .absolute-center {
+    @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+  }
 }
 
 #radix-portal-root {

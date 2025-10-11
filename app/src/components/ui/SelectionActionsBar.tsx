@@ -35,8 +35,8 @@ export const SelectionActionsBar: React.FC<SelectionActionsBarProps> = ({
         <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
       </div>
       <div className="flex items-center gap-2">
-        {actions.map((action, index) => (
-          <React.Fragment key={index}>
+        {actions.map((action) => (
+          <React.Fragment key={action.label}>
             {action.customButton || (
               <Button
                 variant={action.variant || "ghost"}

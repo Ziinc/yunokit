@@ -1,30 +1,25 @@
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Eye, EyeOff } from "lucide-react"
+import { BaseField, type FieldPropsBase } from "./BaseField"
 
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
-
-interface PasswordFieldProps {
-  id: string;
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  description?: string;
+interface PasswordFieldProps extends FieldPropsBase {
+  value: string
+  onChange: (value: string) => void
 }
 
-export const PasswordField: React.FC<PasswordFieldProps> = ({
+export const PasswordField = ({
   id,
   name,
   value,
   onChange,
   description,
-}) => {
-  const [showPassword, setShowPassword] = useState(false);
-  
+}: PasswordFieldProps) => {
+  const [showPassword, setShowPassword] = useState(false)
+
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{name}</Label>
+    <BaseField id={id} name={name} description={description}>
       <div className="relative">
         <Input
           id={id}
@@ -47,9 +42,6 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
           )}
         </Button>
       </div>
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
-  );
-};
+    </BaseField>
+  )
+}

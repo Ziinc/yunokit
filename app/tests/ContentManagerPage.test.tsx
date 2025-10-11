@@ -4,7 +4,8 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import ContentManagerPage from '../src/pages/ContentManagerPage';
 import { act } from 'react-dom/test-utils';
 import { render } from './utils/test-utils';
-import { ContentApi } from '../src/lib/api/ContentApi';
+import * as ContentApi from '../src/lib/api/ContentApi';
+import * as SchemaApi from '../src/lib/api/SchemaApi';
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return { ...actual, useLocation: vi.fn() };
@@ -55,7 +56,7 @@ describe('ContentManagerPage', () => {
 
     // Setup mock responses
     (ContentApi.listContentItems as any).mockResolvedValue({ data: mockContentItems });
-    (ContentApi.getSchemas as any).mockResolvedValue(mockSchemas);
+    (SchemaApi.listSchemas as any).mockResolvedValue({ data: mockSchemas });
   });
 
   it('loads with default filter values when no query parameters are provided', async () => {
@@ -187,7 +188,7 @@ describe('ContentManagerPage - Selection Actions', () => {
     
     // Setup mock responses
     (ContentApi.listContentItems as any).mockResolvedValue({ data: mockContentItems });
-    (ContentApi.getSchemas as any).mockResolvedValue(mockSchemas);
+    (SchemaApi.listSchemas as any).mockResolvedValue({ data: mockSchemas });
   });
   
   it('selection bar remains visible after changing author', async () => {
