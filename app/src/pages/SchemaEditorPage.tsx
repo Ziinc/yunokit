@@ -63,7 +63,6 @@ import { Badge } from "@/components/ui/badge";
 // DestructiveBadge removed; use Badge with variant="destructive"
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BackIconButton } from "@/components/ui/BackIconButton";
 import {
   AlertDialog,
@@ -135,7 +134,6 @@ const SchemaEditorPage = () => {
   const [newFieldName, setNewFieldName] = useState("");
   const [newSchemaName, setNewSchemaName] = useState("");
   const [newSchemaDescription, setNewSchemaDescription] = useState("");
-  const [multiItemAction, setMultiItemAction] = useState<"keep_first" | "delete_all">("keep_first");
   const [newField, setNewField] = useState<SchemaField>({
     id: "",
     label: "",
@@ -702,21 +700,6 @@ const SchemaEditorPage = () => {
     try {
       // Close dialog immediately
       setShowChangeSchemaType(false);
-
-      // If changing from collection to single and have multiple items, handle content deletion
-      if (schema.type === "collection" && newType === "single" && contentCount > 1) {
-        if (multiItemAction === "delete_all") {
-          // Delete all content items first
-          for (const item of contentItems) {
-            await deleteContentItem(item.id, currentWorkspace!.id);
-          }
-        } else if (multiItemAction === "keep_first" && contentItems.length > 1) {
-          // Keep first item, delete the rest
-          for (let i = 1; i < contentItems.length; i++) {
-            await deleteContentItem(contentItems[i].id, currentWorkspace!.id);
-          }
-        }
-      }
 
       // Optimistic update
       mutateSchema(
@@ -1482,37 +1465,19 @@ const SchemaEditorPage = () => {
               </p>
               
               {schema?.type === "collection" && contentCount > 1 && (
-                <div className="space-y-3 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/10">
+                <div className="space-y-3 p-4 border rounded-lg bg-destructive/10">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="icon-sm text-warning" />
-                    <h4 className="font-semibold text-warning">
-                      Multiple Items Detected
+                    <AlertCircle className="icon-sm text-destructive" />
+                    <h4 className="font-semibold text-destructive">
+                      Cannot Change Type
                     </h4>
                   </div>
-                  <p className="text-sm text-warning">
-                    This schema contains {contentCount} items. Changing to Single type will only keep one item.
+                  <p className="text-sm text-destructive">
+                    This schema contains {contentCount} items. You must reduce the number of items to 1 or 0 before changing to Single type.
                   </p>
-                  <div className="space-y-2">
-                    <Label>What should happen to the existing items?</Label>
-                    <RadioGroup 
-                      value={multiItemAction} 
-                      onValueChange={(value) => setMultiItemAction(value as "keep_first" | "delete_all")}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="keep_first" id="keep_first" />
-                        <Label htmlFor="keep_first" className="text-sm">
-                          Keep the first item and delete the rest
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="delete_all" id="delete_all" />
-                        <Label htmlFor="delete_all" className="text-sm">
-                          Delete all existing items
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Please delete the extra items from the content manager first.
+                  </p>
                 </div>
               )}
             </div>
@@ -1524,7 +1489,10 @@ const SchemaEditorPage = () => {
             >
               Cancel
             </Button>
-            <Button onClick={handleChangeSchemaType}>
+            <Button 
+              onClick={handleChangeSchemaType}
+              disabled={schema?.type === "collection" && contentCount > 1}
+            >
               Change Type
             </Button>
           </DialogFooter>
