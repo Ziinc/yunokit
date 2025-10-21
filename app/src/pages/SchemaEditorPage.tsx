@@ -991,7 +991,7 @@ const SchemaEditorPage = () => {
                                         onClick={() => navigate(`/manager?schema=${schema.id}`)}
             >
               <Badge variant="secondary" className="hover:bg-secondary/80">
-                <Pencil className="h-3 w-3 mr-1" />
+                <FileText className="h-3 w-3 mr-1" />
                 {contentCount} Items
               </Badge>
             </Button>
