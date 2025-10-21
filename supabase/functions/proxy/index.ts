@@ -43,6 +43,8 @@ app.get("/proxy/:context/content_items", async (req: any, res: any) => {
   const options = {
     schemaIds: req.query.schemaIds
       ? (req.query.schemaIds as string).split(",").map(Number)
+      : req.query.schemaId
+      ? [Number(req.query.schemaId)]
       : undefined,
     authorIds: req.query.authorIds
       ? (req.query.authorIds as string).split(",").map(Number)
