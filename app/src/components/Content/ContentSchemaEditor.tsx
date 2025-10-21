@@ -286,7 +286,11 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                             key={type}
                             variant={newField.type === type ? "default" : "outline"}
                             className={`justify-start text-left ${newField.type === type ? "" : "border-dashed"}`}
-                            onClick={() => setNewField({ ...newField, type: type as SchemaFieldType })}
+                            onClick={() => setNewField({
+                              ...newField,
+                              type: type as SchemaFieldType,
+                              default_value: null // Reset default value when changing type
+                            })}
                           >
                             <div className="flex items-center">
                               {getFieldTypeIcon(type)}
@@ -315,7 +319,24 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                         placeholder="Instructions for content editors"
                       />
                     </div>
-                    
+
+                    {newField.type === SchemaFieldType.NUMBER && (
+                      <div className="space-y-2">
+                        <Label htmlFor="defaultValue">Default Value (optional)</Label>
+                        <Input
+                          id="defaultValue"
+                          type="number"
+                          value={newField.default_value as number ?? ''}
+                          onChange={(e) => setNewField({
+                            ...newField,
+                            default_value: e.target.value === '' ? null : parseFloat(e.target.value)
+                          })}
+                          placeholder="Enter default number value"
+                          data-testid="number-default-value-input"
+                        />
+                      </div>
+                    )}
+
                     {newField.type === "enum" && (
                       <div className="space-y-3">
                         <Label>Options</Label>

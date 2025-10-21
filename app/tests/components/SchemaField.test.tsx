@@ -264,6 +264,127 @@ describe('SchemaField', () => {
       expect(input.value).toBe('123');
       expect(input).not.toBeDisabled();
     });
+
+    it('accepts integer values', async () => {
+      const user = userEvent.setup();
+      render(
+        <SchemaFieldTestWrapper
+          fieldId="test-number"
+          fieldType="number"
+          fieldName="Integer Field"
+          fieldValue={0}
+          onFieldChange={mockOnFieldChange}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('number-input-test-number')).toBeDefined();
+      });
+
+      const input = screen.getByTestId('number-input-test-number') as HTMLInputElement;
+
+      // Clear and type an integer
+      await user.clear(input);
+      await user.type(input, '100');
+
+      expect(input.value).toBe('100');
+    });
+
+    it('accepts float/decimal values', async () => {
+      const user = userEvent.setup();
+      render(
+        <SchemaFieldTestWrapper
+          fieldId="test-number"
+          fieldType="number"
+          fieldName="Float Field"
+          fieldValue={0}
+          onFieldChange={mockOnFieldChange}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('number-input-test-number')).toBeDefined();
+      });
+
+      const input = screen.getByTestId('number-input-test-number') as HTMLInputElement;
+
+      // Clear and type a float
+      await user.clear(input);
+      await user.type(input, '99.99');
+
+      expect(input.value).toBe('99.99');
+    });
+
+    it('accepts negative numbers', async () => {
+      const user = userEvent.setup();
+      render(
+        <SchemaFieldTestWrapper
+          fieldId="test-number"
+          fieldType="number"
+          fieldName="Negative Field"
+          fieldValue={0}
+          onFieldChange={mockOnFieldChange}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('number-input-test-number')).toBeDefined();
+      });
+
+      const input = screen.getByTestId('number-input-test-number') as HTMLInputElement;
+
+      // Clear and type a negative number
+      await user.clear(input);
+      await user.type(input, '-42.5');
+
+      expect(input.value).toBe('-42.5');
+    });
+
+    it('allows empty values when not required', async () => {
+      const user = userEvent.setup();
+      render(
+        <SchemaFieldTestWrapper
+          fieldId="test-number"
+          fieldType="number"
+          fieldName="Optional Number"
+          fieldValue={100}
+          fieldRequired={false}
+          onFieldChange={mockOnFieldChange}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('number-input-test-number')).toBeDefined();
+      });
+
+      const input = screen.getByTestId('number-input-test-number') as HTMLInputElement;
+      expect(input.value).toBe('100');
+
+      // Clear the input
+      await user.clear(input);
+
+      // Input should allow empty value when not required
+      expect(input.value).toBe('');
+      expect(input).not.toBeDisabled();
+    });
+
+    it('uses default value 0 when fieldValue is 0', async () => {
+      render(
+        <SchemaFieldTestWrapper
+          fieldId="test-number"
+          fieldType="number"
+          fieldName="Zero Default"
+          fieldValue={0}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('number-input-test-number')).toBeDefined();
+      });
+
+      const input = screen.getByTestId('number-input-test-number') as HTMLInputElement;
+      expect(input.value).toBe('0');
+    });
   });
 
   describe('Boolean Field', () => {
