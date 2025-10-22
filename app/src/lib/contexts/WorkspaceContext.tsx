@@ -70,7 +70,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         clearCurrentWorkspace();
       }
     }
-  }, [initialized, currentWorkspace, workspaces, clearCurrentWorkspace]);
+  }, [initialized, currentWorkspace, workspaces]);
 
   const refreshWorkspaces = async () => {
     await mutate();
