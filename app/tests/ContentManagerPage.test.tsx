@@ -7,93 +7,112 @@ import { render } from './utils/test-utils';
 import * as ContentApi from '../src/lib/api/ContentApi';
 import * as SchemaApi from '../src/lib/api/SchemaApi';
 
-// Mock API modules
-vi.mock('../src/lib/api/ContentApi', () => ({
+// Hoist mock creation to ensure they're available during module initialization
+const mockContentApi = vi.hoisted(() => ({
   listContentItems: vi.fn(),
   deleteContentItem: vi.fn(),
   updateContentItem: vi.fn()
 }));
 
-vi.mock('../src/lib/api/SchemaApi', () => ({
+const mockSchemaApi = vi.hoisted(() => ({
   listSchemas: vi.fn()
 }));
 
+const mockUseToast = vi.hoisted(() => () => ({ toast: vi.fn() }));
+
+const mockUseWorkspace = vi.hoisted(() => () => ({
+  currentWorkspace: { id: 1, name: 'Test Workspace' },
+  workspaces: [{ id: 1, name: 'Test Workspace' }],
+  isLoading: false,
+  setCurrentWorkspace: vi.fn(),
+  refreshWorkspaces: vi.fn()
+}));
+
+const mockWorkspaceProvider = vi.hoisted(() => ({ children }: { children: React.ReactNode }) => <div>{children}</div>);
+
+const mockUseDebounceCallback = vi.hoisted(() => (callback: Function) => {
+  const debouncedFn = callback as any;
+  debouncedFn.cancel = vi.fn();
+  return debouncedFn;
+});
+
+const mockUseLocation = vi.hoisted(() => vi.fn(() => ({
+  pathname: '/manager',
+  search: '',
+  hash: '',
+  state: null,
+  key: 'default'
+})));
+
+const mockUseNavigate = vi.hoisted(() => vi.fn(() => vi.fn()));
+
+// Setup API mocks
+vi.mock('../src/lib/api/ContentApi', () => mockContentApi);
+vi.mock('../src/lib/api/SchemaApi', () => mockSchemaApi);
+
+// Setup hook mocks
 vi.mock('../src/hooks/use-toast', () => ({
-  useToast: () => ({
-    toast: vi.fn()
-  })
+  useToast: mockUseToast
 }));
 
 vi.mock('../src/hooks/useDebounceCallback', () => ({
-  useDebounceCallback: (callback: Function) => {
-    const debouncedFn = callback;
-    debouncedFn.cancel = vi.fn();
-    return debouncedFn;
-  }
+  useDebounceCallback: mockUseDebounceCallback
 }));
 
 vi.mock('../src/lib/contexts/WorkspaceContext', () => ({
-  useWorkspace: () => ({
-    currentWorkspace: { id: 1, name: 'Test Workspace' },
-    workspaces: [{ id: 1, name: 'Test Workspace' }],
-    isLoading: false
-  }),
-  WorkspaceProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+  useWorkspace: mockUseWorkspace,
+  WorkspaceProvider: mockWorkspaceProvider
 }));
 
+// Setup router mocks
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return { ...actual, useLocation: vi.fn(), useNavigate: vi.fn(() => vi.fn()) };
+  return {
+    ...actual,
+    useLocation: mockUseLocation,
+    useNavigate: mockUseNavigate
+  };
 });
+
 import { useLocation } from 'react-router-dom';
 import type { Mock } from 'vitest';
 const useLocationMock = useLocation as Mock;
 
-const mockContentItems = [
-  {
-    id: 1,
-    title: 'Test Content 1',
-    schema_id: 1,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-    published_at: null,
-    data: {}
-  },
-  {
-    id: 2,
-    title: 'Test Content 2',
-    schema_id: 2,
-    created_at: '2024-01-02T00:00:00Z',
-    updated_at: '2024-01-02T00:00:00Z',
-    published_at: '2024-01-02T00:00:00Z',
-    data: {}
-  }
-];
-
-const mockSchemas = [
-  { id: 1, name: 'Blog Post', workspace_id: 1, config: {}, archived_at: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-  { id: 2, name: 'Article', workspace_id: 1, config: {}, archived_at: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-];
-
+// Import helpers after mocks are set up
+import {
+  createMockContentItem,
+  createMockSchema,
+  updateMockLocation,
+  createApiResponse
+} from './utils/mock-helpers';
 
 describe('ContentManagerPage', () => {
 
   beforeEach(() => {
     // Reset mocks between tests
     vi.clearAllMocks();
-    
-    // Mock the useLocation implementation for each test
-    useLocationMock.mockImplementation(() => ({
+
+    // Reset location to default
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
       search: '',
-      hash: '',
-      state: null,
-      key: 'default',
-    }));
+      key: 'default'
+    });
 
-    // Setup mock responses
-    (ContentApi.listContentItems as any).mockResolvedValue({ data: mockContentItems });
-    (SchemaApi.listSchemas as any).mockResolvedValue({ data: mockSchemas });
+    // Re-setup mock responses (they get cleared by vi.clearAllMocks)
+    mockContentApi.listContentItems.mockResolvedValue(
+      createApiResponse([
+        createMockContentItem({ id: 1, title: 'Test Content 1', schema_id: 1, published_at: null }),
+        createMockContentItem({ id: 2, title: 'Test Content 2', schema_id: 2, published_at: '2024-01-02T00:00:00Z' })
+      ])
+    );
+
+    mockSchemaApi.listSchemas.mockResolvedValue(
+      createApiResponse([
+        createMockSchema({ id: 1, name: 'Blog Post' }),
+        createMockSchema({ id: 2, name: 'Article' })
+      ])
+    );
   });
 
   it('loads with default filter values when no query parameters are provided', async () => {
@@ -108,13 +127,11 @@ describe('ContentManagerPage', () => {
 
   it('updates filter values from URL query parameters', async () => {
     // Mock useLocation to return query parameters (using schema id)
-    useLocationMock.mockImplementation(() => ({
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
       search: '?schema=2&search=test',
-      hash: '',
-      state: null,
-      key: 'test',
-    }));
+      key: 'test'
+    });
 
     render(<ContentManagerPage />);
 
@@ -140,13 +157,11 @@ describe('ContentManagerPage', () => {
     });
 
     // Now update the location to simulate navigation with query parameters (using schema id)
-    useLocationMock.mockImplementation(() => ({
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
       search: '?schema=1&search=draft',
-      hash: '',
-      state: null,
-      key: 'navigation',
-    }));
+      key: 'navigation'
+    });
 
     // Re-render to simulate navigation
     act(() => {
@@ -166,13 +181,11 @@ describe('ContentManagerPage', () => {
 
   it('correctly resets filters when clicking the reset button', async () => {
     // Start with filters applied (using schema id)
-    useLocationMock.mockImplementation(() => ({
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
       search: '?schema=2&search=test',
-      hash: '',
-      state: null,
-      key: 'test',
-    }));
+      key: 'test'
+    });
 
     render(<ContentManagerPage />);
 
@@ -198,13 +211,11 @@ describe('ContentManagerPage', () => {
 
   it('correctly applies sort parameter from URL', async () => {
     // Render with sort parameter
-    useLocationMock.mockImplementation(() => ({
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
       search: '?sort=updatedAt',
-      hash: '',
-      state: null,
-      key: 'test',
-    }));
+      key: 'test'
+    });
 
     render(<ContentManagerPage />);
     
