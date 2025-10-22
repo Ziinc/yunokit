@@ -309,6 +309,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
             {workspaces.map((workspace) => {
               const hasProject = !!workspace.project_ref;
               const isLinkingThis = linkingWorkspaceId === workspace.id;
+              const availableProjects = getAvailableProjects(workspace.id);
 
               return (
                 <Card
@@ -355,7 +356,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
                         <p className="text-sm text-amber-600 mb-2">
                           No project linked - workspace cannot be selected
                         </p>
-                        {getAvailableProjects(workspace.id).length > 0 ? (
+                        {availableProjects.length > 0 ? (
                           <Button
                             size="sm"
                             variant="outline"
@@ -384,30 +385,26 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
                         <Select
                           value={selectedProjectId}
                           onValueChange={setSelectedProjectId}
-                          disabled={
-                            getAvailableProjects(workspace.id).length === 0
-                          }
+                          disabled={availableProjects.length === 0}
                         >
                           <SelectTrigger>
                             <SelectValue
                               placeholder={
-                                getAvailableProjects(workspace.id).length === 0
+                                availableProjects.length === 0
                                   ? "No available projects"
                                   : "Select project..."
                               }
                             />
                           </SelectTrigger>
                           <SelectContent>
-                            {getAvailableProjects(workspace.id).map(
-                              (project) => (
-                                <SelectItem key={project.id} value={project.id}>
-                                  {project.name} ({project.region})
-                                </SelectItem>
-                              )
-                            )}
+                            {availableProjects.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name} ({project.region})
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                        {getAvailableProjects(workspace.id).length === 0 && (
+                        {availableProjects.length === 0 && (
                           <p className="text-sm text-amber-600">
                             All available projects are already linked to other
                             workspaces.
@@ -423,7 +420,7 @@ export const WorkspaceSwitcherModal: React.FC<WorkspaceSwitcherModalProps> = ({
                             disabled={
                               !selectedProjectId ||
                               isLinking ||
-                              getAvailableProjects(workspace.id).length === 0
+                              availableProjects.length === 0
                             }
                             className="flex-1"
                           >
