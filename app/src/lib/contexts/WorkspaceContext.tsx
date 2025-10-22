@@ -22,6 +22,11 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
     useNullableState<WorkspaceRow>(null);
   const [initialized, setInitialized] = React.useState(false);
 
+  const clearCurrentWorkspace = React.useCallback(() => {
+    setCurrentWorkspaceState(null);
+    localStorage.removeItem("currentWorkspaceId");
+  }, []);
+
   const {
     data: workspaces = [],
     error,
@@ -42,14 +47,14 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
             setCurrentWorkspaceState(ws);
           } else if (ws && !ws.project_ref) {
             // Clear invalid workspace from localStorage
-            localStorage.removeItem("currentWorkspaceId");
+            clearCurrentWorkspace();
           }
         }
       }
       // Always set initialized to true once workspaces have been loaded (even if empty)
       setInitialized(true);
     }
-  }, [workspaces, isLoading]);
+  }, [workspaces, isLoading, clearCurrentWorkspace]);
 
   // Update current workspace reference when workspaces are refreshed
   React.useEffect(() => {
@@ -59,15 +64,13 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         setCurrentWorkspaceState(updatedWorkspace);
       } else if (updatedWorkspace && !updatedWorkspace.project_ref) {
         // Workspace lost its project_ref, clear it
-        setCurrentWorkspaceState(null);
-        localStorage.removeItem("currentWorkspaceId");
+        clearCurrentWorkspace();
       } else if (!updatedWorkspace) {
         // Workspace was deleted, clear it
-        setCurrentWorkspaceState(null);
-        localStorage.removeItem("currentWorkspaceId");
+        clearCurrentWorkspace();
       }
     }
-  }, [initialized, currentWorkspace, workspaces]);
+  }, [initialized, currentWorkspace, workspaces, clearCurrentWorkspace]);
 
   const refreshWorkspaces = async () => {
     await mutate();
@@ -81,8 +84,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         setCurrentWorkspaceState(workspace);
       }
     } else {
-      localStorage.removeItem("currentWorkspaceId");
-      setCurrentWorkspaceState(null);
+      clearCurrentWorkspace();
     }
   };
 
