@@ -54,7 +54,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
       // Always set initialized to true once workspaces have been loaded (even if empty)
       setInitialized(true);
     }
-  }, [workspaces, isLoading, clearCurrentWorkspace]);
+  }, [workspaces, isLoading]);
 
   // Update current workspace reference when workspaces are refreshed
   React.useEffect(() => {
