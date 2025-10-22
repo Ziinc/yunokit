@@ -989,8 +989,9 @@ describe('TiptapEditor', () => {
       const lastCall = mockOnChange.mock.calls[mockOnChange.mock.calls.length - 1];
       const content = lastCall[0];
 
-      const priceField = content.fields.find((field: any) => field.id === 'price');
-      const quantityField = content.fields.find((field: any) => field.id === 'quantity');
+      interface ContentField { id: string; value: unknown }
+      const priceField = content.fields.find((field: ContentField) => field.id === 'price');
+      const quantityField = content.fields.find((field: ContentField) => field.id === 'quantity');
 
       expect(priceField).toBeDefined();
       expect(priceField.value).toBe(99.99);
@@ -1045,7 +1046,8 @@ describe('TiptapEditor', () => {
       const lastCall = mockOnChange.mock.calls[mockOnChange.mock.calls.length - 1];
       const content = lastCall[0];
 
-      const amountField = content.fields.find((field: any) => field.id === 'amount');
+      interface ContentField { id: string; value: unknown }
+      const amountField = content.fields.find((field: ContentField) => field.id === 'amount');
       expect(amountField).toBeDefined();
       expect(amountField.value).toBe(0);
     });
