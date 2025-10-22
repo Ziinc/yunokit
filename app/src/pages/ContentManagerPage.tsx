@@ -29,17 +29,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { notifyError } from "@/lib/errors";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
-import { downloadContent } from "@/lib/download";
 import { formatDate } from "@/utils/date";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 // Removed css-constants abstraction; use Tailwind utilities directly
@@ -296,39 +289,6 @@ const ContentManagerPage = () => {
     });
   };
   
-  const handleDownload = async (format: 'csv' | 'json' | 'jsonl') => {
-    try {
-      // Create loading toast
-      toast({
-        title: "Preparing download",
-        description: "We're preparing your download, please wait...",
-      });
-      
-      // Convert ContentItemRow to ContentItem for download
-      const convertedItems: ContentItem[] = selectedItems.map(item => ({
-        id: item.id?.toString() || '',
-        title: item.title || '',
-        schemaId: item.schema_id?.toString() || '',
-        status: (item.status || 'draft') as ContentItemStatus,
-        createdAt: item.created_at || '',
-        updatedAt: item.updated_at || '',
-        publishedAt: item.published_at || undefined,
-        data: (item.data as Record<string, unknown>) || {}
-      }));
-      await downloadContent(convertedItems, format);
-      
-      toast({
-        title: "Download complete",
-        description: `Your ${format.toUpperCase()} download is ready.`,
-      });
-    } catch (error) {
-      notifyError(toast, error, {
-        title: "Download failed",
-        fallback: "There was an error downloading your content. Please try again.",
-        prefix: "Download failed",
-      });
-    }
-  };
   
   const handleDelete = async () => {
     try {
@@ -477,32 +437,6 @@ const ContentManagerPage = () => {
                 label: "Delete",
                 icon: <Icons.Trash2 size={16} />,
                 onClick: () => setShowDeleteDialog(true),
-              },
-              {
-                label: "Download",
-                icon: <Icons.Download size={16} />,
-                onClick: () => {},
-                customButton: (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8">
-                        <Icons.Download size={16} className="mr-2" />
-                        Download
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white">
-                      <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                        CSV
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDownload('json')}>
-                        JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDownload('jsonl')}>
-                        JSONL
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ),
               },
             ]}
           />

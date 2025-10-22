@@ -1,7 +1,6 @@
 export {
   // ContentManagerPage icons
   Loader2,
-  Download,
   Trash2,
   EyeOff,
   Users,
