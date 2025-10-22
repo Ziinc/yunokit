@@ -18,4 +18,3 @@ export * from './auth';
 
 // Database and Infrastructure APIs
 export * from './MigrationsApi';
-export * from './SupabaseConnectionApi';
