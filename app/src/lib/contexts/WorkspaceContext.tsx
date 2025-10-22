@@ -22,6 +22,11 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
     useNullableState<WorkspaceRow>(null);
   const [initialized, setInitialized] = React.useState(false);
 
+  const clearCurrentWorkspace = React.useCallback(() => {
+    setCurrentWorkspaceState(null);
+    localStorage.removeItem("currentWorkspaceId");
+  }, []);
+
   const {
     data: workspaces = [],
     error,
@@ -42,7 +47,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
             setCurrentWorkspaceState(ws);
           } else if (ws && !ws.project_ref) {
             // Clear invalid workspace from localStorage
-            localStorage.removeItem("currentWorkspaceId");
+            clearCurrentWorkspace();
           }
         }
       }
@@ -59,12 +64,10 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         setCurrentWorkspaceState(updatedWorkspace);
       } else if (updatedWorkspace && !updatedWorkspace.project_ref) {
         // Workspace lost its project_ref, clear it
-        setCurrentWorkspaceState(null);
-        localStorage.removeItem("currentWorkspaceId");
+        clearCurrentWorkspace();
       } else if (!updatedWorkspace) {
         // Workspace was deleted, clear it
-        setCurrentWorkspaceState(null);
-        localStorage.removeItem("currentWorkspaceId");
+        clearCurrentWorkspace();
       }
     }
   }, [initialized, currentWorkspace, workspaces]);
@@ -81,8 +84,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         setCurrentWorkspaceState(workspace);
       }
     } else {
-      localStorage.removeItem("currentWorkspaceId");
-      setCurrentWorkspaceState(null);
+      clearCurrentWorkspace();
     }
   };
 
