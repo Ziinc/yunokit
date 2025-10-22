@@ -8,12 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Loader2,
-  Lock,
-  Mail,
   Sparkles,
   Zap,
   Clock,
@@ -32,19 +28,7 @@ import {
   signInWithGoogle,
   signInWithMicrosoft,
   signInWithGithub,
-  signInWithEmail,
-  signUpWithEmail,
-  resetPassword,
 } from "@/lib/api/auth";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 // Feature flags removed; all gated features disabled by default
 import { isAuthenticated } from "@/lib/api/auth";
 import { getErrorMessage } from "@/lib/utils";
@@ -156,22 +140,8 @@ const SignInPage = () => {
     });
   };
 
-  // State for email/password auth
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSigningIn, setIsSigningIn] = useState(false);
-
   // State for registration
   const [showRegister, setShowRegister] = useState(false);
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isRegistering, setIsRegistering] = useState(false);
-
-  // State for password reset
-  const [resetEmail, setResetEmail] = useState("");
-  const [isResetSending, setIsResetSending] = useState(false);
-  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -220,136 +190,6 @@ const SignInPage = () => {
         variant: "destructive",
       });
       clearOauthLoading();
-    }
-  };
-
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      setIsSigningIn(true);
-
-      // Validate inputs
-      if (!email || !password) {
-        throw new Error("Please provide both email and password");
-      }
-
-      // Sign in with Supabase
-      const { error } = await signInWithEmail(email, password);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Sign in successful",
-        description: `Welcome back!`,
-      });
-      navigate("/");
-    } catch (error) {
-      console.error("Sign in error:", error);
-      toast({
-        title: "Sign in failed",
-        description: getErrorMessage(error, "Invalid email or password"),
-        variant: "destructive",
-      });
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!registerEmail || !registerPassword || !confirmPassword) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (registerPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsRegistering(true);
-      const { data, error } = await signUpWithEmail(
-        registerEmail,
-        registerPassword
-      );
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Registration successful",
-        description: data?.user?.email_confirmed_at
-          ? "You've been signed up and can now sign in"
-          : "Please check your email to confirm your account",
-      });
-
-      setRegisterEmail("");
-      setRegisterPassword("");
-      setConfirmPassword("");
-      setShowRegister(false);
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast({
-        title: "Registration failed",
-        description: getErrorMessage(error, "Could not create your account"),
-        variant: "destructive",
-      });
-    } finally {
-      setIsRegistering(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!resetEmail) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email address",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsResetSending(true);
-      const { error } = await resetPassword(resetEmail);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Password reset email sent",
-        description:
-          "Please check your email for instructions to reset your password",
-      });
-
-      setResetDialogOpen(false);
-      setResetEmail("");
-    } catch (error) {
-      console.error("Password reset error:", error);
-      toast({
-        title: "Failed to send reset email",
-        description: getErrorMessage(error, "Please try again later"),
-        variant: "destructive",
-      });
-    } finally {
-      setIsResetSending(false);
     }
   };
 
@@ -493,129 +333,24 @@ const SignInPage = () => {
           </CardHeader>
 
           {showRegister ? (
-            false ? (
-              <form onSubmit={handleRegister}>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
-                      <Input
-                        id="register-email"
-                        type="email"
-                        placeholder="Enter your email"
-                        className="pl-10"
-                        value={registerEmail}
-                        onChange={(e) => setRegisterEmail(e.target.value)}
-                        disabled={isRegistering}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        id="register-password"
-                        type="password"
-                        placeholder="Create a password"
-                        className="pl-10"
-                        value={registerPassword}
-                        onChange={(e) => setRegisterPassword(e.target.value)}
-                        disabled={isRegistering}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        id="confirm-password"
-                        type="password"
-                        placeholder="Confirm your password"
-                        className="pl-10"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        disabled={isRegistering}
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    disabled={isRegistering}
-                  >
-                    {isRegistering ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      "Sign Up"
-                    )}
-                  </Button>
-
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      className="text-sm text-primary hover:underline"
-                      onClick={() => setShowRegister(false)}
-                    >
-                      Already have an account? Sign In
-                    </button>
-                  </div>
-                </CardContent>
-              </form>
-            ) : (
-              <CardContent className="space-y-4">
-                <div className="text-center text-muted-foreground">
-                  Email sign-up is currently disabled.
-                </div>
-                <div className="text-center">
-                  <button
-                    type="button"
-                    className="text-sm text-primary hover:underline"
-                    onClick={() => setShowRegister(false)}
-                  >
-                    Back to Sign In
-                  </button>
-                </div>
-              </CardContent>
-            )
+            <CardContent className="space-y-4">
+              <div className="text-center text-muted-foreground">
+                Email sign-up is currently disabled.
+              </div>
+              <div className="text-center">
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:underline"
+                  onClick={() => setShowRegister(false)}
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            </CardContent>
           ) : (
             <>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
-                  {false && (
-                    <Button
-                      onClick={() => handleOAuthSignIn("github")}
-                      className="w-full bg-gray-900 hover:bg-gray-800 text-white"
-                      disabled={oauthLoading !== null}
-                    >
-                      {oauthLoading === "github" ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing in with GitHub...
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className="mr-2 h-4 w-4"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                          </svg>
-                          Continue with GitHub
-                        </>
-                      )}
-                    </Button>
-                  )}
-
                   <Button
                     onClick={() => handleOAuthSignIn("google")}
                     className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300"
@@ -650,181 +385,11 @@ const SignInPage = () => {
                       </>
                     )}
                   </Button>
-
-                  {false && (
-                    <Button
-                      onClick={() => handleOAuthSignIn("microsoft")}
-                      className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                      disabled={oauthLoading !== null}
-                    >
-                      {oauthLoading === "microsoft" ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing in with Microsoft...
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className="mr-2 h-4 w-4"
-                            viewBox="0 0 23 23"
-                            fill="none"
-                          >
-                            <path d="M0 0H11V11H0V0Z" fill="#F25022" />
-                            <path d="M12 0H23V11H12V0Z" fill="#7FBA00" />
-                            <path d="M0 12H11V23H0V12Z" fill="#00A4EF" />
-                            <path d="M12 12H23V23H12V12Z" fill="#FFB900" />
-                          </svg>
-                          Continue with SSO
-                        </>
-                      )}
-                    </Button>
-                  )}
                 </div>
-
-                {false && (
-                  <form onSubmit={handleEmailSignIn}>
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-gray-300" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-card px-2 text-muted-foreground">
-                          or
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="you@example.com"
-                            className="pl-10"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={isSigningIn}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="password">Password</Label>
-                          <Dialog
-                            open={resetDialogOpen}
-                            onOpenChange={setResetDialogOpen}
-                          >
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="link"
-                                className="p-0 h-auto text-xs"
-                              >
-                                Forgot Password?
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Reset Password</DialogTitle>
-                                <DialogDescription>
-                                  Enter your email and we'll send you a link to
-                                  reset your password.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <form
-                                onSubmit={handleResetPassword}
-                                className="space-y-4 py-4"
-                              >
-                                <div className="space-y-2">
-                                  <Label htmlFor="reset-email">Email</Label>
-                                  <Input
-                                    id="reset-email"
-                                    type="email"
-                                    placeholder="Enter your email"
-                                    value={resetEmail}
-                                    onChange={(e) =>
-                                      setResetEmail(e.target.value)
-                                    }
-                                    disabled={isResetSending}
-                                  />
-                                </div>
-                                <DialogFooter className="mt-4">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setResetDialogOpen(false)}
-                                    disabled={isResetSending}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    type="submit"
-                                    disabled={isResetSending}
-                                  >
-                                    {isResetSending ? (
-                                      <>
-                                        <Loader2 className="mr-2 icon-sm animate-spin" />
-                                        Sending...
-                                      </>
-                                    ) : (
-                                      "Send Reset Link"
-                                    )}
-                                  </Button>
-                                </DialogFooter>
-                              </form>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
-                          <Input
-                            id="password"
-                            type="password"
-                            placeholder="••••••••"
-                            className="pl-10"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isSigningIn}
-                          />
-                        </div>
-                      </div>
-
-                      <Button
-                        type="submit"
-                        className="w-full bg-green-600 hover:bg-green-700"
-                        disabled={isSigningIn}
-                      >
-                        {isSigningIn ? (
-                          <>
-                            <Loader2 className="mr-2 icon-sm animate-spin" />
-                            Signing in...
-                          </>
-                        ) : (
-                          "Sign In"
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                )}
               </CardContent>
 
               <CardFooter className="flex flex-col">
                 <div className="text-center w-full">
-                  {false && (
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Don't have an account?{" "}
-                      <button
-                        type="button"
-                        className="text-primary hover:underline ml-1"
-                        onClick={() => setShowRegister(true)}
-                      >
-                        Sign Up Now
-                      </button>
-                    </p>
-                  )}
                   <p className="text-xs text-muted-foreground">
                     By signing in, you agree to our{" "}
                     <a

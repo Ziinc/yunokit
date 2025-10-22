@@ -17,10 +17,13 @@ export function getErrorMessage(
   if (typeof error === "string") return error
   if (error instanceof Error) return error.message || fallback
   if (typeof error === "object") {
-    const anyErr = error as any
-    if (typeof anyErr.message === "string") return anyErr.message
-    if (anyErr.error && typeof anyErr.error.message === "string") {
-      return anyErr.error.message
+    const errorObj = error as Record<string, unknown>
+    if (typeof errorObj.message === "string") return errorObj.message
+    if (errorObj.error && typeof errorObj.error === "object" && errorObj.error !== null) {
+      const nestedError = errorObj.error as Record<string, unknown>
+      if (typeof nestedError.message === "string") {
+        return nestedError.message
+      }
     }
   }
   return fallback
@@ -30,11 +33,10 @@ export function getErrorMessage(
  * Generates a UUID v4 using Web Crypto when available, with a safe fallback.
  */
 export function generateUUID(): string {
-  if (typeof crypto !== "undefined" && typeof (crypto as any).randomUUID === "function") {
-    return (crypto as any).randomUUID()
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
   }
   // Fallback generator (non-cryptographic)
-  // eslint-disable-next-line no-bitwise
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
     const v = c === "x" ? r : (r & 0x3) | 0x8

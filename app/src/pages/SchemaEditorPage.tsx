@@ -82,7 +82,7 @@ import {
 } from "@/components/ui/tooltip";
 import { generateUUID } from "@/lib/utils";
 import { isString } from "@/lib/guards";
-import { listContentItemsBySchema, deleteContentItem } from "@/lib/api/ContentApi";
+import { listContentItemsBySchema } from "@/lib/api/ContentApi";
 import useSWR from "swr";
 import { getSchema, updateSchema, deleteSchema } from "@/lib/api/SchemaApi";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";

@@ -6,7 +6,6 @@ import {
   COMMON_ENUM_OPTIONS,
   IMAGE_ASSET_TYPES,
   createRelationField,
-  createEnumField,
   createMultiselectField
 } from "./templateFieldConstants";
 import { generateUUID } from "../utils";

@@ -12,15 +12,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
-  updateEmail,
-  updatePassword,
   signOut,
 } from "@/lib/api/auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangle,
-  Lock,
-  Mail,
   Loader2,
   Trash2,
   LogOut,
@@ -28,118 +24,14 @@ import {
 // Feature flags removed; email auth settings disabled
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { getErrorMessage } from "@/lib/utils";
 
 const SettingsAccountPage = () => {
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  // Account update states
-  const [emailInput, setEmailInput] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Handle email update
-  const handleUpdateEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (
-      !emailInput.trim() ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.trim())
-    ) {
-      toast({
-        title: "Valid email required",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsUpdatingEmail(true);
-
-      const { error } = await updateEmail(emailInput);
-
-      if (error) throw error;
-
-      toast({
-        title: "Email update initiated",
-        description: "Please check your email to confirm the change",
-      });
-    } catch (error) {
-      console.error("Update email error:", error);
-      toast({
-        title: "Failed to update email",
-        description: getErrorMessage(error, "Please try again later"),
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingEmail(false);
-    }
-  };
-
-  // Handle password update
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newPassword || !confirmPassword) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill out all password fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Your password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsUpdatingPassword(true);
-
-      const { error } = await updatePassword(newPassword);
-
-      if (error) throw error;
-
-      setNewPassword("");
-      setConfirmPassword("");
-
-      toast({
-        title: "Password updated",
-        description: "Your password has been updated successfully",
-      });
-    } catch (error) {
-      console.error("Update password error:", error);
-      toast({
-        title: "Failed to update password",
-        description: getErrorMessage(error, "Please try again later"),
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingPassword(false);
-    }
-  };
 
   // Handle account deletion
   const handleDeleteAccount = async () => {
@@ -214,90 +106,7 @@ const SettingsAccountPage = () => {
 
 
 
-          {false && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-medium mb-4">Update Email</h3>
-              <form onSubmit={handleUpdateEmail} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      className="pl-10"
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      disabled={isUpdatingEmail}
-                    />
-                  </div>
-                </div>
-                <Button type="submit" disabled={isUpdatingEmail}>
-                  {isUpdatingEmail ? (
-                    <>
-                      <Loader2 className="mr-2 icon-sm animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Email"
-                  )}
-                </Button>
-                <p className="text-sm text-muted-foreground">
-                  You will receive a confirmation email to verify the change.
-                </p>
-              </form>
-            </div>
-          )}
 
-          {/* Password Update - Only for email/password accounts, not for OAuth */}
-          {false && (
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-medium mb-4">Update Password</h3>
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
-                    <Input
-                      id="new-password"
-                      type="password"
-                      placeholder="Enter your new password"
-                      className="pl-10"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      disabled={isUpdatingPassword}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground icon-sm" />
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="Confirm your new password"
-                      className="pl-10"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={isUpdatingPassword}
-                    />
-                  </div>
-                </div>
-                <Button type="submit" disabled={isUpdatingPassword}>
-                  {isUpdatingPassword ? (
-                    <>
-                      <Loader2 className="mr-2 icon-sm animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Password"
-                  )}
-                </Button>
-              </form>
-            </div>
-          )}
 
           <div className="border-t pt-6">
             <Button

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CreditCard, Package, Receipt } from "lucide-react";
 
 const SettingsBillingPage = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, []);
 
   const handleComingSoon = () => {
     toast({

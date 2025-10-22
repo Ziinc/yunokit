@@ -15,7 +15,6 @@ import { ContentSchemaEditor } from "@/components/Content/ContentSchemaEditor";
 import {
   listSchemas,
   createSchema,
-  updateSchema,
   deleteSchema,
   ContentSchemaRow,
 } from "@/lib/api/SchemaApi";
