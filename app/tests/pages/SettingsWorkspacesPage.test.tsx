@@ -7,6 +7,7 @@ import SettingsWorkspacesPage from '@/pages/Settings/SettingsWorkspacesPage';
 import * as WorkspaceContext from '@/lib/contexts/WorkspaceContext';
 import * as WorkspaceApi from '@/lib/api/WorkspaceApi';
 import * as ToastHook from '@/hooks/use-toast';
+import { Tabs } from '@/components/ui/tabs';
 
 const mockWorkspaces = [
   {
@@ -63,7 +64,7 @@ describe('SettingsWorkspacesPage', () => {
     vi.spyOn(ToastHook, 'useToast').mockReturnValue({ toast: mockToast, dismiss: vi.fn(), toasts: [] } as any);
   });
 
-  const renderPage = () => render(<SettingsWorkspacesPage />);
+  const renderPage = () => render(<Tabs value="workspaces"><SettingsWorkspacesPage /></Tabs>);
 
   it('should render workspaces list', async () => {
     renderPage();

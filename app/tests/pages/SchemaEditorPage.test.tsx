@@ -110,7 +110,7 @@ const mockContentItems: ContentApi.ContentItemRow[] = [
   },
 ];
 
-describe("SchemaEditorPage - Schema Type Change", () => {
+describe("SchemaEditorPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useWorkspace as Mock).mockReturnValue({
