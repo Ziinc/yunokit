@@ -54,6 +54,9 @@ export const FilterForm: React.FC<FilterFormProps> = ({
     },
   });
 
+  // Track if we're syncing with URL params to prevent auto-submit loops
+  const isSyncingRef = React.useRef(false);
+
   // Watch all form fields for changes
   const formValues = useWatch({
     control: form.control
@@ -62,9 +65,9 @@ export const FilterForm: React.FC<FilterFormProps> = ({
   // Calculate if any filters are active
   const hasActiveFilters = useMemo(() => {
     if (!initialValues) return false;
-    
+
     return (
-      initialValues.search || 
+      initialValues.search ||
       initialValues.schemaId
     );
   }, [initialValues]);
@@ -81,6 +84,9 @@ export const FilterForm: React.FC<FilterFormProps> = ({
   // Reset form with new values when initialValues change
   useEffect(() => {
     if (initialValues) {
+      // Set syncing flag before reset
+      isSyncingRef.current = true;
+
       // Reset the form completely before setting new values
       form.reset({
         schemaId: initialValues.schemaId || "all",
@@ -88,12 +94,18 @@ export const FilterForm: React.FC<FilterFormProps> = ({
         page: initialValues.page || 1,
         perPage: initialValues.perPage || 10
       });
+
+      // Clear syncing flag after a microtask to allow form reset to complete
+      Promise.resolve().then(() => {
+        isSyncingRef.current = false;
+      });
     }
   }, [initialValues, form]);
 
   // Auto-submit on form changes with differential debouncing
   useEffect(() => {
-    if (!formValues) return;
+    // Skip if we're syncing with URL params to prevent infinite loops
+    if (isSyncingRef.current || !formValues) return;
 
     // Immediate submission for schema changes
     if (formValues.schemaId !== initialValues?.schemaId) {
@@ -113,7 +125,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({
   }, [formValues, initialValues, debouncedSubmit, onSubmitFilters]);
 
   return (
-    <Form {...form} key={`form-${initialValues?.schemaId || 'all'}`}>
+    <Form {...form}>
       <div className="flex flex-wrap items-center gap-2">
         <FormField
           control={form.control}
