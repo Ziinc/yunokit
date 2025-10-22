@@ -6,170 +6,216 @@ import { act } from 'react-dom/test-utils';
 import { render } from './utils/test-utils';
 import * as ContentApi from '../src/lib/api/ContentApi';
 import * as SchemaApi from '../src/lib/api/SchemaApi';
+
+// Hoist mock creation to ensure they're available during module initialization
+const mockContentApi = vi.hoisted(() => ({
+  listContentItems: vi.fn(),
+  deleteContentItem: vi.fn(),
+  updateContentItem: vi.fn()
+}));
+
+const mockSchemaApi = vi.hoisted(() => ({
+  listSchemas: vi.fn()
+}));
+
+const mockUseToast = vi.hoisted(() => () => ({ toast: vi.fn() }));
+
+const mockUseWorkspace = vi.hoisted(() => () => ({
+  currentWorkspace: { id: 1, name: 'Test Workspace' },
+  workspaces: [{ id: 1, name: 'Test Workspace' }],
+  isLoading: false,
+  setCurrentWorkspace: vi.fn(),
+  refreshWorkspaces: vi.fn()
+}));
+
+const mockWorkspaceProvider = vi.hoisted(() => ({ children }: { children: React.ReactNode }) => <div>{children}</div>);
+
+const mockUseDebounceCallback = vi.hoisted(() => (callback: Function) => {
+  const debouncedFn = callback as any;
+  debouncedFn.cancel = vi.fn();
+  return debouncedFn;
+});
+
+const mockUseLocation = vi.hoisted(() => vi.fn(() => ({
+  pathname: '/manager',
+  search: '',
+  hash: '',
+  state: null,
+  key: 'default'
+})));
+
+const mockUseNavigate = vi.hoisted(() => vi.fn(() => vi.fn()));
+
+// Setup API mocks
+vi.mock('../src/lib/api/ContentApi', () => mockContentApi);
+vi.mock('../src/lib/api/SchemaApi', () => mockSchemaApi);
+
+// Setup hook mocks
+vi.mock('../src/hooks/use-toast', () => ({
+  useToast: mockUseToast
+}));
+
+vi.mock('../src/hooks/useDebounceCallback', () => ({
+  useDebounceCallback: mockUseDebounceCallback
+}));
+
+vi.mock('../src/lib/contexts/WorkspaceContext', () => ({
+  useWorkspace: mockUseWorkspace,
+  WorkspaceProvider: mockWorkspaceProvider
+}));
+
+// Setup router mocks
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return { ...actual, useLocation: vi.fn() };
+  return {
+    ...actual,
+    useLocation: mockUseLocation,
+    useNavigate: mockUseNavigate
+  };
 });
+
 import { useLocation } from 'react-router-dom';
 import type { Mock } from 'vitest';
 const useLocationMock = useLocation as Mock;
 
-const mockContentItems = [
-  {
-    id: '1',
-    title: 'Test Content 1',
-    status: 'draft',
-    schema: 'blog',
-    author: 'user1@example.com',
-    updatedAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    title: 'Test Content 2',
-    status: 'published',
-    schema: 'article',
-    author: 'user2@example.com',
-    updatedAt: '2024-01-02T00:00:00Z'
-  }
-];
-
-const mockSchemas = [
-  { id: 'blog', name: 'Blog Post' },
-  { id: 'article', name: 'Article' }
-];
-
+// Import helpers after mocks are set up
+import {
+  createMockContentItem,
+  createMockSchema,
+  updateMockLocation,
+  createApiResponse
+} from './utils/mock-helpers';
 
 describe('ContentManagerPage', () => {
 
   beforeEach(() => {
     // Reset mocks between tests
     vi.clearAllMocks();
-    
-    // Mock the useLocation implementation for each test
-    useLocationMock.mockImplementation(() => ({
+
+    // Reset location to default
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
       search: '',
-      hash: '',
-      state: null,
-      key: 'default',
-    }));
+      key: 'default'
+    });
 
-    // Setup mock responses
-    (ContentApi.listContentItems as any).mockResolvedValue({ data: mockContentItems });
-    (SchemaApi.listSchemas as any).mockResolvedValue({ data: mockSchemas });
+    // Re-setup mock responses (they get cleared by vi.clearAllMocks)
+    mockContentApi.listContentItems.mockResolvedValue(
+      createApiResponse([
+        createMockContentItem({ id: 1, title: 'Test Content 1', schema_id: 1, published_at: null }),
+        createMockContentItem({ id: 2, title: 'Test Content 2', schema_id: 2, published_at: '2024-01-02T00:00:00Z' })
+      ])
+    );
+
+    mockSchemaApi.listSchemas.mockResolvedValue(
+      createApiResponse([
+        createMockSchema({ id: 1, name: 'Blog Post' }),
+        createMockSchema({ id: 2, name: 'Article' })
+      ])
+    );
   });
 
   it('loads with default filter values when no query parameters are provided', async () => {
     render(<ContentManagerPage />);
-    
+
     // Verify default values are set
     await waitFor(async () => {
       expect(await screen.findByText('All Schemas')).toBeTruthy();
-      expect(await screen.findByText('All Statuses')).toBeTruthy();
-      expect(await screen.findByText('All Authors')).toBeTruthy();
+      // Note: Status and Author filters removed with draft/review features
     });
   });
 
   it('updates filter values from URL query parameters', async () => {
-    // Mock useLocation to return query parameters
-    useLocationMock.mockImplementation(() => ({
+    // Mock useLocation to return query parameters (using schema id)
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
-      search: '?status=published&schema=article&author=user1@example.com&search=test',
-      hash: '',
-      state: null,
-      key: 'test',
-    }));
+      search: '?schema=2&search=test',
+      key: 'test'
+    });
 
     render(<ContentManagerPage />);
-    
+
     // Verify filter values are updated from URL
     await waitFor(async () => {
       // Check that the search input has the correct value
       const searchInput = await screen.findByPlaceholderText('Search by title...');
       expect(searchInput.getAttribute('value')).toBe('test');
-      
-      // Check other filter values
-      expect(await screen.findByText('Published')).toBeTruthy();
+
+      // Check schema filter value
       expect(await screen.findByText('Article')).toBeTruthy();
-      expect(await screen.findByText('user1')).toBeTruthy();
+      // Note: Status and Author filters removed with draft/review features
     });
   });
 
   it('applies filters when navigating to a URL with query parameters', async () => {
     // First render with no parameters
     const { rerender } = render(<ContentManagerPage />);
-    
+
     // Verify default state
     await waitFor(async () => {
       expect(await screen.findByText('All Schemas')).toBeTruthy();
     });
-    
-    // Now update the location to simulate navigation with query parameters
-    useLocationMock.mockImplementation(() => ({
+
+    // Now update the location to simulate navigation with query parameters (using schema id)
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
-      search: '?status=draft&schema=blog&search=draft',
-      hash: '',
-      state: null,
-      key: 'navigation',
-    }));
-    
+      search: '?schema=1&search=draft',
+      key: 'navigation'
+    });
+
     // Re-render to simulate navigation
     act(() => {
       rerender(
           <ContentManagerPage />
       );
     });
-    
+
     // Verify filter values have updated after navigation
     await waitFor(async () => {
       const searchInput = await screen.findByPlaceholderText('Search by title...');
       expect(searchInput.getAttribute('value')).toBe('draft');
-      expect(await screen.findByText('Draft')).toBeTruthy();
       expect(await screen.findByText('Blog Post')).toBeTruthy();
+      // Note: Status filter removed with draft/review features
     });
   });
 
   it('correctly resets filters when clicking the reset button', async () => {
-    // Start with filters applied
-    useLocationMock.mockImplementation(() => ({
+    // Start with filters applied (using schema id)
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
-      search: '?status=published&schema=article&search=test',
-      hash: '',
-      state: null,
-      key: 'test',
-    }));
+      search: '?schema=2&search=test',
+      key: 'test'
+    });
 
     render(<ContentManagerPage />);
-    
+
     // Verify initial filter values
     await waitFor(async () => {
       const searchInput = await screen.findByPlaceholderText('Search by title...');
       expect(searchInput.getAttribute('value')).toBe('test');
-      expect(await screen.findByText('Published')).toBeTruthy();
+      expect(await screen.findByText('Article')).toBeTruthy();
     });
-    
+
     // Click the reset button
-    const resetButton = await screen.findByText('Reset');
+    const resetButton = screen.getByRole('button', { name: /reset filters/i });
     fireEvent.click(resetButton);
-    
+
     // Verify filters were reset
     await waitFor(async () => {
       const searchInput = await screen.findByPlaceholderText('Search by title...');
       expect(searchInput.getAttribute('value')).toBe('');
-      expect(await screen.findByText('All Statuses')).toBeTruthy();
       expect(await screen.findByText('All Schemas')).toBeTruthy();
+      // Note: Status filter removed with draft/review features
     });
   });
 
   it('correctly applies sort parameter from URL', async () => {
     // Render with sort parameter
-    useLocationMock.mockImplementation(() => ({
+    updateMockLocation(useLocationMock, {
       pathname: '/manager',
       search: '?sort=updatedAt',
-      hash: '',
-      state: null,
-      key: 'test',
-    }));
+      key: 'test'
+    });
 
     render(<ContentManagerPage />);
     
@@ -181,122 +227,4 @@ describe('ContentManagerPage', () => {
   });
 });
 
-describe('ContentManagerPage - Selection Actions', () => {
-  beforeEach(() => {
-    // Reset mocks
-    vi.clearAllMocks();
-    
-    // Setup mock responses
-    (ContentApi.listContentItems as any).mockResolvedValue({ data: mockContentItems });
-    (SchemaApi.listSchemas as any).mockResolvedValue({ data: mockSchemas });
-  });
-  
-  it('selection bar remains visible after changing author', async () => {
-    render(
-          <ContentManagerPage />
-    );
-    
-    // Wait for content to load
-    await waitFor(() => {
-      expect(screen.queryByText('Loading content...')).toBeNull();
-    });
-    
-    // Select items
-    const checkboxes = await screen.findAllByRole('checkbox');
-    fireEvent.click(checkboxes[1]); // Select first item checkbox (index 0 is header)
-    fireEvent.click(checkboxes[2]); // Select second item checkbox
-    
-    // Verify selection bar appears
-    expect(await screen.findByText('2 selected')).toBeTruthy();
-    
-    // Click change author button
-    const changeAuthorButton = await screen.findByText('Change Author');
-    fireEvent.click(changeAuthorButton);
-    
-    // Select new author in dialog
-    const authorSelect = await screen.findByRole('combobox');
-    fireEvent.click(authorSelect);
-    const newAuthorOption = await screen.findByText('user2@example.com');
-    fireEvent.click(newAuthorOption);
-    
-    // Click apply changes
-    const applyButton = await screen.findByText('Apply Changes');
-    fireEvent.click(applyButton);
-    
-    // Verify selection bar is still visible after author change
-    await waitFor(async () => {
-      expect(await screen.findByText('2 selected')).toBeTruthy();
-    });
-    
-    // Verify selection actions are still available
-    expect(await screen.findByText('Download')).toBeTruthy();
-    expect(await screen.findByText('Delete')).toBeTruthy();
-    expect(await screen.findByText('Change Author')).toBeTruthy();
-  });
-  
-  it('selection bar shows correct count after changing author', async () => {
-    render(
-          <ContentManagerPage />
-    );
-    
-    // Wait for content to load
-    await waitFor(() => {
-      expect(screen.queryByText('Loading content...')).toBeNull();
-    });
-    
-    // Select one item
-    const checkboxes = await screen.findAllByRole('checkbox');
-    fireEvent.click(checkboxes[1]); // Select first item
-    
-    // Verify initial selection count
-    expect(await screen.findByText('1 selected')).toBeTruthy();
-    
-    // Change author
-    const changeAuthorButton = await screen.findByText('Change Author');
-    fireEvent.click(changeAuthorButton);
-    
-    // Select new author and apply
-    const authorSelect = await screen.findByRole('combobox');
-    fireEvent.click(authorSelect);
-    const newAuthorOption = await screen.findByText('user2@example.com');
-    fireEvent.click(newAuthorOption);
-    const applyButton = await screen.findByText('Apply Changes');
-    fireEvent.click(applyButton);
-    
-    // Verify selection count remains the same
-    await waitFor(async () => {
-      expect(await screen.findByText('1 selected')).toBeTruthy();
-    });
-  });
-  
-  it('selection persists in table after changing author', async () => {
-    render(
-          <ContentManagerPage />
-    );
-    
-    // Wait for content to load
-    await waitFor(() => {
-      expect(screen.queryByText('Loading content...')).toBeNull();
-    });
-    
-    // Select items
-    const checkboxes = await screen.findAllByRole('checkbox');
-    fireEvent.click(checkboxes[1]); // Select first item
-    
-    // Change author
-    const changeAuthorButton = await screen.findByText('Change Author');
-    fireEvent.click(changeAuthorButton);
-    const authorSelect = await screen.findByRole('combobox');
-    fireEvent.click(authorSelect);
-    const newAuthorOption = await screen.findByText('user2@example.com');
-    fireEvent.click(newAuthorOption);
-    const applyButton = await screen.findByText('Apply Changes');
-    fireEvent.click(applyButton);
-    
-    // Verify checkbox remains checked
-    await waitFor(async () => {
-      const updatedCheckboxes = await screen.findAllByRole('checkbox');
-      expect(updatedCheckboxes[1].getAttribute('checked')).toBe('');
-    });
-  });
-}); 
+// Note: Author management tests removed as this feature was removed along with draft/review features 
