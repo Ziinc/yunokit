@@ -928,4 +928,128 @@ describe('TiptapEditor', () => {
       expect(document.activeElement).toBe(titleInput);
     });
   });
+
+  describe('Default Values Testing', () => {
+    it('initializes number field with custom default value', async () => {
+      const schemaWithDefaults: ContentSchemaRow = {
+        id: 3,
+        name: 'Schema With Defaults',
+        description: 'Schema with default values',
+        fields: [
+          {
+            id: 'price',
+            label: 'Price',
+            type: SchemaFieldType.NUMBER,
+            required: false,
+            description: 'Product price',
+            default_value: 99.99,
+            options: [],
+            relation_schema_id: null
+          },
+          {
+            id: 'quantity',
+            label: 'Quantity',
+            type: SchemaFieldType.NUMBER,
+            required: false,
+            description: 'Stock quantity',
+            default_value: 10,
+            options: [],
+            relation_schema_id: null
+          }
+        ],
+        strict: true,
+        type: 'single',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        archived_at: null,
+        deleted_at: null
+      };
+
+      // Empty content - fields should initialize with defaults
+      const emptyContent = {
+        fields: []
+      };
+
+      render(
+        <TiptapEditor
+          schema={schemaWithDefaults}
+          content={emptyContent}
+          onChange={mockOnChange}
+        />
+      );
+
+      await waitForEditor();
+
+      // Wait for initialization
+      await waitFor(() => {
+        expect(mockOnChange).toHaveBeenCalled();
+      });
+
+      // Verify that onChange was called with default values
+      const lastCall = mockOnChange.mock.calls[mockOnChange.mock.calls.length - 1];
+      const content = lastCall[0];
+
+      interface ContentField { id: string; value: unknown }
+      const priceField = content.fields.find((field: ContentField) => field.id === 'price');
+      const quantityField = content.fields.find((field: ContentField) => field.id === 'quantity');
+
+      expect(priceField).toBeDefined();
+      expect(priceField.value).toBe(99.99);
+
+      expect(quantityField).toBeDefined();
+      expect(quantityField.value).toBe(10);
+    });
+
+    it('falls back to 0 when number field has no default value', async () => {
+      const schemaNoDefaults: ContentSchemaRow = {
+        id: 4,
+        name: 'Schema No Defaults',
+        description: 'Schema without default values',
+        fields: [
+          {
+            id: 'amount',
+            label: 'Amount',
+            type: SchemaFieldType.NUMBER,
+            required: false,
+            description: null,
+            default_value: null,
+            options: [],
+            relation_schema_id: null
+          }
+        ],
+        strict: true,
+        type: 'single',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        archived_at: null,
+        deleted_at: null
+      };
+
+      const emptyContent = {
+        fields: []
+      };
+
+      render(
+        <TiptapEditor
+          schema={schemaNoDefaults}
+          content={emptyContent}
+          onChange={mockOnChange}
+        />
+      );
+
+      await waitForEditor();
+
+      await waitFor(() => {
+        expect(mockOnChange).toHaveBeenCalled();
+      });
+
+      const lastCall = mockOnChange.mock.calls[mockOnChange.mock.calls.length - 1];
+      const content = lastCall[0];
+
+      interface ContentField { id: string; value: unknown }
+      const amountField = content.fields.find((field: ContentField) => field.id === 'amount');
+      expect(amountField).toBeDefined();
+      expect(amountField.value).toBe(0);
+    });
+  });
 });
