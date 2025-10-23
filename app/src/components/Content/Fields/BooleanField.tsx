@@ -1,4 +1,4 @@
-import { Switch } from "@/components/ui/switch"
+import { BooleanToggle } from "@/components/ui/boolean-toggle"
 import { BaseField, type FieldPropsBase } from "./BaseField"
 
 interface BooleanFieldProps extends FieldPropsBase {
@@ -15,12 +15,7 @@ export const BooleanField = ({
 }: BooleanFieldProps) => {
   return (
     <BaseField id={id} name={name} description={description} inline>
-      <Switch
-        id={id}
-        checked={value}
-        onCheckedChange={onChange}
-        className="data-[state=checked]:bg-cms-purple"
-      />
+      <BooleanToggle id={id} value={value} onChange={onChange} />
     </BaseField>
   )
 }

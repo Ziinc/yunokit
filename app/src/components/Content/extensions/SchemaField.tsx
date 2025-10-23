@@ -3,7 +3,7 @@ import { ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from '@tip
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { BooleanToggle } from '@/components/ui/boolean-toggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,6 +12,13 @@ import { useEffect, useRef } from 'react';
 
 interface SchemaFieldAttrs {
   fieldId: string | null;
+  fieldType?: string;
+  fieldName?: string;
+  fieldValue?: unknown;
+  fieldRequired?: boolean;
+  fieldDescription?: string;
+  fieldOptions?: string[];
+  isDynamic?: boolean;
 }
 
 const AutoSizeTextarea: React.FC<{
@@ -66,10 +73,20 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos })
 
   // Get field metadata from editor's extension options
   const schemaFieldExtension = editor.extensionManager.extensions.find(ext => ext.name === 'schemaField');
-  const fieldMetadata = schemaFieldExtension?.options?.fieldMetadata?.[attrs.fieldId || ''];
+  const metadataFromOptions = schemaFieldExtension?.options?.fieldMetadata?.[attrs.fieldId || ''];
+  const fallbackMetadata = {
+    type: attrs.fieldType || 'text',
+    name: attrs.fieldName || '',
+    required: Boolean(attrs.fieldRequired),
+    description: attrs.fieldDescription || '',
+    options: Array.isArray(attrs.fieldOptions) ? attrs.fieldOptions : [],
+    isDynamic: Boolean(attrs.isDynamic),
+  };
+  const fieldMetadata = metadataFromOptions || fallbackMetadata;
   const fieldValues = schemaFieldExtension?.options?.fieldValues || {};
+  const currentValue = (attrs.fieldId && fieldValues[attrs.fieldId]) ?? attrs.fieldValue;
 
-  if (!fieldMetadata) {
+  if (!attrs.fieldId && !metadataFromOptions) {
     return (
       <NodeViewWrapper className="my-1 relative" data-testid={`schema-field-${attrs.fieldId}`}>
         <div>Field not found: {attrs.fieldId}</div>
@@ -82,6 +99,18 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos })
     const onFieldChange = schemaFieldExtension?.options?.onFieldChange;
     if (onFieldChange && attrs.fieldId) {
       onFieldChange(attrs.fieldId, value);
+    }
+
+    if (editor && typeof getPos === 'function') {
+      try {
+        const pos = getPos();
+        if (typeof pos === 'number') {
+          const transaction = editor.state.tr.setNodeAttribute(pos, 'fieldValue', value);
+          editor.view.dispatch(transaction);
+        }
+      } catch (error) {
+        console.error('Error updating field value:', error);
+      }
     }
   };
 
@@ -134,8 +163,6 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos })
   } as const;
 
   const renderInput = () => {
-    const currentValue = fieldValues[attrs.fieldId || ''];
-
     switch (fieldMetadata.type) {
       case 'text':
         return (
@@ -162,17 +189,14 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos })
         );
       case 'boolean':
         return (
-          <div className="flex items-center space-x-2">
-            <Switch
-              checked={Boolean(currentValue)}
-              onCheckedChange={(checked) => handleChange(checked)}
-              className="scale-75"
-              data-testid={`boolean-switch-${attrs.fieldId}`}
-              aria-label={fieldMetadata.name || undefined}
-              aria-describedby={descriptionId}
-            />
-            <span className="text-xs text-muted-foreground">{currentValue ? 'Yes' : 'No'}</span>
-          </div>
+          <BooleanToggle
+            value={Boolean(currentValue)}
+            onChange={(checked) => handleChange(checked)}
+            data-testid={`boolean-switch-${attrs.fieldId}`}
+            aria-label={fieldMetadata.name || undefined}
+            aria-required={fieldMetadata.required ? 'true' : undefined}
+            aria-describedby={descriptionId}
+          />
         );
       default:
         return (
@@ -353,6 +377,13 @@ const SchemaField = Node.create({
   addAttributes() {
     return {
       fieldId: { default: null },
+      fieldType: { default: 'text' },
+      fieldName: { default: '' },
+      fieldValue: { default: null },
+      fieldRequired: { default: false },
+      fieldDescription: { default: '' },
+      fieldOptions: { default: [] },
+      isDynamic: { default: false },
     };
   },
   parseHTML() {
