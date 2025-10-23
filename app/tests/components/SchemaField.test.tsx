@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -388,7 +388,7 @@ describe('SchemaField', () => {
   });
 
   describe('Boolean Field', () => {
-    it('renders switch with correct value', async () => {
+    it('renders boolean toggle with correct active label', async () => {
       render(
         <SchemaFieldTestWrapper
           fieldId="test-boolean"
@@ -399,47 +399,37 @@ describe('SchemaField', () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByTestId('boolean-switch-test-boolean')).toBeDefined();
-      });
+      const toggle = await screen.findByTestId('boolean-switch-test-boolean');
+      const trueButton = within(toggle).getByRole('button', { name: 'true' });
+      const falseButton = within(toggle).getByRole('button', { name: 'false' });
 
-      const switchElement = screen.getByTestId('boolean-switch-test-boolean');
-      expect(switchElement).toBeChecked();
+      expect(trueButton.getAttribute('aria-pressed')).toBe('true');
+      expect(falseButton.getAttribute('aria-pressed')).toBe('false');
     });
 
-    it('renders boolean switch with correct state', async () => {
-      render(
-        <SchemaFieldTestWrapper
-          fieldId="test-boolean"
-          fieldType="boolean"
-          fieldName="Test Boolean"
-          fieldValue={true}
-          onFieldChange={mockOnFieldChange}
-        />
-      );
+    it('toggles active label when selecting options', async () => {
+      const user = userEvent.setup();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('boolean-switch-test-boolean')).toBeDefined();
-      });
-
-      const switchElement = screen.getByTestId('boolean-switch-test-boolean');
-      expect(switchElement).toBeChecked();
-      expect(screen.getByText('Yes')).toBeDefined();
-    });
-
-    it('shows Yes/No text based on value', async () => {
       const { rerender } = render(
         <SchemaFieldTestWrapper
           fieldId="test-boolean"
           fieldType="boolean"
           fieldName="Test Boolean"
           fieldValue={true}
+          onFieldChange={mockOnFieldChange}
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText('Yes')).toBeDefined();
-      });
+      let toggle = await screen.findByTestId('boolean-switch-test-boolean');
+      let trueButton = within(toggle).getByRole('button', { name: 'true' });
+      let falseButton = within(toggle).getByRole('button', { name: 'false' });
+
+      expect(trueButton.getAttribute('aria-pressed')).toBe('true');
+      expect(falseButton.getAttribute('aria-pressed')).toBe('false');
+
+      await user.click(falseButton);
+
+      expect(mockOnFieldChange).toHaveBeenCalledWith(false);
 
       rerender(
         <SchemaFieldTestWrapper
@@ -450,9 +440,28 @@ describe('SchemaField', () => {
         />
       );
 
-      await waitFor(() => {
-        expect(screen.getByText('No')).toBeDefined();
-      });
+      toggle = await screen.findByTestId('boolean-switch-test-boolean');
+      trueButton = within(toggle).getByRole('button', { name: 'true' });
+      falseButton = within(toggle).getByRole('button', { name: 'false' });
+
+      expect(trueButton.getAttribute('aria-pressed')).toBe('false');
+      expect(falseButton.getAttribute('aria-pressed')).toBe('true');
+
+      rerender(
+        <SchemaFieldTestWrapper
+          fieldId="test-boolean"
+          fieldType="boolean"
+          fieldName="Test Boolean"
+          fieldValue={true}
+        />
+      );
+
+      toggle = await screen.findByTestId('boolean-switch-test-boolean');
+      trueButton = within(toggle).getByRole('button', { name: 'true' });
+      falseButton = within(toggle).getByRole('button', { name: 'false' });
+
+      expect(trueButton.getAttribute('aria-pressed')).toBe('true');
+      expect(falseButton.getAttribute('aria-pressed')).toBe('false');
     });
   });
 
@@ -810,23 +819,6 @@ describe('SchemaField', () => {
         const input = screen.getByRole('textbox', { name: /Accessible Text Field/i });
         expect(input).toBeDefined();
         expect(input).toHaveAttribute('aria-label', 'Accessible Text Field');
-      });
-    });
-
-    it('provides proper ARIA labels for boolean switches', async () => {
-      render(
-        <SchemaFieldTestWrapper
-          fieldId="accessible-switch"
-          fieldType="boolean"
-          fieldName="Accessible Switch"
-          fieldValue={false}
-        />
-      );
-
-      await waitFor(() => {
-        const switchElement = screen.getByRole('switch', { name: /Accessible Switch/i });
-        expect(switchElement).toBeDefined();
-        expect(switchElement).toHaveAttribute('aria-label', 'Accessible Switch');
       });
     });
 
