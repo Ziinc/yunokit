@@ -22,7 +22,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PaginationControls } from "@/components/Content/ContentList/PaginationControls";
 import { DocsButton } from "@/components/ui/DocsButton";
 import { SelectionActionsBar } from "@/components/ui/SelectionActionsBar";
 import {
@@ -35,186 +34,11 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import { formatDate } from "@/utils/date";
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 // Feature flags removed — archived functionality is disabled
 import useSWR from "swr";
-
-// Schema Table Component
-type SchemaTableProps = {
-  schemas: ContentSchemaRow[];
-  onRowClick: (schema: ContentSchemaRow) => void;
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  itemsPerPage: number;
-  onItemsPerPageChange: (value: number) => void;
-  onSelectionChange?: (selectedSchemas: ContentSchemaRow[]) => void;
-};
-
-const SchemaTable = ({
-  schemas,
-  onRowClick,
-  currentPage,
-  totalPages,
-  onPageChange,
-  itemsPerPage,
-  onItemsPerPageChange,
-  onSelectionChange,
-}: SchemaTableProps) => {
-  const [selectedSchemas, setSelectedSchemas] = useState<number[]>([]);
-
-  const handleSelectSchema = (e: React.MouseEvent, schemaId: number) => {
-    e.stopPropagation();
-
-    setSelectedSchemas((prev) => {
-      const newSelection = prev.includes(schemaId)
-        ? prev.filter((id) => id !== schemaId)
-        : [...prev, schemaId];
-
-      if (onSelectionChange) {
-        const selectedItems = schemas.filter((schema) =>
-          newSelection.includes(schema.id)
-        );
-        onSelectionChange(selectedItems);
-      }
-
-      return newSelection;
-    });
-  };
-
-  const handleSelectAll = () => {
-    const newSelection = !isAllSelected
-      ? schemas.map((schema) => schema.id)
-      : [];
-    setSelectedSchemas(newSelection);
-
-    if (onSelectionChange) {
-      const selectedItems = schemas.filter((schema) =>
-        newSelection.includes(schema.id)
-      );
-      onSelectionChange(selectedItems);
-    }
-  };
-
-  const isAllSelected =
-    schemas.length > 0 && selectedSchemas.length === schemas.length;
-  const isPartiallySelected =
-    selectedSchemas.length > 0 && selectedSchemas.length < schemas.length;
-
-  return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px] text-center">
-              <div className="flex items-center justify-center">
-                <Checkbox
-                  checked={isAllSelected || isPartiallySelected}
-                  onCheckedChange={handleSelectAll}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-              </div>
-            </TableHead>
-            <TableHead className="w-[280px]">Name</TableHead>
-            <TableHead className="w-[100px] text-center">Type</TableHead>
-            <TableHead className="w-[80px] text-center">Fields</TableHead>
-            <TableHead className="w-[220px]">Description</TableHead>
-            <TableHead className="w-[140px]">
-              <div className="flex items-center gap-2">
-                <Calendar className="icon-sm" />
-                Last Updated
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {schemas.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
-                No schemas found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            schemas.map((schema) => (
-              <TableRow
-                key={schema.id}
-                className="cursor-pointer hover:bg-muted"
-                data-selected={selectedSchemas.includes(schema.id)}
-                onClick={() => onRowClick(schema)}
-              >
-                <TableCell className="text-center">
-                  <div
-                    onClick={(e) => handleSelectSchema(e, schema.id)}
-                    className="flex items-center justify-center"
-                  >
-                    <Checkbox
-                      checked={selectedSchemas.includes(schema.id)}
-                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">
-                  <div className="flex-center-gap-2">
-                    {schema.type === "collection" ? (
-                      <Files className="icon-sm flex-shrink-0" />
-                    ) : (
-                      <File className="icon-sm flex-shrink-0" />
-                    )}
-                    <span className="truncate">{schema.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                    {schema.type === "collection" ? "Collection" : "Single"}
-                  </span>
-                </TableCell>
-                <TableCell className="text-center text-muted-foreground">
-                  {schema.fields?.length || 0}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  <div className="truncate max-w-[200px]">
-                    {schema.description || "No description"}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatDate(schema.updated_at)}
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-      {schemas.length > 0 && (
-        <div className="flex justify-between items-center p-4 border-t">
-          <div className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-            {Math.min(currentPage * itemsPerPage, schemas.length)} of{" "}
-            {schemas.length} schemas
-          </div>
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-            itemsPerPage={itemsPerPage}
-            onItemsPerPageChange={onItemsPerPageChange}
-            pageSizeOptions={[5, 10, 20, 50]}
-          />
-        </div>
-      )}
-    </div>
-  );
-};
-
+import { DataTable, TableColumn } from "@/components/DataTable";
 
 const ContentSchemaBuilderPage = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -231,6 +55,74 @@ const ContentSchemaBuilderPage = () => {
   );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { currentWorkspace } = useWorkspace();
+
+  const schemaColumns: TableColumn<ContentSchemaRow>[] = useMemo(
+    () => [
+      {
+        header: "Name",
+        accessorKey: "name",
+        width: "280px",
+        cell: (schema) => (
+          <div className="flex-center-gap-2">
+            {schema.type?.toString().toLowerCase() === "collection" ? (
+              <Files className="icon-sm flex-shrink-0" />
+            ) : (
+              <File className="icon-sm flex-shrink-0" />
+            )}
+            <span className="truncate">{schema.name}</span>
+          </div>
+        ),
+      },
+      {
+        header: "Type",
+        accessorKey: "type",
+        width: "120px",
+        className: "text-center",
+        cell: (schema) => {
+          const normalizedType = schema.type?.toString().toLowerCase();
+          return (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+              {normalizedType === "collection" ? "Collection" : "Single"}
+            </span>
+          );
+        },
+      },
+      {
+        header: "Fields",
+        accessorKey: "fields",
+        width: "100px",
+        className: "text-center text-muted-foreground",
+        cell: (schema) => {
+          const fieldCount = schema.fields?.length ?? 0;
+          return `${fieldCount} ${fieldCount === 1 ? "field" : "fields"}`;
+        },
+      },
+      {
+        header: "Description",
+        accessorKey: "description",
+        width: "220px",
+        className: "text-muted-foreground",
+        cell: (schema) => (
+          <div className="truncate max-w-[200px]">
+            {schema.description || "No description"}
+          </div>
+        ),
+      },
+      {
+        header: (
+          <div className="flex items-center gap-2">
+            <Calendar className="icon-sm" />
+            <span>Last Updated</span>
+          </div>
+        ),
+        accessorKey: "updated_at",
+        width: "140px",
+        className: "text-muted-foreground",
+        cell: (schema) => formatDate(schema.updated_at || schema.created_at),
+      },
+    ],
+    []
+  );
 
   const {
     data: schemasResponse,
@@ -470,8 +362,9 @@ const ContentSchemaBuilderPage = () => {
                   ]}
                 />
               )}
-              <SchemaTable
-                schemas={paginatedSchemas}
+              <DataTable
+                items={paginatedSchemas}
+                columns={schemaColumns}
                 onRowClick={handleRowClick}
                 currentPage={currentSchemasPage}
                 totalPages={totalSchemaPages}
@@ -479,6 +372,8 @@ const ContentSchemaBuilderPage = () => {
                 itemsPerPage={schemasPerPage}
                 onItemsPerPageChange={setSchemasPerPage}
                 onSelectionChange={setSelectedSchemas}
+                getItemId={(schema) => schema.id?.toString() || ""}
+                emptyMessage="No schemas found."
               />
             </>
           )}
