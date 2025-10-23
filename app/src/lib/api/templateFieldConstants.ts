@@ -151,20 +151,6 @@ export const createRelationField = (
   isMultiple
 });
 
-// Helper function to create enum fields
-export const createEnumField = (
-  id: string,
-  name: string,
-  options: string[],
-  required = false
-): FieldBase => ({
-  id,
-  name,
-  type: 'enum',
-  options,
-  required
-});
-
 // Helper function to create multiselect fields
 export const createMultiselectField = (
   id: string,
