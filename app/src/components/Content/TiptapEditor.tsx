@@ -429,7 +429,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({
     } catch {
       // Fallback: if serialization fails, avoid calling onChange repeatedly
       // and only attempt a best-effort sync when shapes differ minimally
-      if (!(content && typeof content === 'object' && 'fields' in (content as any))) {
+      if (!(content && typeof content === 'object' && 'fields' in content)) {
         onChange(mergedContent);
       }
     }

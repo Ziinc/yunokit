@@ -110,16 +110,10 @@ const SchemaFieldComponent: React.FC<NodeViewProps> = ({ node, editor, getPos })
 
   const handleAddFieldAfter = () => {
     if (!editor || typeof getPos !== 'function') return;
-    
+
     // For now, just log - this would need to trigger the add field dialog
     // with the correct insertion position
-    const pos = getPos();
-    const nodeSize = node.nodeSize;
-    const insertPos = pos + nodeSize;
-    
-    
-    
-    // TODO: Trigger add field dialog with insertPos
+    // TODO: Trigger add field dialog with insertion position (getPos() + node.nodeSize)
     // This would need to communicate with the TiptapEditor component
     // to show the AddFieldDialog with the correct insertion position
   };

@@ -324,18 +324,18 @@ function getPayloadConfigFromPayload(
   }
 
   const payloadPayload =
-    "payload" in payload && isObject((payload as any).payload)
-      ? (payload as any).payload
+    "payload" in payload && isObject((payload as Record<string, unknown>).payload)
+      ? (payload as Record<string, unknown>).payload as Record<string, unknown>
       : undefined
 
   let configLabelKey: string = key
 
-  if (key in payload && isString((payload as any)[key])) {
+  if (key in payload && isString((payload as Record<string, unknown>)[key])) {
     configLabelKey = payload[key as keyof typeof payload] as string
   } else if (
     payloadPayload &&
     key in payloadPayload &&
-    isString((payloadPayload as any)[key])
+    isString(payloadPayload[key])
   ) {
     configLabelKey = payloadPayload[
       key as keyof typeof payloadPayload

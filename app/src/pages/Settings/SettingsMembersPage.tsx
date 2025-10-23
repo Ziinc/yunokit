@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UserPlus, UserMinus } from "lucide-react";
-import { getErrorMessage } from "@/lib/utils";
 import { notifyError } from "@/lib/errors";
 
 interface Member {

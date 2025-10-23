@@ -39,11 +39,11 @@ export function notifyIfResponseError<T extends { error?: unknown }>(
   response: T,
   opts: ErrorOpts
 ): boolean {
-  const err: any = (response as any)?.error;
+  const err: unknown = response?.error;
   if (!err) return false;
   const description =
-    typeof err?.message === "string"
-      ? err.message
+    typeof err === "object" && err !== null && "message" in err && typeof (err as Record<string, unknown>).message === "string"
+      ? (err as Record<string, unknown>).message as string
       : getErrorMessage(err, opts.fallback || "Unknown error");
   if (opts.prefix) {
     console.error(`${opts.prefix}:`, err);
