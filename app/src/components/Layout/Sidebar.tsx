@@ -33,10 +33,34 @@ interface NavGroup {
   items: NavItem[];
 }
 
+interface SidebarNavLinkProps {
+  item: NavItem;
+  isActive: boolean;
+}
+
+const SidebarNavLink = React.memo(({ item, isActive }: SidebarNavLinkProps) => (
+  <Link
+    to={item.path}
+    className={cn(
+      "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+    )}
+  >
+    {item.icon}
+    {item.name}
+  </Link>
+));
+
+SidebarNavLink.displayName = "SidebarNavLink";
+
 export const Sidebar: React.FC = () => {
   const location = useLocation();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const { currentWorkspace, isLoading } = useWorkspace();
+
+  const isNavItemActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  };
 
   const standaloneItems: NavItem[] = [
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
@@ -121,9 +145,7 @@ export const Sidebar: React.FC = () => {
   };
 
   const isGroupActive = (group: NavGroup) => {
-    return group.items.some(item => 
-      location.pathname === item.path || location.pathname.startsWith(item.path + "/")
-    );
+    return group.items.some(item => isNavItemActive(item.path));
   };
 
   return (
@@ -162,19 +184,7 @@ export const Sidebar: React.FC = () => {
       <nav className="flex-1 p-4 space-y-2">
         {/* Standalone items */}
         {standaloneItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-              location.pathname === item.path || location.pathname.startsWith(item.path + "/")
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-            )}
-          >
-            {item.icon}
-            {item.name}
-          </Link>
+          <SidebarNavLink key={item.path} item={item} isActive={isNavItemActive(item.path)} />
         ))}
 
         {/* Grouped items */}
@@ -205,19 +215,11 @@ export const Sidebar: React.FC = () => {
               {isExpanded && (
                 <div className="ml-4 space-y-1">
                   {group.items.map((item) => (
-                    <Link
+                    <SidebarNavLink
                       key={item.path}
-                      to={item.path}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                        location.pathname === item.path || location.pathname.startsWith(item.path + "/")
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted"
-                      )}
-                    >
-                      {item.icon}
-                      {item.name}
-                    </Link>
+                      item={item}
+                      isActive={isNavItemActive(item.path)}
+                    />
                   ))}
                 </div>
               )}
