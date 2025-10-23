@@ -1,7 +1,6 @@
 // Core Content Management APIs
 export * from './ContentApi';
 export * from './SchemaApi';
-export * from './AssetsApi';
 
 // Template and Service APIs
 export * from './TemplateService';
