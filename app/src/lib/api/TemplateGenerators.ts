@@ -3,11 +3,9 @@ import {
   COMMON_BOOLEAN_FIELDS,
   COMMON_CONTENT_FIELDS,
   COMMON_METADATA_FIELDS,
-  COMMON_ENUM_OPTIONS,
   IMAGE_ASSET_TYPES,
   createRelationField,
-  createEnumField,
-  createMultiselectField
+  createEnumField
 } from "./templateFieldConstants";
 import { generateUUID } from "../utils";
 
@@ -264,7 +262,6 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
       COMMON_METADATA_FIELDS.publishDate(),
       createRelationField('author', 'Author', 'author', true),
       createRelationField('category', 'Category', 'blogCategory'),
-      createMultiselectField('tags', 'Tags', [...COMMON_ENUM_OPTIONS.categories.blog]),
       COMMON_BOOLEAN_FIELDS.featured('Post'),
       createRelationField('relatedPosts', 'Related Posts', 'post', false, true)
     ]
@@ -390,7 +387,6 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
         publishDate: nowISO(),
         author: authors[0].id,
         category: categories[0].id,
-        tags: ['Technology', 'React'],
         featured: true
       },
       createdBy: 'jane.smith@example.com',
@@ -409,8 +405,7 @@ export const generateBloggingTemplate = (): { schemas: ContentSchema[], contentI
         excerpt: 'Learn the key principles of effective UI design.',
         publishDate: nowISO(),
         author: authors[0].id,
-        category: categories[1].id,
-        tags: ['Design', 'UI/UX']
+        category: categories[1].id
       },
       createdBy: 'jane.smith@example.com',
       updatedBy: 'jane.smith@example.com'
@@ -492,7 +487,6 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
       { id: 'bio', name: 'Biography', type: 'markdown', required: true },
       { id: 'avatar', name: 'Avatar', type: 'asset', assetTypes: ['image/jpeg', 'image/png', 'image/webp'] },
       { id: 'email', name: 'Email', type: 'email', required: true },
-      { id: 'expertise', name: 'Areas of Expertise', type: 'multiselect', options: ['Web Development', 'Mobile Development', 'UI/UX Design', 'Machine Learning', 'Data Science'] },
       { id: 'social', name: 'Social Media', type: 'json' }
     ]
   };
@@ -526,8 +520,7 @@ export const generateTutorialsTemplate = (): { schemas: ContentSchema[], content
       data: {
         name: 'David Johnson',
         bio: 'Full-stack developer and educator with 15 years of experience.',
-        email: 'david.johnson@example.com',
-        expertise: ['Web Development', 'Mobile Development']
+        email: 'david.johnson@example.com'
       },
       createdBy: 'admin@example.com',
       updatedBy: 'admin@example.com',

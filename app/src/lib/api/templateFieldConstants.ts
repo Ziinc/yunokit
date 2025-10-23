@@ -128,13 +128,6 @@ export const COMMON_CONTENT_FIELDS = {
   })
 } as const;
 
-// Common enum options - only the ones actually used
-export const COMMON_ENUM_OPTIONS = {
-  categories: {
-    blog: ['Technology', 'Design', 'Marketing', 'Business', 'Lifestyle']
-  }
-} as const;
-
 // Helper function to create relation fields
 export const createRelationField = (
   id: string,
@@ -164,17 +157,3 @@ export const createEnumField = (
   options,
   required
 });
-
-// Helper function to create multiselect fields
-export const createMultiselectField = (
-  id: string,
-  name: string,
-  options: string[],
-  required = false
-): FieldBase => ({
-  id,
-  name,
-  type: 'multiselect',
-  options,
-  required
-}); 
