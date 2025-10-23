@@ -4,14 +4,17 @@ import React from 'react';
 import { render } from './utils/test-utils';
 import ContentSchemaBuilderPage from '../src/pages/ContentSchemaBuilderPage';
 import * as SchemaApi from '../src/lib/api/SchemaApi';
+import useSWR from 'swr';
 
-// Mock the APIs
-vi.mock('../src/lib/api/SchemaApi', () => ({
+const schemaApiMock = vi.hoisted(() => ({
   listSchemas: vi.fn(),
   createSchema: vi.fn(),
   updateSchema: vi.fn(),
-  deleteSchema: vi.fn()
+  deleteSchema: vi.fn(),
 }));
+
+vi.mock('@/lib/api/SchemaApi', () => schemaApiMock);
+vi.mock('../src/lib/api/SchemaApi', () => schemaApiMock);
 
 vi.mock('../src/hooks/use-toast', () => ({
   useToast: () => ({
@@ -19,33 +22,47 @@ vi.mock('../src/hooks/use-toast', () => ({
   })
 }));
 
-vi.mock('../src/lib/contexts/WorkspaceContext', () => ({
+const workspaceMock = vi.hoisted(() => ({
   useWorkspace: () => ({
-    workspace: { id: 1, name: 'Test Workspace' }
+    currentWorkspace: { id: 1, name: 'Test Workspace' }
   }),
-  WorkspaceProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+  WorkspaceProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
+
+vi.mock('@/lib/contexts/WorkspaceContext', () => workspaceMock);
+vi.mock('../src/lib/contexts/WorkspaceContext', () => workspaceMock);
+
+const schemaResponse = vi.hoisted(() => ({
+  data: [
+    {
+      id: 1,
+      name: 'Blog Post',
+      type: 'collection',
+      description: 'Blog post schema',
+      fields: [
+        { name: 'title', type: 'text' },
+        { name: 'content', type: 'markdown' },
+        { name: 'published', type: 'boolean' }
+      ],
+      created_at: '2023-01-01T00:00:00Z',
+      updated_at: '2023-01-02T00:00:00Z'
+    }
+  ],
+  error: null
+}));
+
+const useSWRMock = useSWR as unknown as ReturnType<typeof vi.fn>;
 
 describe('ContentSchemaBuilderPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (SchemaApi.listSchemas as any).mockResolvedValue({
-      data: [
-        {
-          id: 1,
-          name: 'Blog Post',
-          type: 'Collection',
-          description: 'Blog post schema',
-          fields: [
-            { name: 'title', type: 'text' },
-            { name: 'content', type: 'markdown' },
-            { name: 'published', type: 'boolean' }
-          ],
-          created_at: '2023-01-01T00:00:00Z'
-        }
-      ],
-      error: null
-    });
+    (SchemaApi.listSchemas as any).mockResolvedValue(schemaResponse);
+    useSWRMock.mockReturnValue({
+      data: schemaResponse,
+      error: null,
+      isLoading: false,
+      mutate: vi.fn(),
+    } as any);
   });
 
   const renderPage = () => {
@@ -55,22 +72,23 @@ describe('ContentSchemaBuilderPage', () => {
   describe('Table Rendering', () => {
     it('renders schema table with correct columns', async () => {
       renderPage();
-      
-      // Check for schema table headers
-      expect(await screen.findByRole('columnheader', { name: /name/i })).toBeDefined();
-      expect(screen.getByRole('columnheader', { name: /type/i })).toBeDefined();
-      expect(screen.getByRole('columnheader', { name: /fields/i })).toBeDefined();
-      expect(screen.getByRole('columnheader', { name: /description/i })).toBeDefined();
-      expect(screen.getByRole('columnheader', { name: /actions/i })).toBeDefined();
+      const headerMatchers = ['name', 'type', 'fields', 'description', 'last updated'];
+
+      await screen.findByRole('columnheader', { name: /name/i });
+      headerMatchers.forEach((label) => {
+        expect(screen.getByRole('columnheader', { name: new RegExp(label, 'i') })).toBeDefined();
+      });
     });
 
     it('displays correct schema data in table', async () => {
       renderPage();
-      
-      // Check first schema row
-      expect(await screen.findByText('Blog Post')).toBeDefined();
-      expect(screen.getByText('Collection')).toBeDefined();
-      expect(screen.getByText('3 fields')).toBeDefined();
+      const [schema] = schemaResponse.data;
+      const rowTexts = [schema.name, 'Collection', `${schema.fields.length} fields`];
+
+      await screen.findByText(rowTexts[0]);
+      rowTexts.forEach((text) => {
+        expect(screen.getByText(text)).toBeDefined();
+      });
     });
   });
-}); 
+});
