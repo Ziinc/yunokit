@@ -14,8 +14,8 @@ import { generateUUID } from "../utils";
  * Generates a short ID with an optional prefix
  */
 function generateShortId(prefix?: string): string {
-  const shortId = crypto.randomUUID().slice(0, 8)
-  return prefix ? `${prefix}-${shortId}` : shortId
+  const shortId = generateUUID().slice(0, 8);
+  return prefix ? `${prefix}-${shortId}` : shortId;
 }
 import { nowISO } from "@/utils/date";
 
