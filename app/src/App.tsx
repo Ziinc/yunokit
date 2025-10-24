@@ -18,7 +18,6 @@ const SettingsBillingPage = lazy(() => import("./pages/Settings/SettingsBillingP
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
-const CommunityPage = lazy(() => import("./pages/CommunityPage"));
 const ForumManagementPage = lazy(() => import("./pages/ForumManagementPage"));
 const ForumDetailPage = lazy(() => import("./pages/ForumDetailPage"));
 const NewPostPage = lazy(() => import("./pages/NewPostPage"));
@@ -74,10 +73,7 @@ const AppContent: FC = () => {
                 <Route path="database" element={<SettingsDatabasePage />} />
                 <Route path="billing" element={<SettingsBillingPage />} />
               </Route>
-              <Route path="/community" element={<CommunityPage />}>
-                <Route index element={<Navigate to="forums" replace />} />
-                <Route path="forums" element={<ForumManagementPage />} />
-              </Route>
+              <Route path="/community/forums" element={<ForumManagementPage />} />
               <Route path="/community/forums/:forumId" element={<ForumDetailPage />} />
               <Route path="/community/forums/:forumId/new-post" element={<NewPostPage />} />
               <Route path="/community/posts/:postId" element={<PostCommentsPage />} />
