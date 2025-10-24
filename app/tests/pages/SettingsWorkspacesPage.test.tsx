@@ -4,6 +4,7 @@ import type { Mock } from 'vitest';
 import { screen, fireEvent, within } from '@testing-library/react';
 import { render } from '../utils/test-utils';
 import SettingsWorkspacesPage from '@/pages/Settings/SettingsWorkspacesPage';
+import { Tabs } from '@/components/ui/tabs';
 import * as WorkspaceContext from '@/lib/contexts/WorkspaceContext';
 import * as WorkspaceApi from '@/lib/api/WorkspaceApi';
 import * as ToastHook from '@/hooks/use-toast';
@@ -63,7 +64,11 @@ describe('SettingsWorkspacesPage', () => {
     vi.spyOn(ToastHook, 'useToast').mockReturnValue({ toast: mockToast, dismiss: vi.fn(), toasts: [] } as any);
   });
 
-  const renderPage = () => render(<SettingsWorkspacesPage />);
+  const renderPage = () => render(
+    <Tabs value="workspaces">
+      <SettingsWorkspacesPage />
+    </Tabs>
+  );
 
   it('should render workspaces list', async () => {
     renderPage();
