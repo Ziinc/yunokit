@@ -9,6 +9,18 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      SequelizeMeta: {
+        Row: {
+          name: string
+        }
+        Insert: {
+          name: string
+        }
+        Update: {
+          name?: string
+        }
+        Relationships: []
+      }
       supabase_connections: {
         Row: {
           access_token: string | null
@@ -67,6 +79,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: number
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: number
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: number
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       workspace_users: {
         Row: {
@@ -146,10 +182,10 @@ export type Database = {
       }
       sb_mgmt_api: {
         Args: {
+          base_url?: string
+          body?: Json
           endpoint: string
           method?: string
-          body?: Json
-          base_url?: string
         }
         Returns: Json
       }

@@ -7,7 +7,7 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <BrowserRouter>
       <WorkspaceProvider>
-        {children}
+          {children}
       </WorkspaceProvider>
     </BrowserRouter>
   );

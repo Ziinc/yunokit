@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "templates": {
+    "supabase/migrations-templates/yunocontent_content_items_single_type_constraint.sql": {
+      "lastBuildHash": "3de66278af04c3c8148c2811aa03db16",
+      "lastBuildDate": "2025-10-24T14:18:03.030Z",
+      "lastMigrationFile": "20251024141803_srtd-yunocontent_content_items_single_type_constraint.sql"
+    }
+  },
+  "lastTimestamp": "20251024141803"
+}

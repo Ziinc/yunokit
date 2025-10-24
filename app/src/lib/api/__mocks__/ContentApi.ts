@@ -36,20 +36,3 @@ export const deleteContentItemVersion = vi.fn().mockResolvedValue(undefined);
 export const listContentItemVersionsByOptions = vi
   .fn()
   .mockResolvedValue({ data: [], error: null });
-
-// Maintain compatibility for tests importing `{ ContentApi }`
-export const ContentApi = {
-  listContentItems,
-  getSchemas,
-  getContentItemById,
-  listContentItemsBySchema,
-  createContentItem,
-  updateContentItem,
-  deleteContentItem,
-  listContentItemVersions,
-  getContentItemVersion,
-  createContentItemVersion,
-  updateContentItemVersion,
-  deleteContentItemVersion,
-  listContentItemVersionsByOptions,
-};

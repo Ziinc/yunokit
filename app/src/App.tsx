@@ -52,33 +52,37 @@ const AppContent: FC = () => {
           <Route path="/sign-in" element={<SignInPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-          <Route path="*" element={<NotFound />} />
 
           {/* Protected Routes */}
-          {isAuthenticated && (
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/manager" element={<ContentManagerPage />} />
-              <Route path="/manager/editor/:schemaId/new" element={<ContentItemPage />} />
-              <Route path="/manager/editor/:contentId" element={<ContentItemPage />} />
-              <Route path="/builder" element={<ContentSchemaBuilderPage />} />
-              <Route path="/builder/schemas/:schemaId" element={<SchemaEditorPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/settings" element={<SettingsPage />}>
-                <Route index element={<Navigate to="account" replace />} />
-                <Route path="account" element={<SettingsAccountPage />} />
-                <Route path="workspaces" element={<SettingsWorkspacesPage />} />
-                <Route path="members" element={<SettingsMembersPage />} />
-                <Route path="database" element={<SettingsDatabasePage />} />
-                <Route path="billing" element={<SettingsBillingPage />} />
+          {isAuthenticated ? (
+            <>
+              <Route path="/" element={<AppLayout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/manager" element={<ContentManagerPage />} />
+                <Route path="/manager/editor/:schemaId/new" element={<ContentItemPage />} />
+                <Route path="/manager/editor/:contentId" element={<ContentItemPage />} />
+                <Route path="/builder" element={<ContentSchemaBuilderPage />} />
+                <Route path="/builder/schemas/:schemaId" element={<SchemaEditorPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/settings" element={<SettingsPage />}>
+                  <Route index element={<Navigate to="account" replace />} />
+                  <Route path="account" element={<SettingsAccountPage />} />
+                  <Route path="workspaces" element={<SettingsWorkspacesPage />} />
+                  <Route path="members" element={<SettingsMembersPage />} />
+                  <Route path="database" element={<SettingsDatabasePage />} />
+                  <Route path="billing" element={<SettingsBillingPage />} />
+                </Route>
+                <Route path="/community/forums" element={<ForumManagementPage />} />
+                <Route path="/community/forums/:forumId" element={<ForumDetailPage />} />
+                <Route path="/community/forums/:forumId/new-post" element={<NewPostPage />} />
+                <Route path="/community/posts/:postId" element={<PostCommentsPage />} />
+                <Route path="/community/posts/:postId/:commentId" element={<PostCommentsPage />} />
               </Route>
-              <Route path="/community/forums" element={<ForumManagementPage />} />
-              <Route path="/community/forums/:forumId" element={<ForumDetailPage />} />
-              <Route path="/community/forums/:forumId/new-post" element={<NewPostPage />} />
-              <Route path="/community/posts/:postId" element={<PostCommentsPage />} />
-              <Route path="/community/posts/:postId/:commentId" element={<PostCommentsPage />} />
-            </Route>
+              <Route path="*" element={<NotFound />} />
+            </>
+          ) : (
+            <Route path="*" element={<Navigate to="/sign-in" replace />} />
           )}
         </Routes>
       </Suspense>
