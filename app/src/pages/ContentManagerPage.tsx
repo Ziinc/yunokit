@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { ContentItem, ContentItemStatus } from "@/lib/api/SchemaApi";
 import * as ContentApiMod from '@/lib/api/ContentApi';
 import * as SchemaApiMod from '@/lib/api/SchemaApi';
 import type { ContentSchemaRow } from '@/lib/api/SchemaApi';
