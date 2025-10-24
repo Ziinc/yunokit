@@ -5,7 +5,6 @@ import {
   FileText,
   Home,
   Database,
-  MessageCircle,
   Loader2,
   Building2,
   Settings,
@@ -14,6 +13,7 @@ import {
   ChevronRight,
   Folder,
   Users,
+  MessageCircle,
 } from "lucide-react";
 
 import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
@@ -81,7 +81,7 @@ export const Sidebar: React.FC = () => {
       items: [
         {
           name: "Forums",
-          path: "/community",
+          path: "/community/forums",
           icon: <MessageCircle size={20} />,
         },
       ],
