@@ -1,6 +1,11 @@
 # Development Guide
 
-All tests under app/tests/** specify the specification that the app should be in.
+When given a task, create failing tests first, get approval for the failing tests, then complete implementation via TDD.
+
+- it is only considered complete if the failing tests pass.
+- do not write e2e tests unless specified explicitly by the task.
+
+All tests under app/tests/\*\* specify the specification that the app should be in.
 Any feature that is added must be included as a test spec.
 Any feature that is without a test spec can and SHOULD be safely removed if prompted.
 
@@ -15,7 +20,7 @@ Code should be concise and succinct, with no backward compatability or fallbacks
 ## Repository Structure
 
 - **app/**: React web application (Vite + TypeScript + SWR)
-- **web/**: Docusaurus documentation site  
+- **web/**: Docusaurus documentation site
 - **shared/**: Shared UI components with Storybook
 - **supabase/**: Database schemas, migrations, Edge Functions
 - **comp/strapi/**: Strapi CMS (legacy)
@@ -23,11 +28,13 @@ Code should be concise and succinct, with no backward compatability or fallbacks
 ## Architecture
 
 ### Frontend Stack
+
 - React 19 + TypeScript + Vite + TailwindCSS
 - Radix UI (consolidated package) + SWR + React Router
 - Vitest + Playwright for testing
 
-### Backend Stack  
+### Backend Stack
+
 - Supabase (auth, database, edge functions)
 - PostgreSQL schemas: `public` (app), `yunocontent` (CMS), `yunocommunity` (forums)
 - API modules in `app/src/lib/api/` wrap `supabase.functions.invoke()` calls
@@ -35,6 +42,7 @@ Code should be concise and succinct, with no backward compatability or fallbacks
 ## Commands
 
 ### Development
+
 ```bash
 make start           # Start Supabase + React app
 make stop            # Stop all services
@@ -82,12 +90,12 @@ const transformContentItem = (item: ContentItemRow): ContentItem => ({ ... });
 ```typescript
 // Transform when component expects ContentItem
 const contentItem: ContentItem = {
-  id: dbItem.id?.toString() || '',
-  schemaId: dbItem.schema_id?.toString() || '',
-  title: dbItem.title || 'Untitled',
-  status: (dbItem.status as ContentItemStatus) || 'draft',
-  createdAt: dbItem.created_at || '',
-  updatedAt: dbItem.updated_at || dbItem.created_at || '',
+  id: dbItem.id?.toString() || "",
+  schemaId: dbItem.schema_id?.toString() || "",
+  title: dbItem.title || "Untitled",
+  status: (dbItem.status as ContentItemStatus) || "draft",
+  createdAt: dbItem.created_at || "",
+  updatedAt: dbItem.updated_at || dbItem.created_at || "",
   publishedAt: dbItem.published_at || undefined,
   data: (dbItem.data as Record<string, unknown>) || {},
 };
@@ -113,13 +121,13 @@ const handleMutation = async () => {
   try {
     // 1. Optimistic update
     mutate(optimisticData, false);
-    
+
     // 2. Close UI immediately
     setShowDialog(false);
-    
+
     // 3. API call
     const response = await apiCall();
-    
+
     // 4. Handle errors
     if (response.error) {
       mutate(); // Revert
@@ -127,7 +135,7 @@ const handleMutation = async () => {
       showErrorToast("Could not perform action");
       return;
     }
-    
+
     // 5. Update with real data
     mutate(response.data, { revalidate: false });
     showSuccessToast();
@@ -139,40 +147,48 @@ const handleMutation = async () => {
 ```
 
 ### Error Handling for Supabase Functions
+
 Always check `response.error` before proceeding. Supabase functions return `{ data: T | null, error: { message: string } | null }`.
 
 ```typescript
 const response = await supabase.functions.invoke("endpoint");
 if (response.error) {
-  toast({ title: "Operation failed", description: response.error.message, variant: "destructive" });
+  toast({
+    title: "Operation failed",
+    description: response.error.message,
+    variant: "destructive",
+  });
   return;
 }
 // Handle success with response.data
 ```
 
 ### Best Practices
+
 1. Always use useSWR's `mutate` for data updates
 2. Check `response.error` before success logic
 3. Call `mutate()` without arguments to revert and fetch fresh data
 4. Close dialogs immediately after optimistic updates
 5. Handle both API errors and exceptions
 
-1. **Always use useSWR's `mutate`** for data updates
-2. **Check `response.error`** before success logic
-3. **Call `mutate()` without arguments** to revert and fetch fresh data
-4. **Close dialogs immediately** after optimistic updates
-5. **Handle both API errors and exceptions** with proper fallbacks
-6. **Use database types directly** to avoid transformation overhead
-7. **Transform data only when components require specific formats**
+6. **Always use useSWR's `mutate`** for data updates
+7. **Check `response.error`** before success logic
+8. **Call `mutate()` without arguments** to revert and fetch fresh data
+9. **Close dialogs immediately** after optimistic updates
+10. **Handle both API errors and exceptions** with proper fallbacks
+11. **Use database types directly** to avoid transformation overhead
+12. **Transform data only when components require specific formats**
 
 ## Testing Guidelines
 
 ### Test Structure
+
 - Tests in `app/tests/` directory
 - Use `tests/utils/test-utils.tsx` wrapper for consistent provider setup
 - Import components using default imports when they're default exports: `import ComponentName from '../src/path'`
 
 ### Assertions
+
 - **Never use** `toBeInTheDocument()` - use `.toBeDefined()` instead
 - **Never import** `@testing-library/jest-dom` or use any jest-dom APIs
 - Use `screen.findBy*` for async assertions when elements should exist
@@ -180,6 +196,7 @@ if (response.error) {
 - Avoid `.toHaveAttribute()` - check elements directly
 
 ### Mocking
+
 - Mock APIs using `vi.mock()` with relative paths: `vi.mock('../src/lib/api/ApiName')`
 - Import APIs as modules: `import * as ApiName from '../src/lib/api/ApiName'`
 - Mock return values in `beforeEach`: `(ApiName.functionName as any).mockResolvedValue(data)`
@@ -189,26 +206,26 @@ if (response.error) {
 
 ```typescript
 // ✅ Good: Proper test setup
-import { screen } from '@testing-library/react';
-import { render } from './utils/test-utils';
-import ComponentName from '../src/components/ComponentName';
-import * as ApiName from '../src/lib/api/ApiName';
+import { screen } from "@testing-library/react";
+import { render } from "./utils/test-utils";
+import ComponentName from "../src/components/ComponentName";
+import * as ApiName from "../src/lib/api/ApiName";
 
-vi.mock('../src/lib/api/ApiName', () => ({
+vi.mock("../src/lib/api/ApiName", () => ({
   listItems: vi.fn(),
-  createItem: vi.fn()
+  createItem: vi.fn(),
 }));
 
 beforeEach(() => {
   (ApiName.listItems as any).mockResolvedValue({
-    data: [{ id: 1, name: 'Test' }],
-    error: null
+    data: [{ id: 1, name: "Test" }],
+    error: null,
   });
 });
 
 // ✅ Good: Correct assertions
-expect(screen.getByText('Test')).toBeDefined();
-expect(screen.queryByText('Not Found')).toBeNull();
+expect(screen.getByText("Test")).toBeDefined();
+expect(screen.queryByText("Not Found")).toBeNull();
 
 // ❌ Bad: Never use these
 expect(element).toBeInTheDocument();

@@ -9,8 +9,7 @@ type ContentItemVersionRow = Database['yunocontent']['Tables']['content_item_ver
 
 // Content Item Operations
 export interface ListContentItemsOptions {
-  schemaIds?: number[];
-  authorIds?: number[];
+  schemaIds?: number[] | string[] | undefined;
   status?: string;
   limit?: number;
   offset?: number;
@@ -27,7 +26,6 @@ export const listContentItems = async (
       workspaceId,
       query: {
         schemaIds: options?.schemaIds,
-        authorIds: options?.authorIds,
         status: options?.status,
         limit: options?.limit,
         offset: options?.offset,

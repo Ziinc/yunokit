@@ -312,8 +312,8 @@ const SignInPage = () => {
         />
       </div>
 
-      <div className={`p-4 ${Z_INDEX.dropdown} flex flex-col lg:flex-row max-w-7xl w-full gap-8 flex items-center justify-center`}>
-        <Card className={`w-full max-w-md shadow-xl ${Z_INDEX.dropdown}`}>
+      <div className={`p-4 z-10 flex flex-col lg:flex-row max-w-7xl w-full gap-8 flex items-center justify-center`}>
+        <Card className={`w-full max-w-md shadow-xl z-10`}>
           <CardHeader className="text-center">
             <div className={`mx-auto mb-4 w-48 h-12 flex items-center justify-center`}>
               <img

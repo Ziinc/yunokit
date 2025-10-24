@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import React from 'react';
-import type { ContentItemRow } from '@/lib/api/ContentApi';
-import type { ContentSchemaRow } from '@/lib/api/SchemaApi';
+import type { ContentItemRow } from '../../src/lib/api/ContentApi';
+import type { ContentSchemaRow } from '../../src/lib/api/SchemaApi';
 
 /**
  * Mock Helpers for Tests
@@ -51,6 +51,10 @@ export function createMockContentItem(overrides: Partial<ContentItemRow> = {}): 
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     published_at: null,
+    archived_at: null,
+    deleted_at: null,
+    uid: 'test-uid-1',
+    status: null,
     data: {},
     ...overrides
   };
@@ -76,13 +80,36 @@ export function createMockSchema(overrides: Partial<ContentSchemaRow> = {}): Con
   return {
     id: 1,
     name: 'Test Schema',
-    workspace_id: 1,
-    config: {},
+    fields: [],
+    strict: false,
     archived_at: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
+    deleted_at: null,
+    description: null,
+    type: 'collection',
     ...overrides
   };
+}
+
+/**
+ * Creates a mock single-type schema
+ */
+export function createSingleTypeSchema(overrides: Partial<ContentSchemaRow> = {}): ContentSchemaRow {
+  return createMockSchema({
+    type: 'single',
+    ...overrides
+  });
+}
+
+/**
+ * Creates a mock collection-type schema
+ */
+export function createCollectionTypeSchema(overrides: Partial<ContentSchemaRow> = {}): ContentSchemaRow {
+  return createMockSchema({
+    type: 'collection',
+    ...overrides
+  });
 }
 
 /**

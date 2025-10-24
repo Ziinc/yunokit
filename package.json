@@ -1,0 +1,25 @@
+{
+  "name": "yunokit",
+  "version": "1.0.0",
+  "description": "<div align=\"center\">",
+  "homepage": "https://github.com/Ziinc/supacontent#readme",
+  "bugs": {
+    "url": "https://github.com/Ziinc/supacontent/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ziinc/supacontent.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "srtd": "srtd watch"
+  },
+  "dependencies": {
+    "@t1mmen/srtd": "^0.4.7"
+  },
+  "devDependencies": {}
+}

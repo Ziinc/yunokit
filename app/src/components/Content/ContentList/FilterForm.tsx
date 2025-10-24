@@ -25,8 +25,6 @@ import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 const filterSchema = z.object({
   schemaId: z.string().optional(),
   search: z.string().optional(),
-  page: z.number().default(1),
-  perPage: z.number().default(10),
 });
 
 export type FilterValues = z.infer<typeof filterSchema>;

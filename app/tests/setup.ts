@@ -170,6 +170,5 @@ vi.mock('../src/lib/supabase');
 vi.mock('../src/contexts/AuthContext');
 vi.mock('../src/lib/contexts/WorkspaceContext');
 
-// Mock SWR
-vi.mock('swr'); 
+
 

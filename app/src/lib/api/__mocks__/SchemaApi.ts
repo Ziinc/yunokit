@@ -16,7 +16,7 @@ export const deleteSchema = vi
   .fn()
   .mockResolvedValue({ data: null, error: null });
 
-export const getSchemaById = vi
+export const getSchema = vi
   .fn()
   .mockResolvedValue({ data: {}, error: null });
 
