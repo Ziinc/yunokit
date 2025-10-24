@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,17 +7,7 @@ import { ContentSchemaRow } from "@/lib/api/SchemaApi";
 import { TiptapEditor } from "./TiptapEditor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Simple JSON syntax highlighter
-const highlightJSON = (jsonString: string): string => {
-  return jsonString
-    .replace(/("([^"\\]|\\.)*")\s*:/g, '<span style="color: #7dd3fc;">$1</span>:') // Keys (cyan)
-    .replace(/:\s*("([^"\\]|\\.)*")/g, ': <span style="color: #86efac;">$1</span>') // String values (green)
-    .replace(/:\s*(true|false)/g, ': <span style="color: #fbbf24;">$1</span>') // Booleans (yellow)
-    .replace(/:\s*(null)/g, ': <span style="color: #f87171;">$1</span>') // Null (red)
-    .replace(/:\s*(\d+\.?\d*)/g, ': <span style="color: #c084fc;">$1</span>') // Numbers (purple)
-    .replace(/([{}[\]])/g, '<span style="color: #e2e8f0;">$1</span>') // Brackets (light gray)
-    .replace(/(,)/g, '<span style="color: #64748b;">$1</span>'); // Commas (gray)
-};
+const JSON_INDENT_SPACES = 2;
 
 interface ContentItemEditorProps {
   schema: ContentSchemaRow;
@@ -43,6 +33,10 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
   const [content, setContent] = useState<Record<string, unknown>>(initialData);
   const [title, setTitle] = useState<string>(initialTitle);
   const [activeTab, setActiveTab] = useState<string>("fields");
+  const jsonPreview = useMemo(
+    () => JSON.stringify(content, null, JSON_INDENT_SPACES),
+    [content]
+  );
 
   const handleSave = useCallback(() => {
     // Validate title
@@ -157,13 +151,7 @@ export const ContentItemEditor: React.FC<ContentItemEditorProps> = ({
             <CardContent>
               <div className="bg-slate-900 text-slate-100 p-4 rounded-md text-sm overflow-auto max-h-[600px] font-mono">
                 <pre className="whitespace-pre-wrap">
-                  <code dangerouslySetInnerHTML={{
-                    __html: highlightJSON(JSON.stringify(
-                      content,
-                      null,
-                      2
-                    ))
-                  }} />
+                  <code>{jsonPreview}</code>
                 </pre>
               </div>
             </CardContent>
