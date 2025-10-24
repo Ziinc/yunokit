@@ -3,17 +3,12 @@ import { ContentItemEditor } from "@/components/Content/ContentItemEditor";
 import { useParams, useNavigate } from "react-router-dom";
 import { ContentItem } from "@/lib/api/SchemaApi";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Send, Plus, ArrowRight, FileX2, Save } from "lucide-react";
+import { ChevronLeft, FileX2, Save } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { BackIconButton } from "@/components/ui/BackIconButton";
 import { useToast } from "@/hooks/use-toast";
 import { createErrorHandler, notifySuccess } from "@/lib/errors";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { getSchema, ContentSchemaRow } from "@/lib/api/SchemaApi";
 import {
   createContentItem,
@@ -24,10 +19,6 @@ import { useWorkspace } from "@/lib/contexts/WorkspaceContext";
 import useSWR from "swr";
 import type { Json } from "../../database.types";
 import { JSONContent } from "@tiptap/core";
-import { isString } from "@/lib/guards";
-import { useNullableState } from "@/hooks/useNullableState";
-import { generateUUID } from "@/lib/utils";
-import { nowISO } from "@/utils/date";
 // Remove css-constants over-abstraction; use Tailwind utilities directly
 
 const ContentItemPage = () => {
@@ -36,9 +27,6 @@ const ContentItemPage = () => {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
   const errorHandler = createErrorHandler(toast);
-  const [selectedLine, setSelectedLine] = useNullableState<number>(null);
-  const [inlineCommentText, setInlineCommentText] = useState("");
-  const [diffView, setDiffView] = useState<"unified" | "split">("unified");
   const [hasChanges, setHasChanges] = useState(false);
   const saveHandlerRef = useRef<() => void>(() => {});
 
@@ -110,82 +98,6 @@ const ContentItemPage = () => {
   // Set up initial content
   const initialContent = getContentData(contentItem) || {};
 
-  // Mock previous version for diffing (for demo purposes)
-  const [previousVersion] = useState<ContentItem | undefined>(() => {
-    if (!contentItem) return undefined;
-    
-    const contentData = getContentData(contentItem);
-    
-    return {
-      ...contentItem,
-      data: {
-        ...contentData,
-        content: isString(contentData.content) 
-          ? contentData.content.replace("React is a JavaScript library", "React is a popular JavaScript library")
-              .replace("helped me understand", "really helped me understand")
-          : contentData.content
-      },
-      updatedAt: new Date(new Date(contentItem.updatedAt).getTime() - 86400000).toISOString() // 1 day before
-    };
-  });
-
-  // Mock diff data for the example
-  const mockDiffLines = previousVersion && contentItem ? [
-    { type: "context", content: "# Introduction to React", lineNumber: 1 },
-    { type: "context", content: "", lineNumber: 2 },
-    { type: "deletion", content: "React is a popular JavaScript library for building user interfaces...", lineNumber: 3 },
-    { type: "addition", content: "React is a JavaScript library for building user interfaces...", lineNumber: 3 },
-    { type: "context", content: "It was developed by Facebook and is now maintained by Facebook and a community of developers.", lineNumber: 4 },
-    { type: "context", content: "", lineNumber: 5 },
-    { type: "context", content: "## Key Features", lineNumber: 6 },
-    { type: "context", content: "", lineNumber: 7 },
-    { type: "context", content: "* Component-based architecture", lineNumber: 8 },
-    { type: "context", content: "* Virtual DOM for performance", lineNumber: 9 },
-    { type: "context", content: "* JSX syntax", lineNumber: 10 },
-    { type: "context", content: "", lineNumber: 11 },
-    { type: "deletion", content: "This article really helped me understand the topic better.", lineNumber: 12 },
-    { type: "addition", content: "This article helped me understand the topic better.", lineNumber: 12 },
-  ] : [];
-
-  // Mock inline comments
-  const [inlineComments, setInlineComments] = useState<{
-    lineNumber: number;
-    comments: Array<{
-      id: string;
-      text: string;
-      author: string;
-      authorAvatar: string;
-      timestamp: string;
-    }>;
-  }[]>([
-    {
-      lineNumber: 3,
-      comments: [
-        {
-          id: "inline-1",
-          text: "I removed 'popular' to be more neutral in tone",
-          author: "John Smith",
-          authorAvatar: "/placeholder.svg",
-          timestamp: new Date(Date.now() - 3600000).toISOString()
-        }
-      ]
-    },
-    {
-      lineNumber: 12,
-      comments: [
-        {
-          id: "inline-2",
-          text: "Removed 'really' as it's redundant",
-          author: "Jane Doe",
-          authorAvatar: "/placeholder.svg",
-          timestamp: new Date(Date.now() - 1800000).toISOString()
-        }
-      ]
-    }
-  ]);
-
-
-  
   const handleSave = async (
     contentItem: {
       title: string
@@ -260,56 +172,6 @@ const ContentItemPage = () => {
     // No need to handle errors explicitly - the errorHandler does it for us
   };
   
-  const handleAddInlineComment = () => {
-    if (!inlineCommentText.trim() || selectedLine === null) return;
-
-    const existingCommentsIndex = inlineComments.findIndex(c => c.lineNumber === selectedLine);
-    
-    if (existingCommentsIndex >= 0) {
-      // Add to existing comments for this line
-      const updatedComments = [...inlineComments];
-      updatedComments[existingCommentsIndex] = {
-        ...updatedComments[existingCommentsIndex],
-        comments: [
-          ...updatedComments[existingCommentsIndex].comments,
-          {
-            id: generateUUID(),
-            text: inlineCommentText,
-            author: "Current User",
-            authorAvatar: "/placeholder.svg",
-            timestamp: nowISO()
-          }
-        ]
-      };
-      setInlineComments(updatedComments);
-    } else {
-      // Create new comment thread for this line
-      setInlineComments([
-        ...inlineComments,
-        {
-          lineNumber: selectedLine,
-          comments: [
-            {
-              id: generateUUID(),
-              text: inlineCommentText,
-              author: "Current User",
-              authorAvatar: "/placeholder.svg",
-              timestamp: nowISO()
-            }
-          ]
-        }
-      ]);
-    }
-
-    setInlineCommentText("");
-    setSelectedLine(null);
-
-    toast({
-      title: "Inline comment added",
-      description: "Your comment has been added to this line."
-    });
-  };
-
   // Show loading state
   if (isLoadingSchema || (contentId && isLoadingContentItem)) {
     return (
@@ -383,165 +245,30 @@ const ContentItemPage = () => {
   return (
     <>
       <div className={`max-w-7xl mx-auto p-6 space-content-lg`}>
-      <div className={`flex items-center justify-start gap-4`}>
-        <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
-        
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">
-            {contentId ? 'Edit Content' : 'Create Content'} - {schema.name}
-          </h1>
-          <p className="text-muted-foreground">
-            {contentId ? 'Update your content item' : 'Create a new content item'}
-          </p>
+        <div className={`flex items-center justify-start gap-4`}>
+          <BackIconButton label="Back to manager" onClick={() => navigate('/manager')} />
+
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">
+              {contentId ? 'Edit Content' : 'Create Content'} - {schema.name}
+            </h1>
+            <p className="text-muted-foreground">
+              {contentId ? 'Update your content item' : 'Create a new content item'}
+            </p>
+          </div>
+          <Button
+            onClick={() => saveHandlerRef.current?.()}
+            disabled={!hasChanges}
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save
+          </Button>
         </div>
-        <Button
-          onClick={() => saveHandlerRef.current?.()}
-          disabled={!hasChanges}
-          className="flex items-center gap-2"
-        >
-          <Save className="h-4 w-4" />
-          Save
-        </Button>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="col-span-1">
-          {contentItem?.status === 'pending_review' && previousVersion ? (
-            <div className="space-content">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Content Review</h2>
-                <ToggleGroup type="single" value={diffView} onValueChange={(value) => value && setDiffView(value as "unified" | "split")}>
-                  <ToggleGroupItem value="unified">Unified View</ToggleGroupItem>
-                  <ToggleGroupItem value="split">Split View</ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-              
-              <div className="border rounded-md">
-                <div className="bg-muted p-3 border-b flex justify-between">
-                  <div className={`flex items-center justify-start gap-2`}>
-                    <span className="text-sm font-medium">Comparing changes</span>
-                  </div>
-                  <div className={`flex items-center justify-start gap-2 text-xs text-muted-foreground`}>
-                    <span>{format(new Date(previousVersion.updatedAt), "MMM d, yyyy")}</span>
-                    <ArrowRight size={12} className="my-auto" />
-                    <span>{format(new Date(contentItem.updatedAt), "MMM d, yyyy")}</span>
-                  </div>
-                </div>
-
-                <ScrollArea className="h-96">
-                  <div className="p-4 space-y-1 font-mono text-sm">
-                    {mockDiffLines.map((line) => {
-                      const hasComments = inlineComments.some(c => c.lineNumber === line.lineNumber);
-                      
-                      return (
-                        <div key={line.lineNumber} className="group">
-                          <div 
-                            className={`flex items-center gap-2 p-1 rounded cursor-pointer hover:bg-muted/50 ${
-                              selectedLine === line.lineNumber ? 'bg-blue-50 border border-blue-200' : ''
-                            } ${
-                              line.type === 'addition' ? 'bg-green-50 text-green-800' : 
-                              line.type === 'deletion' ? 'bg-red-50 text-red-800' : 
-                              'text-muted-foreground'
-                            }`}
-                            onClick={() => setSelectedLine(line.lineNumber)}
-                          >
-                            <span className="w-8 text-xs text-right">{line.lineNumber}</span>
-                            <span className="w-4">
-                              {line.type === 'addition' ? '+' : line.type === 'deletion' ? '-' : ' '}
-                            </span>
-                            <span className="flex-1">{line.content}</span>
-                            {hasComments && (
-                              <MessageSquare size={12} className="text-info" />
-                            )}
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedLine(line.lineNumber);
-                              }}
-                            >
-                              <Plus size={12} />
-                            </Button>
-                          </div>
-                          
-                          {/* Inline comments for this line */}
-                          {inlineComments
-                            .filter(c => c.lineNumber === line.lineNumber)
-                            .map(commentGroup => (
-                              <div key={commentGroup.lineNumber} className="ml-12 mt-2 space-y-2">
-                                {commentGroup.comments.map(comment => (
-                                  <div key={comment.id} className="flex gap-2 p-2 bg-blue-50 rounded-md border border-blue-200">
-                                    <Avatar className="h-6 w-6">
-                                      <AvatarImage src={comment.authorAvatar} />
-                                      <AvatarFallback className="text-xs">
-                                        {comment.author.split(' ').map(n => n[0]).join('')}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 text-sm">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-medium">{comment.author}</span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {format(new Date(comment.timestamp), "MMM d, h:mm a")}
-                                        </span>
-                                      </div>
-                                      <p>{comment.text}</p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-
-                {/* Add inline comment form */}
-                {selectedLine !== null && (
-                  <div className="border-t p-4 bg-muted/30">
-                    <div className="flex gap-2">
-                      <Textarea
-                        placeholder={`Add a comment to line ${selectedLine}...`}
-                        value={inlineCommentText}
-                        onChange={(e) => setInlineCommentText(e.target.value)}
-                        className="flex-1 min-h-[60px]"
-                      />
-                      <div className="flex flex-col gap-2">
-                        <Button 
-                          size="sm" 
-                          onClick={handleAddInlineComment}
-                          disabled={!inlineCommentText.trim()}
-                        >
-                          <Send className="icon-sm" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => setSelectedLine(null)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {contentSchema && (
-                <ContentItemEditor
-                  schema={contentSchema}
-                  initialData={initialContent}
-                  initialTitle={contentItem?.title || ""}
-                  onSave={handleSave}
-                  onChangesDetected={setHasChanges}
-                  registerSaveHandler={registerSaveHandler}
-                />
-              )}
-            </div>
-          ) : (
-            contentSchema && (
+        {contentSchema && (
+          <div className="grid grid-cols-1 gap-6">
+            <div className="col-span-1">
               <ContentItemEditor
                 schema={contentSchema}
                 initialData={initialContent}
@@ -550,10 +277,9 @@ const ContentItemPage = () => {
                 onChangesDetected={setHasChanges}
                 registerSaveHandler={registerSaveHandler}
               />
-            )
-          )}
-        </div>
-      </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
