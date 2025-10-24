@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash, FileText, List, Check, FileJson } from "lucide-react";
-// ContentFieldType is now SchemaFieldType from SchemaApi
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { DocsButton } from "@/components/ui/DocsButton";
-import { ContentSchemaRow, SchemaField, SchemaFieldType  } from "@/lib/api/SchemaApi";
+import { ContentSchemaRow, SchemaField, SchemaFieldType } from "@/lib/api/SchemaApi";
+
+const FIELD_TYPES: SchemaFieldType[] = Object.values(SchemaFieldType);
 
 interface ContentSchemaEditorProps {
   initialSchema?: ContentSchemaRow;
@@ -46,7 +47,7 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
   
   const [newOption, setNewOption] = useState("");
 
-  const getFieldTypeIcon = (type: ContentFieldType) => {
+  const getFieldTypeIcon = (type: SchemaFieldType) => {
     switch (type) {
       case SchemaFieldType.MARKDOWN:
         return <FileText size={18} className="text-cms-purple" />;
@@ -281,14 +282,14 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                     <div className="space-y-2">
                       <Label>Field Type</Label>
                       <div className="grid grid-cols-2 gap-2">
-                        {(["text", "number", "date", "boolean", "enum", "relation", "image", "markdown", "json"] as ContentFieldType[]).map((type) => (
+                        {FIELD_TYPES.map((type) => (
                           <Button
                             key={type}
                             variant={newField.type === type ? "default" : "outline"}
                             className={`justify-start text-left ${newField.type === type ? "" : "border-dashed"}`}
                             onClick={() => setNewField({
                               ...newField,
-                              type: type as SchemaFieldType,
+                              type,
                               default_value: null // Reset default value when changing type
                             })}
                           >
@@ -337,7 +338,7 @@ export const ContentSchemaEditor: React.FC<ContentSchemaEditorProps> = ({
                       </div>
                     )}
 
-                    {newField.type === "enum" && (
+                    {newField.type === SchemaFieldType.ENUM && (
                       <div className="space-y-3">
                         <Label>Options</Label>
                         <div className="flex gap-2">
