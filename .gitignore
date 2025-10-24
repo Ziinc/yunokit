@@ -23,3 +23,5 @@ supabase/functions/migrations/*/*.sql
 supabase/functions/migrations/*/*.txt
 *storybook.log
 storybook-static
+test-results/
+playwright-report/
