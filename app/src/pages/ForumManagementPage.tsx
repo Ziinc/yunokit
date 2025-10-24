@@ -328,29 +328,6 @@ const ForumManagementPage = () => {
 
   return (
     <>
-      <style>{`
-        @keyframes highlight-fade {
-          0% { 
-            background-color: rgb(240 253 244); 
-            border-color: rgb(187 247 208);
-            box-shadow: 0 0 0 2px rgb(187 247 208 / 0.3);
-          }
-          70% { 
-            background-color: rgb(240 253 244); 
-            border-color: rgb(187 247 208);
-            box-shadow: 0 0 0 2px rgb(187 247 208 / 0.3);
-          }
-          100% { 
-            background-color: transparent; 
-            border-color: transparent;
-            box-shadow: none;
-          }
-        }
-        
-        .forum-highlight {
-          animation: highlight-fade 3s ease-out forwards;
-        }
-      `}</style>
       <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
