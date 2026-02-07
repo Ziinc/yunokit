@@ -33,11 +33,20 @@ interface TiptapEditorProps {
   editable?: boolean;
 }
 
+const FIELD_TYPE_FALLBACK = {
+  TEXT: 'text',
+  NUMBER: 'number',
+  BOOLEAN: 'boolean',
+} as const;
+
+const getFieldTypeValue = <K extends keyof typeof FIELD_TYPE_FALLBACK>(key: K) =>
+  (FieldType?.[key] ?? FIELD_TYPE_FALLBACK[key]) as SchemaFieldType['type'];
+
 // Field type options for the add field dialog
-const FIELD_TYPE_OPTIONS: { value: FieldType; label: string; icon: React.ReactNode }[] = [
-  { value: FieldType.TEXT, label: 'Text', icon: <Type className="h-4 w-4" /> },
-  { value: FieldType.NUMBER, label: 'Number', icon: <Hash className="h-4 w-4" /> },
-  { value: FieldType.BOOLEAN, label: 'Boolean', icon: <ToggleLeft className="h-4 w-4" /> },
+const FIELD_TYPE_OPTIONS: { value: SchemaFieldType['type']; label: string; icon: React.ReactNode }[] = [
+  { value: getFieldTypeValue('TEXT'), label: 'Text', icon: <Type className="h-4 w-4" /> },
+  { value: getFieldTypeValue('NUMBER'), label: 'Number', icon: <Hash className="h-4 w-4" /> },
+  { value: getFieldTypeValue('BOOLEAN'), label: 'Boolean', icon: <ToggleLeft className="h-4 w-4" /> },
 ];
 
 interface AddFieldDialogProps {
@@ -210,99 +219,70 @@ interface MarkdownToolbarProps {
 const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ editor, schema }) => {
   if (!editor || schema.strict) return null;
 
+  const toolbarActions = useMemo(
+    () => [
+      {
+        testId: 'bold-button',
+        icon: <Bold className="h-4 w-4" />,
+        isActive: () => editor.isActive('bold'),
+        command: () => editor.chain().focus().toggleBold().run(),
+        tooltip: 'Bold (Ctrl+B)',
+      },
+      {
+        testId: 'italic-button',
+        icon: <Italic className="h-4 w-4" />,
+        isActive: () => editor.isActive('italic'),
+        command: () => editor.chain().focus().toggleItalic().run(),
+        tooltip: 'Italic (Ctrl+I)',
+      },
+      {
+        testId: 'strikethrough-button',
+        icon: <Strikethrough className="h-4 w-4" />,
+        isActive: () => editor.isActive('strike'),
+        command: () => editor.chain().focus().toggleStrike().run(),
+        tooltip: 'Strikethrough',
+      },
+      {
+        testId: 'bullet-list-button',
+        icon: <List className="h-4 w-4" />,
+        isActive: () => editor.isActive('bulletList'),
+        command: () => editor.chain().focus().toggleBulletList().run(),
+        tooltip: 'Bullet List',
+      },
+      {
+        testId: 'ordered-list-button',
+        icon: <ListOrdered className="h-4 w-4" />,
+        isActive: () => editor.isActive('orderedList'),
+        command: () => editor.chain().focus().toggleOrderedList().run(),
+        tooltip: 'Numbered List',
+      },
+    ],
+    [editor]
+  );
+
   return (
     <div className={`border-b p-2`}>
       <div className="flex space-x-1">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={editor.isActive('bold') ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                data-testid="bold-button"
-                className="h-8 w-8 p-0"
-              >
-                <Bold className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Bold (Ctrl+B)</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={editor.isActive('italic') ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                data-testid="italic-button"
-                className="h-8 w-8 p-0"
-              >
-                <Italic className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Italic (Ctrl+I)</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={editor.isActive('strike') ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => editor.chain().focus().toggleStrike().run()}
-                data-testid="strikethrough-button"
-                className="h-8 w-8 p-0"
-              >
-                <Strikethrough className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Strikethrough</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={editor.isActive('bulletList') ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => editor.chain().focus().toggleBulletList().run()}
-                data-testid="bullet-list-button"
-                className="h-8 w-8 p-0"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Bullet List</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={editor.isActive('orderedList') ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                data-testid="ordered-list-button"
-                className="h-8 w-8 p-0"
-              >
-                <ListOrdered className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Numbered List</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {toolbarActions.map(({ testId, icon, isActive, command, tooltip }) => (
+          <TooltipProvider key={testId}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isActive() ? 'secondary' : 'ghost'}
+                  size="sm"
+                  onClick={command}
+                  data-testid={testId}
+                  className="h-8 w-8 p-0"
+                >
+                  {icon}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ))}
       </div>
     </div>
   );
